@@ -1,0 +1,5 @@
+*.o
+luftballons
+*.gcda
+*.gcno
+*.gcov
