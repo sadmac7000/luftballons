@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 CLANGFLAGS = --std=gnu99
-CFLAGS = -g -Wall -Wextra
+CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES
 CC = gcc
 LINK = $(CC)
 RM = rm
@@ -20,7 +20,7 @@ TEST_PROGS=
 PROGS=luftballons
 
 luftballons_OBJS=main.o
-luftballons_LINK=-lglut
+luftballons_LINK=-lglut -lGL
 
 define SET_DEPS =
 $(1): $$($(1)_OBJS)
