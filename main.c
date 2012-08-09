@@ -39,6 +39,9 @@ const float verts[] = {
 GLuint position_buf = 0;
 GLuint shader_prog;
 
+GLsizei win_sz[2] = {800, 600};
+int need_reshape = 1;
+
 void
 load_position_buf(void)
 {
@@ -50,9 +53,20 @@ load_position_buf(void)
 }
 
 void
+handle_reshape(void)
+{
+	if (! need_reshape)
+		return;
+
+	glViewport(0, 0, win_sz[0], win_sz[1]);
+}
+
+void
 render(void)
 {
 	GLint loc;
+
+	handle_reshape();
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
@@ -75,18 +89,28 @@ render(void)
 	glutSwapBuffers();
 }
 
+void
+reshape(int x, int y)
+{
+	win_sz[0] = x;
+	win_sz[1] = y;
+
+	need_reshape = 1;
+}
+
 int
 main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
-	glutInitWindowSize(800, 600);
+	glutInitWindowSize(win_sz[0], win_sz[1]);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_ACCUM |
 			    GLUT_DEPTH | GLUT_STENCIL);
 
 	glutCreateWindow(argv[0]);
 
 	glutDisplayFunc(render);
+	glutReshapeFunc(reshape);
 
 	load_position_buf();
 	shader_prog = shader_program("vertex.glsl", "fragment.glsl");
