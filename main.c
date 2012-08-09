@@ -109,6 +109,10 @@ main(int argc, char **argv)
 
 	glutCreateWindow(argv[0]);
 
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
+
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
 
