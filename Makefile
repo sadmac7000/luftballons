@@ -20,7 +20,7 @@ TEST_PROGS=
 PROGS=luftballons
 
 luftballons_OBJS=main.o shader.o
-luftballons_LINK=-lglut -lGL
+luftballons_LINK=-lglut -lGL -lm
 
 define SET_DEPS =
 $(1): $$($(1)_OBJS)

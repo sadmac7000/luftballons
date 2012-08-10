@@ -22,6 +22,8 @@
 #include <err.h>
 #include <fcntl.h>
 
+#include <math.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -30,10 +32,31 @@
 
 #include "shader.h"
 
-const float verts[] = {
-	0.75, 0.75, 0.0, 1.0,
-	0.75, -0.75, 0.0, 1.0,
-	-0.75, -0.75, 0.0, 1.0,
+const float vert_data[] = {
+//coords
+	0.0f,    0.5f, -1.0f, 1.0f,
+	0.5f, -0.366f, -1.5f, 1.0f,
+	-0.5f, -0.366f, -1.0f, 1.0f,
+//colors
+	1.0f,    0.0f, 0.0f, 1.0f,
+	0.0f,    1.0f, 0.0f, 1.0f,
+	0.0f,    0.0f, 1.0f, 1.0f,
+};
+
+const float scale = 1;
+const float near = .5;
+const float far = 3.0;
+
+float cam_to_clip_transform[] = {
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1, 0,
+	0, 0, 0, 1,
+	/*
+	1, 0, 0, 0,
+	0, 1, 0, 0,
+	0, 0, 1.0202, 2.0202,
+	0, 0, -1, 0,*/
 };
 
 GLuint position_buf = 0;
@@ -47,7 +70,7 @@ load_position_buf(void)
 {
 	glGenBuffers(1, &position_buf);
 	glBindBuffer(GL_ARRAY_BUFFER, position_buf);
-	glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(float), verts,
+	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), vert_data,
 		     GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
@@ -58,15 +81,37 @@ handle_reshape(void)
 	if (! need_reshape)
 		return;
 
+	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
+
 	glViewport(0, 0, win_sz[0], win_sz[1]);
+}
+
+void
+get_offsets(GLfloat *x, GLfloat *y)
+{
+	const float period = 5000.0;
+	const float scale = 3.14159 * 2.0 / period;
+
+	float time = glutGet(GLUT_ELAPSED_TIME);
+
+	float angle = fmodf(time, period) * scale;
+
+	*x = cosf(angle) * 0.5;
+	*y = sinf(angle) * 0.5;
 }
 
 void
 render(void)
 {
-	GLint loc;
+	GLint vert_pos_loc;
+	GLint color_pos_loc;
+	GLint offset_loc;
+	GLint trans_loc;
+	GLfloat x, y;
 
 	handle_reshape();
+
+	get_offsets(&x, &y);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
@@ -76,17 +121,29 @@ render(void)
 
 	glBindBuffer(GL_ARRAY_BUFFER, position_buf);
 
-	loc = glGetAttribLocation(shader_prog, "position");
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer(loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	vert_pos_loc = glGetAttribLocation(shader_prog, "position");
+	color_pos_loc = glGetAttribLocation(shader_prog, "colorin");
+	offset_loc = glGetUniformLocation(shader_prog, "offset");
+	trans_loc = glGetUniformLocation(shader_prog, "transform");
+
+	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
+	glUniform4f(offset_loc, x, y, 0.0, 0.0);
+
+	glEnableVertexAttribArray(vert_pos_loc);
+	glEnableVertexAttribArray(color_pos_loc);
+	glVertexAttribPointer(vert_pos_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(color_pos_loc, 4, GL_FLOAT, GL_FALSE, 0,
+			      (void *)(12 * sizeof(float)));
 
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableVertexAttribArray(loc);
+	glDisableVertexAttribArray(vert_pos_loc);
+	glDisableVertexAttribArray(color_pos_loc);
 	glUseProgram(0);
 
 	glutSwapBuffers();
+	glutPostRedisplay();
 }
 
 void
@@ -115,6 +172,14 @@ main(int argc, char **argv)
 
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
+
+	cam_to_clip_transform[10] = (near + far)/(near - far);
+	cam_to_clip_transform[11] = 2*near*far/(near - far);
+	cam_to_clip_transform[14] = -1;
+	cam_to_clip_transform[15] = 0;
+
+	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
+	cam_to_clip_transform[5] = scale;
 
 	load_position_buf();
 	shader_prog = shader_program("vertex.glsl", "fragment.glsl");
