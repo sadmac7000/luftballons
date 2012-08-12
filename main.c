@@ -57,7 +57,7 @@ float cam_to_clip_transform[] = {
 };
 
 mesh_t *mesh;
-GLuint shader_prog;
+shader_t *shader;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -102,10 +102,8 @@ render(void)
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glUseProgram(shader_prog);
-
-	offset_loc = glGetUniformLocation(shader_prog, "offset");
-	trans_loc = glGetUniformLocation(shader_prog, "transform");
+	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
+	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
 
 	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
@@ -156,9 +154,9 @@ main(int argc, char **argv)
 
 	buffer = buffer_create(vdsize, GL_STATIC_DRAW);
 
-	shader_prog = shader_program("vertex.glsl", "fragment.glsl");
+	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(shader_prog, 3 * 4 * sizeof(float),
+	mesh = mesh_create(shader, 3 * 4 * sizeof(float),
 			   3 * 4 * sizeof(float), vert_data);
 
 	if (mesh_add_to_buffer(mesh, buffer))

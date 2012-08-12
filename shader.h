@@ -18,11 +18,23 @@
 #ifndef SHADER_H
 #define SHADER_H
 
+#include <GL/glut.h>
+
+/**
+ * A shader.
+ *
+ * gl_handle: The OpenGL designation for the shader.
+ **/
+typedef struct shader {
+	GLuint gl_handle;
+} shader_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-GLuint shader_program(const char *vertex, const char *frag);
+shader_t *shader_create(const char *vertex, const char *frag);
+void shader_activate(shader_t *shader);
 
 #ifdef __cplusplus
 }

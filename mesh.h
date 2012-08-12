@@ -21,10 +21,11 @@
 #include <GL/glut.h>
 
 #include "buffer.h"
+#include "shader.h"
 
 typedef struct mesh {
 	float *vert_data;
-	GLint shader_prog;
+	shader_t *shader;
 	size_t verts;
 	size_t vert_colors;
 
@@ -36,7 +37,7 @@ typedef struct mesh {
 extern "C" {
 #endif
 
-mesh_t *mesh_create(GLint shader_prog, size_t verts, size_t vert_colors,
+mesh_t *mesh_create(shader_t *shader, size_t verts, size_t vert_colors,
 		    const float *vert_data);
 size_t mesh_data_size(mesh_t *mesh);
 void mesh_destroy(mesh_t *mesh);

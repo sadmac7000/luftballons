@@ -25,14 +25,14 @@
  * Create a new mesh object.
  **/
 mesh_t *
-mesh_create(GLint shader_prog, size_t verts, size_t vert_colors,
+mesh_create(shader_t *shader, size_t verts, size_t vert_colors,
 	    const float *vert_data)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
 
 	ret->vert_data = xcalloc(verts + vert_colors, sizeof(float));
 	memcpy(ret->vert_data, vert_data, (verts + vert_colors) * sizeof(float));
-	ret->shader_prog = shader_prog;
+	ret->shader = shader;
 	ret->verts = verts;
 	ret->vert_colors = vert_colors;
 	ret->buffer = NULL;
@@ -115,9 +115,10 @@ mesh_draw(mesh_t *mesh)
 		errx(1, "Drawing mesh without buffer");
 
 	buffer_bind(mesh->buffer);
+	shader_activate(mesh->shader);
 
-	vert_pos_loc = glGetAttribLocation(mesh->shader_prog, "position");
-	color_pos_loc = glGetAttribLocation(mesh->shader_prog, "colorin");
+	vert_pos_loc = glGetAttribLocation(mesh->shader->gl_handle, "position");
+	color_pos_loc = glGetAttribLocation(mesh->shader->gl_handle, "colorin");
 
 	glEnableVertexAttribArray(vert_pos_loc);
 	glEnableVertexAttribArray(color_pos_loc);

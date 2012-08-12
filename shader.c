@@ -27,6 +27,40 @@
 
 #include <GL/glut.h>
 
+#include "shader.h"
+#include "util.h"
+
+static shader_t *current_shader = NULL;
+
+/**
+ * Compile a shader from a string containing glsl.
+ **/
+static GLuint
+shader_string(GLenum type, const char *shader_name, const GLchar *data,
+	      GLint len)
+{
+	GLchar *log;
+	GLuint shader;
+	GLint status;
+	GLint log_len;
+
+	shader = glCreateShader(type);
+	glShaderSource(shader, 1, &data, &len);
+	glCompileShader(shader);
+
+	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+
+	if (status != GL_FALSE)
+		return shader;
+
+	log = xmalloc(log_len + 1);
+
+	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
+	glGetShaderInfoLog(shader, log_len, NULL, log);
+
+	errx(1, "Could not compile %s: %s", shader_name, log);
+}
+
 /**
  * Load an OpenGL shader from a file.
  **/
@@ -35,11 +69,8 @@ shader_file(GLenum type, const char *filename)
 {
 	int fd = open(filename, O_RDONLY | O_CLOEXEC);
 	GLint size;
-	const GLchar * data;
-	GLchar *log;
+	GLchar *data;
 	GLuint shader;
-	GLint status;
-	GLint log_len;
 
 	if (fd < 0)
 		err(1, "Could not open shader file %s", filename);
@@ -55,66 +86,81 @@ shader_file(GLenum type, const char *filename)
 	if (! data)
 		err(1, "Could not map shader file");
 
-	shader = glCreateShader(type);
-	glShaderSource(shader, 1, &data, &size);
-	glCompileShader(shader);
-	munmap((void *)data, size);
+	shader = shader_string(type, filename, data, size);
 
-	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
+	munmap(data, size);
+	return shader;
+}
+
+/**
+ * Link a shader.
+ **/
+static void
+shader_link(shader_t *shader)
+{
+	GLint status;
+	GLint log_len;
+	GLchar *log;
+
+	glLinkProgram(shader->gl_handle);
+	glGetProgramiv(shader->gl_handle, GL_LINK_STATUS, &status);
 
 	if (status != GL_FALSE)
-		return shader;
+		return;
 
-	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &log_len);
+	log = xmalloc(log_len + 1);
 
-	log = malloc(log_len + 1);
+	glGetProgramiv(shader->gl_handle, GL_INFO_LOG_LENGTH, &log_len);
+	glGetProgramInfoLog(shader->gl_handle, log_len, NULL, log);
 
-	if (! log)
-		err(1, "Could not allocate memory while "
-		    "processing shader error");
+	errx(1, "Could not link shaders: %s", log);
+}
 
-	glGetShaderInfoLog(shader, log_len, NULL, log);
+/**
+ * Instantiate a shader.
+ **/
+static shader_t *
+shader_instantiate(void)
+{
+	shader_t *ret = xmalloc(sizeof(shader_t));
 
-	errx(1, "Could not compile %s: %s", filename, log);
+	ret->gl_handle = glCreateProgram();
+	return ret;
 }
 
 /**
  * Given a file for a vertex shader and fragment shader, load them.
  **/
-GLuint
-shader_program(const char *vertex, const char *frag)
+shader_t *
+shader_create(const char *vertex, const char *frag)
 {
-	GLuint shader_prog;
 	GLuint vert_shader = shader_file(GL_VERTEX_SHADER, vertex);
 	GLuint frag_shader = shader_file(GL_FRAGMENT_SHADER, frag);
-	GLint status;
-	GLint log_len;
-	GLchar *log;
 
-	shader_prog = glCreateProgram();
-	glAttachShader(shader_prog, vert_shader);
-	glAttachShader(shader_prog, frag_shader);
+	shader_t *ret = shader_instantiate();
 
-	glLinkProgram(shader_prog);
-	glGetProgramiv(shader_prog, GL_LINK_STATUS, &status);
+	glAttachShader(ret->gl_handle, vert_shader);
+	glAttachShader(ret->gl_handle, frag_shader);
 
-	if (status != GL_FALSE) {
-		glDetachShader(shader_prog, vert_shader);
-		glDetachShader(shader_prog, frag_shader);
-		glDeleteShader(vert_shader);
-		glDeleteShader(frag_shader);
-		return shader_prog;
-	}
+	shader_link(ret);
 
-	glGetProgramiv(shader_prog, GL_INFO_LOG_LENGTH, &log_len);
+	glDetachShader(ret->gl_handle, vert_shader);
+	glDetachShader(ret->gl_handle, frag_shader);
+	glDeleteShader(vert_shader);
+	glDeleteShader(frag_shader);
 
-	log = malloc(log_len + 1);
+	return ret;
+}
 
-	if (! log)
-		err(1, "Could not allocate memory while processing "
-		    "shader link error");
+/**
+ * Enter this shader into the OpenGL state.
+ **/
+void
+shader_activate(shader_t *shader)
+{
+	if (current_shader == shader)
+		return;
 
-	glGetProgramInfoLog(shader_prog, log_len, NULL, log);
-
-	errx(1, "Could not link shaders: %s", log);
+	current_shader = shader;
+	glUseProgram(shader->gl_handle);
 }
