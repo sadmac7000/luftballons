@@ -31,6 +31,8 @@
 #include <GL/glut.h>
 
 #include "shader.h"
+#include "mesh.h"
+#include "buffer.h"
 
 const float vert_data[] = {
 //coords
@@ -54,21 +56,11 @@ float cam_to_clip_transform[] = {
 	0, 0, 0, 1,
 };
 
-GLuint position_buf = 0;
+mesh_t *mesh;
 GLuint shader_prog;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
-
-void
-load_position_buf(void)
-{
-	glGenBuffers(1, &position_buf);
-	glBindBuffer(GL_ARRAY_BUFFER, position_buf);
-	glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(float), vert_data,
-		     GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
 
 void
 handle_reshape(void)
@@ -98,8 +90,6 @@ get_offsets(GLfloat *x, GLfloat *y)
 void
 render(void)
 {
-	GLint vert_pos_loc;
-	GLint color_pos_loc;
 	GLint offset_loc;
 	GLint trans_loc;
 	GLfloat x, y;
@@ -114,28 +104,13 @@ render(void)
 
 	glUseProgram(shader_prog);
 
-	glBindBuffer(GL_ARRAY_BUFFER, position_buf);
-
-	vert_pos_loc = glGetAttribLocation(shader_prog, "position");
-	color_pos_loc = glGetAttribLocation(shader_prog, "colorin");
 	offset_loc = glGetUniformLocation(shader_prog, "offset");
 	trans_loc = glGetUniformLocation(shader_prog, "transform");
 
 	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
 
-	glEnableVertexAttribArray(vert_pos_loc);
-	glEnableVertexAttribArray(color_pos_loc);
-	glVertexAttribPointer(vert_pos_loc, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	glVertexAttribPointer(color_pos_loc, 4, GL_FLOAT, GL_FALSE, 0,
-			      (void *)(12 * sizeof(float)));
-
-	glDrawArrays(GL_TRIANGLES, 0, 3);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableVertexAttribArray(vert_pos_loc);
-	glDisableVertexAttribArray(color_pos_loc);
-	glUseProgram(0);
+	mesh_draw(mesh);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -153,6 +128,9 @@ reshape(int x, int y)
 int
 main(int argc, char **argv)
 {
+	size_t vdsize = 24 * sizeof(float);
+	buffer_t *buffer;
+
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
 	glutInitWindowSize(win_sz[0], win_sz[1]);
@@ -176,8 +154,18 @@ main(int argc, char **argv)
 	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
 	cam_to_clip_transform[5] = scale;
 
-	load_position_buf();
+	buffer = buffer_create(vdsize, GL_STATIC_DRAW);
+
 	shader_prog = shader_program("vertex.glsl", "fragment.glsl");
+
+	mesh = mesh_create(shader_prog, 3 * 4 * sizeof(float),
+			   3 * 4 * sizeof(float), vert_data);
+
+	if (mesh_add_to_buffer(mesh, buffer))
+		errx(1, "Could not add mesh to buffer");
+
+	buffer_ungrab(buffer);
+
 	glutMainLoop();
 	return 0;
 }

@@ -19,7 +19,7 @@ TEST_PROGS=
 
 PROGS=luftballons
 
-luftballons_OBJS=main.o shader.o
+luftballons_OBJS=main.o shader.o mesh.o buffer.o
 luftballons_LINK=-lglut -lGL -lm
 
 define SET_DEPS =
