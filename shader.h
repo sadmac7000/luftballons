@@ -21,6 +21,16 @@
 #include <GL/glut.h>
 
 /**
+ * Callback that recieves a vertex attribute name and sets its buffer location.
+ *
+ * name: The name of the attribute.
+ * id: The opengl handle of the attribute.
+ *
+ * Returns: Nonzero if the attribute is used.
+ **/
+typedef int (*shader_attr_callback_t)(const char *name, GLuint id, void *data);
+
+/**
  * A shader.
  *
  * gl_handle: The OpenGL designation for the shader.
@@ -35,6 +45,8 @@ extern "C" {
 
 shader_t *shader_create(const char *vertex, const char *frag);
 void shader_activate(shader_t *shader);
+void shader_set_vertex_attrs(shader_t *shader,
+			     shader_attr_callback_t callback, void *data);
 
 #ifdef __cplusplus
 }

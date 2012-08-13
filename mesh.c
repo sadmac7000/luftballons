@@ -102,30 +102,37 @@ mesh_remove_from_buffer(mesh_t *mesh)
 	mesh->buffer = NULL;
 }
 
+int
+callback(const char *name, GLuint value, void *data)
+{
+	mesh_t *mesh = data;
+
+	if (! strcmp(name, "position"))
+		glVertexAttribPointer(value, 4, GL_FLOAT, GL_FALSE, 0,
+				      (void *)mesh->buffer_pos);
+	else if (! strcmp(name, "colorin"))
+		glVertexAttribPointer(value, 4, GL_FLOAT, GL_FALSE, 0,
+				      (void *)(mesh->buffer_pos +
+				       (12 * sizeof(float))));
+	else
+		return 0;
+
+	return 1;
+}
+
 /**
  * Draw a mesh.
  **/
 void
 mesh_draw(mesh_t *mesh)
 {
-	GLint vert_pos_loc;
-	GLint color_pos_loc;
-
 	if (! mesh->buffer)
 		errx(1, "Drawing mesh without buffer");
 
 	buffer_bind(mesh->buffer);
 	shader_activate(mesh->shader);
 
-	vert_pos_loc = glGetAttribLocation(mesh->shader->gl_handle, "position");
-	color_pos_loc = glGetAttribLocation(mesh->shader->gl_handle, "colorin");
+	shader_set_vertex_attrs(mesh->shader, callback, mesh);
 
-	glEnableVertexAttribArray(vert_pos_loc);
-	glEnableVertexAttribArray(color_pos_loc);
-	glVertexAttribPointer(vert_pos_loc, 4, GL_FLOAT, GL_FALSE, 0,
-			      (void *)mesh->buffer_pos);
-	glVertexAttribPointer(color_pos_loc, 4, GL_FLOAT, GL_FALSE, 0,
-			      (void *)(mesh->buffer_pos +
-				       (12 * sizeof(float))));
 	glDrawArrays(GL_TRIANGLES, 0, 3);
 }

@@ -164,3 +164,35 @@ shader_activate(shader_t *shader)
 	current_shader = shader;
 	glUseProgram(shader->gl_handle);
 }
+
+/**
+ * Set vertex attributes.
+ **/
+void
+shader_set_vertex_attrs(shader_t *shader, shader_attr_callback_t callback,
+			void *data)
+{
+	GLint attrs;
+	GLint bufsz;
+	GLint i;
+	GLchar *buf;
+	GLint sz;
+	GLenum type;
+
+	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTES, &attrs);
+	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &bufsz);
+
+	buf = xmalloc(bufsz);
+
+	for (i = 0; i < attrs; i++) {
+		glGetActiveAttrib(shader->gl_handle, i, bufsz,
+				  NULL, &sz, &type, buf);
+
+		if (callback(buf, i, data))
+			glEnableVertexAttribArray(i);
+		else
+			glDisableVertexAttribArray(i);
+	}
+
+	free(buf);
+}
