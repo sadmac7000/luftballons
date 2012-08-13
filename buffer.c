@@ -29,13 +29,17 @@ buffer_t *current_array_buffer = NULL;
  *
  * size: Size of the buffer.
  * usage: Use for the buffer.
+ * segments: Number of segments.
+ * segment_descriptors: Type of each segment.
  **/
 buffer_t *
-buffer_create(GLsizeiptr size, GLenum usage)
+buffer_create(GLsizeiptr size, GLenum usage, size_t segments,
+	      buf_vdata_t *segment_descriptors)
 {
 	buffer_t *ret;
 	GLuint handle;
 	GLenum error;
+	size_t segments_sz = segments * sizeof(buf_vdata_t);
 
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
@@ -54,15 +58,14 @@ buffer_create(GLsizeiptr size, GLenum usage)
 
 	ret = xmalloc(sizeof(buffer_t));
 	ret->gl_handle = handle;
+	ret->segments = segments;
+	ret->segment_descriptors = xmalloc(segments_sz);
+	memcpy(ret->segment_descriptors, segment_descriptors, segments_sz);
 	ret->refcount = 1;
 	ret->regions_sz = xmalloc(sizeof(buf_region_t *));
 
 	ret->regions_off = xmalloc(sizeof(buf_region_t *));
 
-#if 0
-	ret->meshes = NULL;
-	ret->mesh_count = 0;
-#endif
 	ret->region_count = 1;
 	ret->regions_sz[0] = xmalloc(sizeof(buf_region_t));
 	ret->regions_off[0] = ret->regions_sz[0];

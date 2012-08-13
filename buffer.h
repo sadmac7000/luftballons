@@ -21,6 +21,14 @@
 #include <GL/glut.h>
 
 /**
+ * A type of vertex data that will be stored for each vertex.
+ **/
+typedef struct buf_vdata {
+	char name[32];
+	size_t size;
+} buf_vdata_t;
+
+/**
  * A region in a buffer.
  *
  * start: Start offset.
@@ -35,31 +43,32 @@ typedef struct buf_region {
  * Wrapper around an OpenGL buffer object.
  *
  * gl_handle: OpenGL handle for the buffer.
+ * segments: Number of segments in the buffer.
+ * segment_descriptors: Type of data in each segment.
  * refcount: Reference counting.
  * regions_sz: Array of free regions by size.
  * regions_off: Array of free regions by position.
- * meshes: Array of contained meshes.
- * mesh_count: Number of contained meshes.
+ * region_count: Number of free regions.
  **/
 typedef struct buffer {
 	GLuint gl_handle;
+
+	size_t segments;
+	buf_vdata_t *segment_descriptors;
+
 	unsigned int refcount;
+
 	buf_region_t **regions_sz;
 	buf_region_t **regions_off;
-
 	size_t region_count;
-
-#if 0
-	mesh_t *meshes;
-	size_t mesh_count;
-#endif
 } buffer_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-buffer_t *buffer_create(GLsizeiptr size, GLenum usage);
+buffer_t *buffer_create(GLsizeiptr size, GLenum usage, size_t segments,
+			buf_vdata_t *segment_descriptors);
 void buffer_grab(buffer_t *buffer);
 void buffer_ungrab(buffer_t *buffer);
 void buffer_add_data(buffer_t *buffer, size_t offset, size_t size,
