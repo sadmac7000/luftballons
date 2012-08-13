@@ -70,15 +70,14 @@ mesh_destroy(mesh_t *mesh)
 int
 mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
 {
-	size_t size = mesh_data_size(mesh);
-	ssize_t offset = buffer_locate_free_space(buffer, size);
+	ssize_t offset = buffer_locate_free_space(buffer, 3);
 
 	if (offset < 0)
 		return -1;
 
 	mesh_remove_from_buffer(mesh);
 
-	buffer_add_data(buffer, offset, size, mesh->vert_data);
+	buffer_add_data(buffer, offset, 3, mesh->vert_data);
 	mesh->buffer = buffer;
 	mesh->buffer_pos = offset;
 	buffer_grab(buffer);

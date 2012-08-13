@@ -46,11 +46,9 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 	for (i = 0; i < segments; i++)
 		byte_size += segment_descriptors[i].size;
 
-	byte_size *= size;
-
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
-	glBufferData(GL_ARRAY_BUFFER, byte_size, NULL, usage);
+	glBufferData(GL_ARRAY_BUFFER, byte_size * size, NULL, usage);
 	error = glGetError();
 
 	if (current_array_buffer)
@@ -64,6 +62,7 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 	}
 
 	ret = xmalloc(sizeof(buffer_t));
+	ret->vert_size = byte_size;
 	ret->gl_handle = handle;
 	ret->segments = segments;
 	ret->segment_descriptors = xmalloc(segments_sz);
@@ -77,7 +76,7 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 	ret->regions_sz[0] = xmalloc(sizeof(buf_region_t));
 	ret->regions_off[0] = ret->regions_sz[0];
 	ret->regions_sz[0]->start = 0;
-	ret->regions_sz[0]->size = byte_size;
+	ret->regions_sz[0]->size = size;
 
 	return ret;
 }
@@ -391,7 +390,8 @@ buffer_add_data(buffer_t *buffer, size_t offset, size_t size, const void *data)
 	buffer_alloc_region(buffer, offset, size);
 
 	buffer_bind(buffer);
-	glBufferSubData(GL_ARRAY_BUFFER, offset, size, data);
+	glBufferSubData(GL_ARRAY_BUFFER, offset, size * buffer->vert_size,
+			data);
 }
 
 /**

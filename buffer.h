@@ -45,6 +45,7 @@ typedef struct buf_region {
  * gl_handle: OpenGL handle for the buffer.
  * segments: Number of segments in the buffer.
  * segment_descriptors: Type of data in each segment.
+ * vert_size: size of the data for a vertex in bytes.
  * refcount: Reference counting.
  * regions_sz: Array of free regions by size.
  * regions_off: Array of free regions by position.
@@ -55,6 +56,7 @@ typedef struct buffer {
 
 	size_t segments;
 	buf_vdata_t *segment_descriptors;
+	size_t vert_size;
 
 	unsigned int refcount;
 
