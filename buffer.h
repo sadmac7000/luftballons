@@ -67,7 +67,7 @@ typedef struct buffer {
 extern "C" {
 #endif
 
-buffer_t *buffer_create(GLsizeiptr size, GLenum usage, size_t segments,
+buffer_t *buffer_create(size_t size, GLenum usage, size_t segments,
 			buf_vdata_t *segment_descriptors);
 void buffer_grab(buffer_t *buffer);
 void buffer_ungrab(buffer_t *buffer);

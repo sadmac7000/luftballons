@@ -126,7 +126,6 @@ reshape(int x, int y)
 int
 main(int argc, char **argv)
 {
-	size_t vdsize = 24 * sizeof(float);
 	buffer_t *buffer;
 	buf_vdata_t vert_regions[2] = {
 		{ "position", 4 * sizeof(float), },
@@ -156,7 +155,7 @@ main(int argc, char **argv)
 	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
 	cam_to_clip_transform[5] = scale;
 
-	buffer = buffer_create(vdsize, GL_STATIC_DRAW, 2, vert_regions);
+	buffer = buffer_create(3, GL_STATIC_DRAW, 2, vert_regions);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
