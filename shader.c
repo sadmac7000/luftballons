@@ -28,6 +28,7 @@
 #include <GL/glut.h>
 
 #include "shader.h"
+#include "buffer.h"
 #include "util.h"
 
 static shader_t *current_shader = NULL;
@@ -153,46 +154,45 @@ shader_create(const char *vertex, const char *frag)
 }
 
 /**
- * Enter this shader into the OpenGL state.
- **/
-void
-shader_activate(shader_t *shader)
-{
-	if (current_shader == shader)
-		return;
-
-	current_shader = shader;
-	glUseProgram(shader->gl_handle);
-}
-
-/**
  * Set vertex attributes.
  **/
-void
-shader_set_vertex_attrs(shader_t *shader, shader_attr_callback_t callback,
-			void *data)
+static void
+shader_set_vertex_attrs(shader_t *shader, buffer_t *buffer)
 {
 	GLint attrs;
-	GLint bufsz;
+	GLint namesz;
 	GLint i;
-	GLchar *buf;
+	GLchar *name;
 	GLint sz;
 	GLenum type;
 
 	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTES, &attrs);
-	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &bufsz);
+	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
+		       &namesz);
 
-	buf = xmalloc(bufsz);
+	name = xmalloc(namesz);
 
 	for (i = 0; i < attrs; i++) {
-		glGetActiveAttrib(shader->gl_handle, i, bufsz,
-				  NULL, &sz, &type, buf);
+		glGetActiveAttrib(shader->gl_handle, i, namesz,
+				  NULL, &sz, &type, name);
 
-		if (callback(buf, i, data))
-			glEnableVertexAttribArray(i);
-		else
-			glDisableVertexAttribArray(i);
+		buffer_setup_vertex_attribute(buffer, name, i);
 	}
 
-	free(buf);
+	free(name);
+}
+
+/**
+ * Enter this shader into the OpenGL state.
+ **/
+void
+shader_activate(shader_t *shader, buffer_t *buffer)
+{
+	if (current_shader != shader) {
+		current_shader = shader;
+		glUseProgram(shader->gl_handle);
+	}
+
+	buffer_bind(buffer);
+	shader_set_vertex_attrs(shader, buffer);
 }

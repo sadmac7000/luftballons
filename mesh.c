@@ -68,15 +68,34 @@ int
 mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
 {
 	ssize_t offset = buffer_locate_free_space(buffer, mesh->verts);
+	size_t base = 0;
+	size_t local_base = 0;
+	size_t i;
+	buf_vdata_t *seg;
 
 	if (offset < 0)
 		return -1;
 
 	mesh_remove_from_buffer(mesh);
 
-	buffer_add_data(buffer, offset, mesh->verts, mesh->vert_data);
+	buffer_alloc_region(buffer, offset, mesh->verts);
+
 	mesh->buffer = buffer;
 	mesh->buffer_pos = offset;
+
+	buffer_bind(buffer);
+
+	for (i = 0; i < buffer->segments; i++) {
+		seg = &buffer->segment_descriptors[i];
+
+		glBufferSubData(GL_ARRAY_BUFFER, base + offset * seg->size,
+				mesh->verts * seg->size,
+				mesh->vert_data + local_base);
+
+		base += seg->size * buffer->vert_count;
+		local_base += seg->size * mesh->verts;
+	}
+
 	buffer_grab(buffer);
 
 	return 0;
@@ -96,24 +115,6 @@ mesh_remove_from_buffer(mesh_t *mesh)
 	mesh->buffer = NULL;
 }
 
-int
-callback(const char *name, GLuint value, void *data)
-{
-	mesh_t *mesh = data;
-
-	if (! strcmp(name, "position"))
-		glVertexAttribPointer(value, 4, GL_FLOAT, GL_FALSE, 0,
-				      (void *)mesh->buffer_pos);
-	else if (! strcmp(name, "colorin"))
-		glVertexAttribPointer(value, 4, GL_FLOAT, GL_FALSE, 0,
-				      (void *)(mesh->buffer_pos +
-				       (12 * sizeof(float))));
-	else
-		return 0;
-
-	return 1;
-}
-
 /**
  * Draw a mesh.
  **/
@@ -123,10 +124,7 @@ mesh_draw(mesh_t *mesh)
 	if (! mesh->buffer)
 		errx(1, "Drawing mesh without buffer");
 
-	buffer_bind(mesh->buffer);
-	shader_activate(mesh->shader);
+	shader_activate(mesh->shader, mesh->buffer);
 
-	shader_set_vertex_attrs(mesh->shader, callback, mesh);
-
-	glDrawArrays(GL_TRIANGLES, 0, mesh->verts);
+	glDrawArrays(GL_TRIANGLES, mesh->buffer_pos, mesh->verts);
 }

@@ -63,6 +63,7 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 
 	ret = xmalloc(sizeof(buffer_t));
 	ret->vert_size = byte_size;
+	ret->vert_count = size;
 	ret->gl_handle = handle;
 	ret->segments = segments;
 	ret->segment_descriptors = xmalloc(segments_sz);
@@ -79,6 +80,36 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 	ret->regions_sz[0]->size = size;
 
 	return ret;
+}
+
+/**
+ * Setup the vertex attribute named for the attribute handle given.
+ **/
+void
+buffer_setup_vertex_attribute(buffer_t *buffer, const char *name, GLint handle)
+{
+	size_t i;
+	buf_vdata_t *seg;
+	size_t position = 0;
+
+	for (i = 0; i < buffer->segments; i++) {
+		seg = &buffer->segment_descriptors[i];
+
+		if (! strcmp(seg->name, name))
+			break;
+
+		position += seg->size * buffer->vert_count;
+	}
+
+	if (i == buffer->segments) {
+		glDisableVertexAttribArray(i);
+		return;
+	}
+
+	buffer_bind(buffer);
+	glEnableVertexAttribArray(i);
+	glVertexAttribPointer(handle, 4, GL_FLOAT, GL_FALSE, 0,
+			      (void *)position);
 }
 
 /**
@@ -330,7 +361,7 @@ buffer_drop_data(buffer_t *buffer, size_t offset, size_t size)
 /**
  * Allocate a region of a buffer.
  **/
-static void
+void
 buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
 {
 	size_t begin = 0;
@@ -374,24 +405,6 @@ buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
 	if (create_size)
 		buffer_drop_data(buffer, pos->start + pos->size + size,
 				 create_size);
-}
-
-/**
- * Add data to a buffer.
- * 
- * buffer: The buffer to add to.
- * offset: The offset where we should add the data.
- * size: The size of the data.
- * data: Pointer to the data.
- **/
-void
-buffer_add_data(buffer_t *buffer, size_t offset, size_t size, const void *data)
-{
-	buffer_alloc_region(buffer, offset, size);
-
-	buffer_bind(buffer);
-	glBufferSubData(GL_ARRAY_BUFFER, offset, size * buffer->vert_size,
-			data);
 }
 
 /**

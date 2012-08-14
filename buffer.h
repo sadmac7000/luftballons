@@ -46,6 +46,7 @@ typedef struct buf_region {
  * segments: Number of segments in the buffer.
  * segment_descriptors: Type of data in each segment.
  * vert_size: size of the data for a vertex in bytes.
+ * vert_count: total verts in this buffer.
  * refcount: Reference counting.
  * regions_sz: Array of free regions by size.
  * regions_off: Array of free regions by position.
@@ -57,6 +58,7 @@ typedef struct buffer {
 	size_t segments;
 	buf_vdata_t *segment_descriptors;
 	size_t vert_size;
+	size_t vert_count;
 
 	unsigned int refcount;
 
@@ -73,11 +75,12 @@ buffer_t *buffer_create(size_t size, GLenum usage, size_t segments,
 			buf_vdata_t *segment_descriptors);
 void buffer_grab(buffer_t *buffer);
 void buffer_ungrab(buffer_t *buffer);
-void buffer_add_data(buffer_t *buffer, size_t offset, size_t size,
-		     const void *data);
 void buffer_drop_data(buffer_t *buffer, size_t offset, size_t size);
 void buffer_bind(buffer_t *buffer);
+void buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size);
 ssize_t buffer_locate_free_space(buffer_t *buffer, size_t size);
+void buffer_setup_vertex_attribute(buffer_t *buffer,
+				   const char *name, GLint handle);
 
 #ifdef __cplusplus
 }

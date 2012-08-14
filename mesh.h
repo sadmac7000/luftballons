@@ -24,7 +24,7 @@
 #include "shader.h"
 
 typedef struct mesh {
-	float *vert_data;
+	char *vert_data;
 	shader_t *shader;
 	size_t verts;
 
