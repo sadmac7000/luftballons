@@ -25,29 +25,26 @@
  * Create a new mesh object.
  **/
 mesh_t *
-mesh_create(shader_t *shader, size_t verts, size_t vert_colors,
-	    const float *vert_data)
+mesh_create(shader_t *shader, size_t verts, const float *vert_data,
+	    size_t segments, buf_vdata_t *segment_descriptors)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
+	size_t data_size = verts;
+	size_t i;
 
-	ret->vert_data = xcalloc(verts + vert_colors, sizeof(float));
-	memcpy(ret->vert_data, vert_data, (verts + vert_colors) * sizeof(float));
+	for (i = 0; i < segments; i++)
+		data_size *= segment_descriptors[i].size;
+
+	ret->vert_data = xmalloc(data_size);
+	memcpy(ret->vert_data, vert_data, data_size);
+	ret->segments = segments;
+	ret->segment_descriptors = xcalloc(segments, sizeof(buf_vdata_t));
 	ret->shader = shader;
 	ret->verts = verts;
-	ret->vert_colors = vert_colors;
 	ret->buffer = NULL;
 	ret->buffer_pos = 0;
 
 	return ret;
-}
-
-/**
- * Find the total size of the mesh's array data.
- **/
-size_t
-mesh_data_size(mesh_t *mesh)
-{
-	return mesh->verts + mesh->vert_colors;
 }
 
 /**
@@ -70,14 +67,14 @@ mesh_destroy(mesh_t *mesh)
 int
 mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
 {
-	ssize_t offset = buffer_locate_free_space(buffer, 3);
+	ssize_t offset = buffer_locate_free_space(buffer, mesh->verts);
 
 	if (offset < 0)
 		return -1;
 
 	mesh_remove_from_buffer(mesh);
 
-	buffer_add_data(buffer, offset, 3, mesh->vert_data);
+	buffer_add_data(buffer, offset, mesh->verts, mesh->vert_data);
 	mesh->buffer = buffer;
 	mesh->buffer_pos = offset;
 	buffer_grab(buffer);
@@ -91,12 +88,10 @@ mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
 void
 mesh_remove_from_buffer(mesh_t *mesh)
 {
-	size_t size = mesh_data_size(mesh);
-
 	if (! mesh->buffer)
 		return;
 
-	buffer_drop_data(mesh->buffer, mesh->buffer_pos, size);
+	buffer_drop_data(mesh->buffer, mesh->buffer_pos, mesh->verts);
 	buffer_ungrab(mesh->buffer);
 	mesh->buffer = NULL;
 }
@@ -133,5 +128,5 @@ mesh_draw(mesh_t *mesh)
 
 	shader_set_vertex_attrs(mesh->shader, callback, mesh);
 
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, mesh->verts);
 }
