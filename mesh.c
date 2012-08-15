@@ -26,8 +26,7 @@
  **/
 mesh_t *
 mesh_create(shader_t *shader, size_t verts, const float *vert_data,
-	    size_t segments, buf_vdata_t *segment_descriptors,
-	    GLenum type)
+	    size_t segments, vbuf_fmt_t *segment_descriptors, GLenum type)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
 	size_t data_size = verts;
@@ -39,7 +38,7 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 	ret->vert_data = xmalloc(data_size);
 	memcpy(ret->vert_data, vert_data, data_size);
 	ret->segments = segments;
-	ret->segment_descriptors = xcalloc(segments, sizeof(buf_vdata_t));
+	ret->segment_descriptors = xcalloc(segments, sizeof(vbuf_fmt_t));
 	ret->shader = shader;
 	ret->verts = verts;
 	ret->buffer = NULL;
@@ -67,25 +66,25 @@ mesh_destroy(mesh_t *mesh)
  * Returns: 0 on success, -1 on no space.
  **/
 int
-mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
+mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer)
 {
-	ssize_t offset = buffer_locate_free_space(buffer, mesh->verts);
+	ssize_t offset = vbuf_locate_free_space(buffer, mesh->verts);
 	size_t base = 0;
 	size_t local_base = 0;
 	size_t i;
-	buf_vdata_t *seg;
+	vbuf_fmt_t *seg;
 
 	if (offset < 0)
 		return -1;
 
 	mesh_remove_from_buffer(mesh);
 
-	buffer_alloc_region(buffer, offset, mesh->verts);
+	vbuf_alloc_region(buffer, offset, mesh->verts);
 
 	mesh->buffer = buffer;
 	mesh->buffer_pos = offset;
 
-	buffer_bind(buffer);
+	vbuf_bind(buffer);
 
 	for (i = 0; i < buffer->segments; i++) {
 		seg = &buffer->segment_descriptors[i];
@@ -98,7 +97,7 @@ mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer)
 		local_base += seg->size * mesh->verts;
 	}
 
-	buffer_grab(buffer);
+	vbuf_grab(buffer);
 
 	return 0;
 }
@@ -112,8 +111,8 @@ mesh_remove_from_buffer(mesh_t *mesh)
 	if (! mesh->buffer)
 		return;
 
-	buffer_drop_data(mesh->buffer, mesh->buffer_pos, mesh->verts);
-	buffer_ungrab(mesh->buffer);
+	vbuf_drop_data(mesh->buffer, mesh->buffer_pos, mesh->verts);
+	vbuf_ungrab(mesh->buffer);
 	mesh->buffer = NULL;
 }
 

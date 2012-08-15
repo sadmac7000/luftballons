@@ -28,7 +28,7 @@
 #include <GL/glut.h>
 
 #include "shader.h"
-#include "buffer.h"
+#include "vbuf.h"
 #include "util.h"
 
 static shader_t *current_shader = NULL;
@@ -157,7 +157,7 @@ shader_create(const char *vertex, const char *frag)
  * Set vertex attributes.
  **/
 static void
-shader_set_vertex_attrs(shader_t *shader, buffer_t *buffer)
+shader_set_vertex_attrs(shader_t *shader, vbuf_t *buffer)
 {
 	GLint attrs;
 	GLint namesz;
@@ -176,7 +176,7 @@ shader_set_vertex_attrs(shader_t *shader, buffer_t *buffer)
 		glGetActiveAttrib(shader->gl_handle, i, namesz,
 				  NULL, &sz, &type, name);
 
-		buffer_setup_vertex_attribute(buffer, name, i);
+		vbuf_setup_vertex_attribute(buffer, name, i);
 	}
 
 	free(name);
@@ -186,13 +186,13 @@ shader_set_vertex_attrs(shader_t *shader, buffer_t *buffer)
  * Enter this shader into the OpenGL state.
  **/
 void
-shader_activate(shader_t *shader, buffer_t *buffer)
+shader_activate(shader_t *shader, vbuf_t *buffer)
 {
 	if (current_shader != shader) {
 		current_shader = shader;
 		glUseProgram(shader->gl_handle);
 	}
 
-	buffer_bind(buffer);
+	vbuf_bind(buffer);
 	shader_set_vertex_attrs(shader, buffer);
 }

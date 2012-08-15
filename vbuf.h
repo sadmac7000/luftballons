@@ -15,23 +15,24 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef BUFFER_H
-#define BUFFER_H
+#ifndef VBUF_H
+#define VBUF_H
 
 #include <GL/glut.h>
 
 #include "interval.h"
 
 /**
- * A type of vertex data that will be stored for each vertex.
+ * A type of vertex data that will be stored for each vertex. We use arrays of
+ * these to define the complete vertex data.
  **/
-typedef struct buf_vdata {
+typedef struct vbuf_fmt {
 	char name[32];
 	size_t size;
-} buf_vdata_t;
+} vbuf_fmt_t;
 
 /**
- * Wrapper around an OpenGL buffer object.
+ * Wrapper around an OpenGL buffer object for vertex data buffers.
  *
  * gl_handle: OpenGL handle for the buffer.
  * segments: Number of segments in the buffer.
@@ -41,37 +42,37 @@ typedef struct buf_vdata {
  * refcount: Reference counting.
  * free: Free space tracking.
  **/
-typedef struct buffer {
+typedef struct vbuf {
 	GLuint gl_handle;
 
 	size_t segments;
-	buf_vdata_t *segment_descriptors;
+	vbuf_fmt_t *segment_descriptors;
 	size_t vert_size;
 	size_t vert_count;
 
 	unsigned int refcount;
 
 	intervals_t free;
-} buffer_t;
+} vbuf_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-buffer_t *buffer_create(size_t size, GLenum usage, size_t segments,
-			buf_vdata_t *segment_descriptors);
-void buffer_grab(buffer_t *buffer);
-void buffer_ungrab(buffer_t *buffer);
-void buffer_drop_data(buffer_t *buffer, size_t offset, size_t size);
-void buffer_bind(buffer_t *buffer);
-void buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size);
-ssize_t buffer_locate_free_space(buffer_t *buffer, size_t size);
-void buffer_setup_vertex_attribute(buffer_t *buffer,
+vbuf_t *vbuf_create(size_t size, GLenum usage, size_t segments,
+		    vbuf_fmt_t *segment_descriptors);
+void vbuf_grab(vbuf_t *buffer);
+void vbuf_ungrab(vbuf_t *buffer);
+void vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size);
+void vbuf_bind(vbuf_t *buffer);
+void vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size);
+ssize_t vbuf_locate_free_space(vbuf_t *buffer, size_t size);
+void vbuf_setup_vertex_attribute(vbuf_t *buffer,
 				   const char *name, GLint handle);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BUFFER_H */
+#endif /* VBUF_H */
 

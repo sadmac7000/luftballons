@@ -20,7 +20,7 @@
 
 #include <GL/glut.h>
 
-#include "buffer.h"
+#include "vbuf.h"
 
 /**
  * A shader.
@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 shader_t *shader_create(const char *vertex, const char *frag);
-void shader_activate(shader_t *shader, buffer_t *buffer);
+void shader_activate(shader_t *shader, vbuf_t *buffer);
 
 #ifdef __cplusplus
 }

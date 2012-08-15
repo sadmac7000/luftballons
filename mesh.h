@@ -20,7 +20,7 @@
 
 #include <GL/glut.h>
 
-#include "buffer.h"
+#include "vbuf.h"
 #include "shader.h"
 
 typedef struct mesh {
@@ -30,9 +30,9 @@ typedef struct mesh {
 	GLenum type;
 
 	size_t segments;
-	buf_vdata_t *segment_descriptors;
+	vbuf_fmt_t *segment_descriptors;
 
-	buffer_t *buffer;
+	vbuf_t *buffer;
 	size_t buffer_pos;
 } mesh_t;
 
@@ -41,11 +41,11 @@ extern "C" {
 #endif
 
 mesh_t *mesh_create(shader_t *shader, size_t verts, const float *vert_data,
-		    size_t segments, buf_vdata_t *segment_descriptors,
+		    size_t segments, vbuf_fmt_t *segment_descriptors,
 		    GLenum type);
 size_t mesh_data_size(mesh_t *mesh);
 void mesh_destroy(mesh_t *mesh);
-int mesh_add_to_buffer(mesh_t *mesh, buffer_t *buffer);
+int mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer);
 void mesh_remove_from_buffer(mesh_t *mesh);
 void mesh_draw(mesh_t *mesh);
 

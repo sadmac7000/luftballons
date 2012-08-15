@@ -32,7 +32,7 @@
 
 #include "shader.h"
 #include "mesh.h"
-#include "buffer.h"
+#include "vbuf.h"
 
 const float vert_data[] = {
 //coords
@@ -153,8 +153,8 @@ reshape(int x, int y)
 int
 main(int argc, char **argv)
 {
-	buffer_t *buffer;
-	buf_vdata_t vert_regions[2] = {
+	vbuf_t *buffer;
+	vbuf_fmt_t vert_regions[2] = {
 		{ "position", 4 * sizeof(float), },
 		{ "colorin", 4 * sizeof(float), },
 	};
@@ -182,7 +182,7 @@ main(int argc, char **argv)
 	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
 	cam_to_clip_transform[5] = scale;
 
-	buffer = buffer_create(6, GL_STATIC_DRAW, 2, vert_regions);
+	buffer = vbuf_create(6, GL_STATIC_DRAW, 2, vert_regions);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 	if (mesh_add_to_buffer(mesh2, buffer))
 		errx(1, "Could not add mesh to buffer");
 
-	buffer_ungrab(buffer);
+	vbuf_ungrab(buffer);
 
 	glutMainLoop();
 	return 0;

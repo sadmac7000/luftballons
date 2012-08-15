@@ -19,10 +19,10 @@
 #include <string.h>
 #include <err.h>
 
-#include "buffer.h"
+#include "vbuf.h"
 #include "util.h"
 
-buffer_t *current_array_buffer = NULL;
+vbuf_t *current_vbuf = NULL;
 
 /**
  * Create a new buffer object.
@@ -32,14 +32,14 @@ buffer_t *current_array_buffer = NULL;
  * segments: Number of segments.
  * segment_descriptors: Type of each segment.
  **/
-buffer_t *
-buffer_create(size_t size, GLenum usage, size_t segments,
-	      buf_vdata_t *segment_descriptors)
+vbuf_t *
+vbuf_create(size_t size, GLenum usage, size_t segments,
+	    vbuf_fmt_t *segment_descriptors)
 {
-	buffer_t *ret;
+	vbuf_t *ret;
 	GLuint handle;
 	GLenum error;
-	size_t segments_sz = segments * sizeof(buf_vdata_t);
+	size_t segments_sz = segments * sizeof(vbuf_fmt_t);
 	size_t i;
 	GLsizeiptr byte_size = 0;
 
@@ -51,8 +51,8 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 	glBufferData(GL_ARRAY_BUFFER, byte_size * size, NULL, usage);
 	error = glGetError();
 
-	if (current_array_buffer)
-		buffer_bind(current_array_buffer);
+	if (current_vbuf)
+		vbuf_bind(current_vbuf);
 
 	if (error != GL_NO_ERROR) {
 		if (error == GL_OUT_OF_MEMORY)
@@ -61,7 +61,7 @@ buffer_create(size_t size, GLenum usage, size_t segments,
 		errx(1, "Unexpected OpenGL error allocating buffer");
 	}
 
-	ret = xmalloc(sizeof(buffer_t));
+	ret = xmalloc(sizeof(vbuf_t));
 	ret->vert_size = byte_size;
 	ret->vert_count = size;
 	ret->gl_handle = handle;
@@ -80,10 +80,10 @@ buffer_create(size_t size, GLenum usage, size_t segments,
  * Setup the vertex attribute named for the attribute handle given.
  **/
 void
-buffer_setup_vertex_attribute(buffer_t *buffer, const char *name, GLint handle)
+vbuf_setup_vertex_attribute(vbuf_t *buffer, const char *name, GLint handle)
 {
 	size_t i;
-	buf_vdata_t *seg;
+	vbuf_fmt_t *seg;
 	size_t position = 0;
 
 	for (i = 0; i < buffer->segments; i++) {
@@ -100,7 +100,7 @@ buffer_setup_vertex_attribute(buffer_t *buffer, const char *name, GLint handle)
 		return;
 	}
 
-	buffer_bind(buffer);
+	vbuf_bind(buffer);
 	glEnableVertexAttribArray(i);
 	glVertexAttribPointer(handle, 4, GL_FLOAT, GL_FALSE, 0,
 			      (void *)position);
@@ -110,7 +110,7 @@ buffer_setup_vertex_attribute(buffer_t *buffer, const char *name, GLint handle)
  * Increase a buffer's refcount.
  **/
 void
-buffer_grab(buffer_t *buffer)
+vbuf_grab(vbuf_t *buffer)
 {
 	buffer->refcount++;
 }
@@ -119,14 +119,14 @@ buffer_grab(buffer_t *buffer)
  * Decrease a buffer's refcount. If the count becomes zero, free it.
  **/
 void
-buffer_ungrab(buffer_t *buffer)
+vbuf_ungrab(vbuf_t *buffer)
 {
 	if (--buffer->refcount)
 		return;
 
-	if (current_array_buffer == buffer) {
+	if (current_vbuf == buffer) {
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		current_array_buffer = NULL;
+		current_vbuf = NULL;
 	}
 
 	glDeleteBuffers(1, &buffer->gl_handle);
@@ -139,7 +139,7 @@ buffer_ungrab(buffer_t *buffer)
  * Create a new free region and add it to a buffer's lists.
  **/
 void
-buffer_drop_data(buffer_t *buffer, size_t offset, size_t size)
+vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size)
 {
 	interval_set(&buffer->free, offset, size);
 }
@@ -148,7 +148,7 @@ buffer_drop_data(buffer_t *buffer, size_t offset, size_t size)
  * Allocate a region of a buffer.
  **/
 void
-buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
+vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size)
 {
 	interval_unset(&buffer->free, offset, size);
 }
@@ -157,9 +157,9 @@ buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
  * Bind a vertex buffer.
  **/
 void
-buffer_bind(buffer_t *buffer)
+vbuf_bind(vbuf_t *buffer)
 {
-	current_array_buffer = buffer;
+	current_vbuf = buffer;
 	glBindBuffer(GL_ARRAY_BUFFER, buffer->gl_handle);
 }
 
@@ -172,7 +172,7 @@ buffer_bind(buffer_t *buffer)
  * Returns: Offset to space or -1 if not enough space found.
  **/
 ssize_t
-buffer_locate_free_space(buffer_t *buffer, size_t size)
+vbuf_locate_free_space(vbuf_t *buffer, size_t size)
 {
 	return interval_find(&buffer->free, size);
 }
