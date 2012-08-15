@@ -160,21 +160,25 @@ buffer_bisect_regions_sz(buffer_t *buffer, size_t size)
 
 	buf_region_t *cmp;
 
-	for (;;) {
+	while (end != start) {
 		pos = (start + end) / 2;
 		cmp = buffer->regions_sz[pos];
 
-		if (cmp->size < size)
-			end = pos;
-		else if (cmp->size > size && pos != start)
+		if (cmp->size > size && (pos + 1) != end)
 			start = pos;
+		else if (cmp->size > size)
+			return end;
+		else if (cmp->size < size)
+			end = pos;
 		else if (cmp->size == size)
 			return pos;
-		else if (pos == start && end == buffer->region_count)
+		else if (pos == (end - 1) && end == buffer->region_count)
 			return buffer->region_count;
 		else
 			return pos;
 	}
+
+	return start;
 }
 
 /**
@@ -212,6 +216,7 @@ buffer_remove_free_region(buffer_t *buffer, size_t offset_idx)
 		sizeof(buf_region_t *));
 
 	buffer->region_count--;
+	free(region);
 }
 
 /**
@@ -274,16 +279,15 @@ buffer_do_merge(buffer_t *buffer, size_t idx)
 		}
 	}
 
-	if (! count)
-		return;
+	if (count) {
+		cmp = buffer->regions_off[idx + count];
+		end_size = cmp->start - pos->start + cmp->size;
 
-	cmp = buffer->regions_off[idx + count];
-	end_size = cmp->start - pos->start + cmp->size;
+		for(;count; count--)
+			buffer_remove_free_region(buffer, idx + count);
 
-	for(;count; count--)
-		buffer_remove_free_region(buffer, idx + count);
-
-	pos->size = end_size;
+		pos->size = end_size;
+	}
 
 	buffer_reposition_in_size_array(buffer, idx);
 }
@@ -301,21 +305,25 @@ buffer_bisect_regions_off(buffer_t *buffer, size_t offset)
 
 	buf_region_t *cmp;
 
-	for (;;) {
+	while (end != start) {
 		pos = (start + end) / 2;
 		cmp = buffer->regions_off[pos];
 
-		if (cmp->start < offset)
-			end = pos;
-		else if (cmp->start > offset && pos != start)
+		if (cmp->start < offset && (pos + 1) != end)
 			start = pos;
-		else if (cmp->start == start)
+		else if (cmp->start < offset)
+			return end;
+		else if (cmp->start > offset)
+			end = pos;
+		else if (cmp->start == offset)
 			return pos;
-		else if (pos == start && end == buffer->region_count)
+		else if (pos == (end - 1) && end == buffer->region_count)
 			return buffer->region_count;
 		else
 			return pos;
 	}
+
+	return start;
 }
 
 /**
@@ -325,6 +333,9 @@ static void
 buffer_expand_region_space(buffer_t *buffer)
 {
 	if (buffer->region_count & (buffer->region_count - 1))
+		return;
+
+	if (! buffer->region_count)
 		return;
 
 	buffer->regions_sz = xrealloc(buffer->regions_sz, 2 *
@@ -368,6 +379,7 @@ buffer_drop_data(buffer_t *buffer, size_t offset, size_t size)
 
 		if (cmp->start == offset + size) {
 			cmp->start = offset;
+			cmp->size += size;
 			buffer_do_merge(buffer, off_pos);
 			return;
 		}
@@ -399,11 +411,18 @@ buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
 	size_t create_size = 0;
 	buf_region_t *pos;
 
+	if (! end)
+		errx(1, "Allocation from empty buffer");
+
+	/* We get away with some stuff here because we MUST find a result */
 	for (;;) {
 		split = (begin + end) / 2;
 		pos = buffer->regions_off[split];
 
 		if (pos->start > offset) {
+			if (! end)
+				errx(1,
+				     "Buffer allocation outside free areas");
 			end = split;
 		} else if (pos->start + pos->size <= offset) {
 			if (begin == split)
