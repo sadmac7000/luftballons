@@ -215,6 +215,35 @@ buffer_remove_free_region(buffer_t *buffer, size_t offset_idx)
 }
 
 /**
+ * Reposition an item in the size array because it has changed size.
+ **/
+static void
+buffer_reposition_in_size_array(buffer_t *buffer, size_t idx)
+{
+	size_t idx_new = idx;
+	buf_region_t *region = buffer->regions_sz[idx];
+
+	while (idx && region->size < buffer->regions_sz[idx - 1]->size)
+		idx_new--;
+
+	while (idx < (buffer->region_count - 1) &&
+	       region->size < buffer->regions_sz[idx + 1]->size)
+		idx_new++;
+
+	if (idx_new == idx)
+		return;
+
+	if (idx_new > idx)
+		memmove(&buffer->regions_sz[idx], &buffer->regions_sz[idx + 1],
+			(idx_new - idx) * sizeof(buf_region_t *));
+	else
+		memmove(&buffer->regions_sz[idx_new + 1], &buffer->regions_sz[idx_new],
+			(idx - idx_new) * sizeof(buf_region_t *));
+
+	buffer->regions_sz[idx_new] = region;
+}
+
+/**
  * Merge a region in a buffer with items on either side of it if there is no
  * space between them.
  *
@@ -256,7 +285,7 @@ buffer_do_merge(buffer_t *buffer, size_t idx)
 
 	pos->size = end_size;
 
-	/* FIXME: Item might be in the wrong place in the size list */
+	buffer_reposition_in_size_array(buffer, idx);
 }
 
 /**
@@ -402,6 +431,7 @@ buffer_alloc_region(buffer_t *buffer, size_t offset, size_t size)
 	create_size = pos->size - size - (offset - pos->start);
 	pos->size = (offset - pos->start);
 
+	buffer_reposition_in_size_array(buffer, split);
 	if (create_size)
 		buffer_drop_data(buffer, pos->start + pos->size + size,
 				 create_size);
