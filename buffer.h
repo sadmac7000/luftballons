@@ -20,6 +20,8 @@
 
 #include <GL/glut.h>
 
+#include "interval.h"
+
 /**
  * A type of vertex data that will be stored for each vertex.
  **/
@@ -27,17 +29,6 @@ typedef struct buf_vdata {
 	char name[32];
 	size_t size;
 } buf_vdata_t;
-
-/**
- * A region in a buffer.
- *
- * start: Start offset.
- * size: Byte length.
- **/
-typedef struct buf_region {
-	size_t start;
-	size_t size;
-} buf_region_t;
 
 /**
  * Wrapper around an OpenGL buffer object.
@@ -48,9 +39,7 @@ typedef struct buf_region {
  * vert_size: size of the data for a vertex in bytes.
  * vert_count: total verts in this buffer.
  * refcount: Reference counting.
- * regions_sz: Array of free regions by size.
- * regions_off: Array of free regions by position.
- * region_count: Number of free regions.
+ * free: Free space tracking.
  **/
 typedef struct buffer {
 	GLuint gl_handle;
@@ -62,9 +51,7 @@ typedef struct buffer {
 
 	unsigned int refcount;
 
-	buf_region_t **regions_sz;
-	buf_region_t **regions_off;
-	size_t region_count;
+	intervals_t free;
 } buffer_t;
 
 #ifdef __cplusplus
