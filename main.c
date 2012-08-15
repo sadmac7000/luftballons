@@ -45,6 +45,17 @@ const float vert_data[] = {
 	0.0f,    0.0f, 1.0f, 1.0f,
 };
 
+const float vert_data_2[] = {
+//coords
+	0.0f,    0.5f, -1.0f, 1.0f,
+	0.5f, -0.366f, -1.0f, 1.0f,
+	-0.5f, -0.366f, -1.5f, 1.0f,
+//colors
+	0.0f,    1.0f, 0.0f, 1.0f,
+	1.0f,    0.0f, 0.0f, 1.0f,
+	0.0f,    0.0f, 1.0f, 1.0f,
+};
+
 const float scale = 1;
 const float near = .5;
 const float far = 3.0;
@@ -57,6 +68,7 @@ float cam_to_clip_transform[] = {
 };
 
 mesh_t *mesh;
+mesh_t *mesh2;
 shader_t *shader;
 
 GLsizei win_sz[2] = {800, 600};
@@ -74,14 +86,17 @@ handle_reshape(void)
 }
 
 void
-get_offsets(GLfloat *x, GLfloat *y)
+get_offsets(GLfloat *x, GLfloat *y, int direction)
 {
-	const float period = 5000.0;
-	const float scale = 3.14159 * 2.0 / period;
+	float period = 5000.0;
+	float scale = 3.14159 * 2.0 / period;
 
 	float time = glutGet(GLUT_ELAPSED_TIME);
 
 	float angle = fmodf(time, period) * scale;
+
+	if (direction)
+		angle = 3.14159 * 2.0 - angle;
 
 	*x = cosf(angle) * 0.5;
 	*y = sinf(angle) * 0.5;
@@ -96,11 +111,13 @@ render(void)
 
 	handle_reshape();
 
-	get_offsets(&x, &y);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+
+	get_offsets(&x, &y, 0);
 
 	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
 	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
@@ -109,6 +126,16 @@ render(void)
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
 
 	mesh_draw(mesh);
+
+	get_offsets(&x, &y, 1);
+
+	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
+	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
+
+	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
+	glUniform4f(offset_loc, x, y, 0.0, 0.0);
+
+	mesh_draw(mesh2);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -155,13 +182,17 @@ main(int argc, char **argv)
 	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
 	cam_to_clip_transform[5] = scale;
 
-	buffer = buffer_create(3, GL_STATIC_DRAW, 2, vert_regions);
+	buffer = buffer_create(6, GL_STATIC_DRAW, 2, vert_regions);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
 	mesh = mesh_create(shader, 3, vert_data, 2, vert_regions);
+	mesh2 = mesh_create(shader, 3, vert_data_2, 2, vert_regions);
 
 	if (mesh_add_to_buffer(mesh, buffer))
+		errx(1, "Could not add mesh to buffer");
+
+	if (mesh_add_to_buffer(mesh2, buffer))
 		errx(1, "Could not add mesh to buffer");
 
 	buffer_ungrab(buffer);
