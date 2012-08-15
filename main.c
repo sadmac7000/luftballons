@@ -186,8 +186,8 @@ main(int argc, char **argv)
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(shader, 3, vert_data, 2, vert_regions);
-	mesh2 = mesh_create(shader, 3, vert_data_2, 2, vert_regions);
+	mesh = mesh_create(shader, 3, vert_data, 2, vert_regions, GL_TRIANGLES);
+	mesh2 = mesh_create(shader, 3, vert_data_2, 2, vert_regions, GL_TRIANGLES);
 
 	if (mesh_add_to_buffer(mesh, buffer))
 		errx(1, "Could not add mesh to buffer");

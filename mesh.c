@@ -26,7 +26,8 @@
  **/
 mesh_t *
 mesh_create(shader_t *shader, size_t verts, const float *vert_data,
-	    size_t segments, buf_vdata_t *segment_descriptors)
+	    size_t segments, buf_vdata_t *segment_descriptors,
+	    GLenum type)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
 	size_t data_size = verts;
@@ -43,6 +44,7 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 	ret->verts = verts;
 	ret->buffer = NULL;
 	ret->buffer_pos = 0;
+	ret->type = type;
 
 	return ret;
 }
@@ -126,5 +128,5 @@ mesh_draw(mesh_t *mesh)
 
 	shader_activate(mesh->shader, mesh->buffer);
 
-	glDrawArrays(GL_TRIANGLES, mesh->buffer_pos, mesh->verts);
+	glDrawArrays(mesh->type, mesh->buffer_pos, mesh->verts);
 }
