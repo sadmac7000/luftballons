@@ -59,12 +59,12 @@ typedef struct vbuf {
 extern "C" {
 #endif
 
-vbuf_t *vbuf_create(size_t size, GLenum usage, size_t segments,
+vbuf_t *vbuf_create(size_t size, size_t segments,
 		    vbuf_fmt_t *segment_descriptors);
 void vbuf_grab(vbuf_t *buffer);
 void vbuf_ungrab(vbuf_t *buffer);
 void vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size);
-void vbuf_bind(vbuf_t *buffer);
+void vbuf_activate(vbuf_t *buffer);
 void vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size);
 ssize_t vbuf_locate_free_space(vbuf_t *buffer, size_t size);
 void vbuf_setup_vertex_attribute(vbuf_t *buffer,

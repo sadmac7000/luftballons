@@ -21,19 +21,26 @@
 #include <GL/glut.h>
 
 #include "vbuf.h"
+#include "ebuf.h"
 #include "shader.h"
 
 typedef struct mesh {
 	char *vert_data;
-	shader_t *shader;
 	size_t verts;
 	GLenum type;
+	shader_t *shader;
+
+	char *elem_data;
+	size_t elems;
 
 	size_t segments;
 	vbuf_fmt_t *segment_descriptors;
 
-	vbuf_t *buffer;
-	size_t buffer_pos;
+	vbuf_t *vbuf;
+	size_t vbuf_pos;
+
+	ebuf_t *ebuf;
+	size_t ebuf_pos;
 } mesh_t;
 
 #ifdef __cplusplus
@@ -41,12 +48,14 @@ extern "C" {
 #endif
 
 mesh_t *mesh_create(shader_t *shader, size_t verts, const float *vert_data,
-		    size_t segments, vbuf_fmt_t *segment_descriptors,
-		    GLenum type);
+		    size_t elems, const uint16_t *elem_data, size_t segments,
+		    vbuf_fmt_t *segment_descriptors, GLenum type);
 size_t mesh_data_size(mesh_t *mesh);
 void mesh_destroy(mesh_t *mesh);
-int mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer);
-void mesh_remove_from_buffer(mesh_t *mesh);
+int mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer);
+int mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer);
+void mesh_remove_from_vbuf(mesh_t *mesh);
+void mesh_remove_from_ebuf(mesh_t *mesh);
 void mesh_draw(mesh_t *mesh);
 
 #ifdef __cplusplus

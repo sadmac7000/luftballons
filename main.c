@@ -33,6 +33,7 @@
 #include "shader.h"
 #include "mesh.h"
 #include "vbuf.h"
+#include "ebuf.h"
 
 const float vert_data[] = {
 //coords
@@ -153,11 +154,14 @@ reshape(int x, int y)
 int
 main(int argc, char **argv)
 {
-	vbuf_t *buffer;
+	vbuf_t *vbuf;
+	ebuf_t *ebuf;
 	vbuf_fmt_t vert_regions[2] = {
 		{ "position", 4 * sizeof(float), },
 		{ "colorin", 4 * sizeof(float), },
 	};
+
+	uint16_t elems[] = { 0,1,2 };
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -182,20 +186,30 @@ main(int argc, char **argv)
 	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
 	cam_to_clip_transform[5] = scale;
 
-	buffer = vbuf_create(6, GL_STATIC_DRAW, 2, vert_regions);
+	vbuf = vbuf_create(6, 2, vert_regions);
+	ebuf = ebuf_create(6);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(shader, 3, vert_data, 2, vert_regions, GL_TRIANGLES);
-	mesh2 = mesh_create(shader, 3, vert_data_2, 2, vert_regions, GL_TRIANGLES);
+	mesh = mesh_create(shader, 3, vert_data, 3, elems, 2, vert_regions,
+			   GL_TRIANGLES);
+	mesh2 = mesh_create(shader, 3, vert_data_2, 3, elems, 2, vert_regions,
+			    GL_TRIANGLES);
 
-	if (mesh_add_to_buffer(mesh, buffer))
-		errx(1, "Could not add mesh to buffer");
+	if (mesh_add_to_vbuf(mesh, vbuf))
+		errx(1, "Could not add mesh to vertex buffer");
 
-	if (mesh_add_to_buffer(mesh2, buffer))
-		errx(1, "Could not add mesh to buffer");
+	if (mesh_add_to_ebuf(mesh, ebuf))
+		errx(1, "Could not add mesh to element buffer");
 
-	vbuf_ungrab(buffer);
+	if (mesh_add_to_vbuf(mesh2, vbuf))
+		errx(1, "Could not add mesh to vertex buffer");
+
+	if (mesh_add_to_ebuf(mesh2, ebuf))
+		errx(1, "Could not add mesh to element buffer");
+
+	vbuf_ungrab(vbuf);
+	ebuf_ungrab(ebuf);
 
 	glutMainLoop();
 	return 0;

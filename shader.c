@@ -193,6 +193,6 @@ shader_activate(shader_t *shader, vbuf_t *buffer)
 		glUseProgram(shader->gl_handle);
 	}
 
-	vbuf_bind(buffer);
+	vbuf_activate(buffer);
 	shader_set_vertex_attrs(shader, buffer);
 }

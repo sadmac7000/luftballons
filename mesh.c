@@ -26,7 +26,8 @@
  **/
 mesh_t *
 mesh_create(shader_t *shader, size_t verts, const float *vert_data,
-	    size_t segments, vbuf_fmt_t *segment_descriptors, GLenum type)
+	    size_t elems, const uint16_t *elem_data, size_t segments,
+	    vbuf_fmt_t *segment_descriptors, GLenum type)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
 	size_t data_size = verts;
@@ -37,13 +38,23 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 
 	ret->vert_data = xmalloc(data_size);
 	memcpy(ret->vert_data, vert_data, data_size);
+	ret->verts = verts;
+
+	ret->elem_data = xmalloc(data_size);
+	memcpy(ret->elem_data, elem_data, 2 * elems);
+	ret->elems = elems;
+
 	ret->segments = segments;
 	ret->segment_descriptors = xcalloc(segments, sizeof(vbuf_fmt_t));
+
 	ret->shader = shader;
-	ret->verts = verts;
-	ret->buffer = NULL;
-	ret->buffer_pos = 0;
 	ret->type = type;
+
+	ret->vbuf = NULL;
+	ret->vbuf_pos = 0;
+
+	ret->ebuf = NULL;
+	ret->ebuf_pos = 0;
 
 	return ret;
 }
@@ -54,19 +65,49 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 void
 mesh_destroy(mesh_t *mesh)
 {
-	mesh_remove_from_buffer(mesh);
+	mesh_remove_from_vbuf(mesh);
+	mesh_remove_from_ebuf(mesh);
 
 	free(mesh->vert_data);
 	free(mesh);
 }
 
 /**
- * Attach a mesh to a buffer.
+ * Attach a mesh to an element buffer.
  *
  * Returns: 0 on success, -1 on no space.
  **/
 int
-mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer)
+mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer)
+{
+	ssize_t offset = ebuf_locate_free_space(buffer, mesh->elems);
+
+	if (offset < 0)
+		return -1;
+
+	mesh_remove_from_ebuf(mesh);
+
+	ebuf_alloc_region(buffer, offset, mesh->elems);
+
+	ebuf_activate(buffer);
+
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(uint16_t),
+			mesh->elems * sizeof(uint16_t), mesh->elem_data);
+
+	mesh->ebuf = buffer;
+	mesh->ebuf_pos = offset;
+	ebuf_grab(buffer);
+
+	return 0;
+}
+
+/**
+ * Attach a mesh to a vertex buffer.
+ *
+ * Returns: 0 on success, -1 on no space.
+ **/
+int
+mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer)
 {
 	ssize_t offset = vbuf_locate_free_space(buffer, mesh->verts);
 	size_t base = 0;
@@ -77,14 +118,14 @@ mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer)
 	if (offset < 0)
 		return -1;
 
-	mesh_remove_from_buffer(mesh);
+	mesh_remove_from_vbuf(mesh);
 
 	vbuf_alloc_region(buffer, offset, mesh->verts);
 
-	mesh->buffer = buffer;
-	mesh->buffer_pos = offset;
+	mesh->vbuf = buffer;
+	mesh->vbuf_pos = offset;
 
-	vbuf_bind(buffer);
+	vbuf_activate(buffer);
 
 	for (i = 0; i < buffer->segments; i++) {
 		seg = &buffer->segment_descriptors[i];
@@ -103,17 +144,31 @@ mesh_add_to_buffer(mesh_t *mesh, vbuf_t *buffer)
 }
 
 /**
- * Remove a mesh from its host buffer.
+ * Remove a mesh from its host element buffer.
  **/
 void
-mesh_remove_from_buffer(mesh_t *mesh)
+mesh_remove_from_ebuf(mesh_t *mesh)
 {
-	if (! mesh->buffer)
+	if (! mesh->ebuf)
 		return;
 
-	vbuf_drop_data(mesh->buffer, mesh->buffer_pos, mesh->verts);
-	vbuf_ungrab(mesh->buffer);
-	mesh->buffer = NULL;
+	ebuf_drop_data(mesh->ebuf, mesh->ebuf_pos, mesh->elems);
+	ebuf_ungrab(mesh->ebuf);
+	mesh->ebuf = NULL;
+}
+
+/**
+ * Remove a mesh from its host vertex buffer.
+ **/
+void
+mesh_remove_from_vbuf(mesh_t *mesh)
+{
+	if (! mesh->vbuf)
+		return;
+
+	vbuf_drop_data(mesh->vbuf, mesh->vbuf_pos, mesh->verts);
+	vbuf_ungrab(mesh->vbuf);
+	mesh->vbuf = NULL;
 }
 
 /**
@@ -122,10 +177,16 @@ mesh_remove_from_buffer(mesh_t *mesh)
 void
 mesh_draw(mesh_t *mesh)
 {
-	if (! mesh->buffer)
-		errx(1, "Drawing mesh without buffer");
+	if (! mesh->vbuf)
+		errx(1, "Drawing mesh without vertex buffer");
 
-	shader_activate(mesh->shader, mesh->buffer);
+	if (! mesh->ebuf)
+		errx(1, "Drawing mesh without element buffer");
 
-	glDrawArrays(mesh->type, mesh->buffer_pos, mesh->verts);
+	shader_activate(mesh->shader, mesh->vbuf);
+	ebuf_activate(mesh->ebuf);
+
+	/*glDrawArrays(mesh->type, mesh->vbuf_pos, mesh->verts);*/
+	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
+				 (void *)mesh->ebuf_pos, mesh->vbuf_pos);
 }

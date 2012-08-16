@@ -19,38 +19,31 @@
 #include <string.h>
 #include <err.h>
 
-#include "vbuf.h"
+#include "ebuf.h"
 #include "util.h"
 
-vbuf_t *current_vbuf = NULL;
+ebuf_t *current_ebuf = NULL;
 
 /**
  * Create a new buffer object.
  *
- * size: Vertices the buffer should accomodate.
- * segments: Number of segments.
- * segment_descriptors: Type of each segment.
+ * size: Indices the buffer should accomodate.
  **/
-vbuf_t *
-vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
+ebuf_t *
+ebuf_create(size_t size)
 {
-	vbuf_t *ret;
+	ebuf_t *ret = xmalloc(sizeof(ebuf_t));
 	GLuint handle;
 	GLenum error;
-	size_t segments_sz = segments * sizeof(vbuf_fmt_t);
-	size_t i;
-	GLsizeiptr byte_size = 0;
-
-	for (i = 0; i < segments; i++)
-		byte_size += segment_descriptors[i].size;
 
 	glGenBuffers(1, &handle);
-	glBindBuffer(GL_ARRAY_BUFFER, handle);
-	glBufferData(GL_ARRAY_BUFFER, byte_size * size, NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(uint16_t), NULL,
+		     GL_STATIC_DRAW);
 	error = glGetError();
 
-	if (current_vbuf)
-		vbuf_activate(current_vbuf);
+	if (current_ebuf)
+		ebuf_activate(current_ebuf);
 
 	if (error != GL_NO_ERROR) {
 		if (error == GL_OUT_OF_MEMORY)
@@ -59,13 +52,8 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
 		errx(1, "Unexpected OpenGL error allocating buffer");
 	}
 
-	ret = xmalloc(sizeof(vbuf_t));
-	ret->vert_size = byte_size;
-	ret->vert_count = size;
 	ret->gl_handle = handle;
-	ret->segments = segments;
-	ret->segment_descriptors = xmalloc(segments_sz);
-	memcpy(ret->segment_descriptors, segment_descriptors, segments_sz);
+	ret->size = size;
 	ret->refcount = 1;
 
 	intervals_init(&ret->free);
@@ -75,40 +63,10 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
 }
 
 /**
- * Setup the vertex attribute named for the attribute handle given.
- **/
-void
-vbuf_setup_vertex_attribute(vbuf_t *buffer, const char *name, GLint handle)
-{
-	size_t i;
-	vbuf_fmt_t *seg;
-	size_t position = 0;
-
-	for (i = 0; i < buffer->segments; i++) {
-		seg = &buffer->segment_descriptors[i];
-
-		if (! strcmp(seg->name, name))
-			break;
-
-		position += seg->size * buffer->vert_count;
-	}
-
-	if (i == buffer->segments) {
-		glDisableVertexAttribArray(i);
-		return;
-	}
-
-	vbuf_activate(buffer);
-	glEnableVertexAttribArray(i);
-	glVertexAttribPointer(handle, 4, GL_FLOAT, GL_FALSE, 0,
-			      (void *)position);
-}
-
-/**
  * Increase a buffer's refcount.
  **/
 void
-vbuf_grab(vbuf_t *buffer)
+ebuf_grab(ebuf_t *buffer)
 {
 	buffer->refcount++;
 }
@@ -117,14 +75,14 @@ vbuf_grab(vbuf_t *buffer)
  * Decrease a buffer's refcount. If the count becomes zero, free it.
  **/
 void
-vbuf_ungrab(vbuf_t *buffer)
+ebuf_ungrab(ebuf_t *buffer)
 {
 	if (--buffer->refcount)
 		return;
 
-	if (current_vbuf == buffer) {
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		current_vbuf = NULL;
+	if (current_ebuf == buffer) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		current_ebuf = NULL;
 	}
 
 	glDeleteBuffers(1, &buffer->gl_handle);
@@ -137,7 +95,7 @@ vbuf_ungrab(vbuf_t *buffer)
  * Create a new free region and add it to a buffer's lists.
  **/
 void
-vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size)
+ebuf_drop_data(ebuf_t *buffer, size_t offset, size_t size)
 {
 	interval_set(&buffer->free, offset, size);
 }
@@ -146,7 +104,7 @@ vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size)
  * Allocate a region of a buffer.
  **/
 void
-vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size)
+ebuf_alloc_region(ebuf_t *buffer, size_t offset, size_t size)
 {
 	interval_unset(&buffer->free, offset, size);
 }
@@ -155,9 +113,9 @@ vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size)
  * Bind a vertex buffer.
  **/
 void
-vbuf_activate(vbuf_t *buffer)
+ebuf_activate(ebuf_t *buffer)
 {
-	current_vbuf = buffer;
+	current_ebuf = buffer;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
 }
 
@@ -170,7 +128,8 @@ vbuf_activate(vbuf_t *buffer)
  * Returns: Offset to space or -1 if not enough space found.
  **/
 ssize_t
-vbuf_locate_free_space(vbuf_t *buffer, size_t size)
+ebuf_locate_free_space(ebuf_t *buffer, size_t size)
 {
 	return interval_find(&buffer->free, size);
 }
+
