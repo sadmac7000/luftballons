@@ -57,7 +57,7 @@ camera_calc_matrix(camera_t *camera)
 		1, 0, 0, 0,
 		0, 1, 0, 0,
 		0, 0, 1, 0,
-		0, 0, 0, 0,
+		0, 0, -1, 0,
 	};
 
 	float xfrm_mat[16];
@@ -66,7 +66,6 @@ camera_calc_matrix(camera_t *camera)
 	clip[5] = scale;
 	clip[10] = (near + far)/(near - far);
 	clip[11] = 2*near*far/(near - far);
-	clip[14] = -1;
 
 	vec3_subtract(camera->target, camera->pos, look_vec);
 	vec3_normalize(look_vec, look_vec);
