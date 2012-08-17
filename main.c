@@ -34,6 +34,7 @@
 #include "mesh.h"
 #include "vbuf.h"
 #include "ebuf.h"
+#include "camera.h"
 
 const float vert_data[] = {
 //coords
@@ -57,20 +58,10 @@ const float vert_data_2[] = {
 	0.0f,    0.0f, 1.0f, 1.0f,
 };
 
-const float scale = 1;
-const float near = .5;
-const float far = 3.0;
-
-float cam_to_clip_transform[] = {
-	1, 0, 0, 0,
-	0, 1, 0, 0,
-	0, 0, 1, 0,
-	0, 0, 0, 1,
-};
-
 mesh_t *mesh;
 mesh_t *mesh2;
 shader_t *shader;
+camera_t *camera;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -78,11 +69,12 @@ int need_reshape = 1;
 void
 handle_reshape(void)
 {
+	float aspect = (win_sz[0] / (float)win_sz[1]);
+
 	if (! need_reshape)
 		return;
 
-	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
-
+	camera_update_aspect(camera, aspect);
 	glViewport(0, 0, win_sz[0], win_sz[1]);
 }
 
@@ -110,8 +102,11 @@ render(void)
 	GLint trans_loc;
 	GLfloat x, y;
 
+	float cam_mat[16];
+
 	handle_reshape();
 
+	camera_get_transform(camera, cam_mat);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
@@ -123,7 +118,7 @@ render(void)
 	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
 	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
 
-	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
+	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_mat);
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
 
 	mesh_draw(mesh);
@@ -133,7 +128,7 @@ render(void)
 	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
 	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
 
-	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_to_clip_transform);
+	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, cam_mat);
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
 
 	mesh_draw(mesh2);
@@ -162,6 +157,7 @@ main(int argc, char **argv)
 	};
 
 	uint16_t elems[] = { 0,1,2 };
+	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -177,14 +173,6 @@ main(int argc, char **argv)
 
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
-
-	cam_to_clip_transform[10] = (near + far)/(near - far);
-	cam_to_clip_transform[11] = 2*near*far/(near - far);
-	cam_to_clip_transform[14] = -1;
-	cam_to_clip_transform[15] = 0;
-
-	cam_to_clip_transform[0] = scale / (win_sz[0] / (float)win_sz[1]);
-	cam_to_clip_transform[5] = scale;
 
 	vbuf = vbuf_create(6, 2, vert_regions);
 	ebuf = ebuf_create(6);
@@ -210,6 +198,8 @@ main(int argc, char **argv)
 
 	vbuf_ungrab(vbuf);
 	ebuf_ungrab(ebuf);
+
+	camera = camera_create(.5, 3.0, aspect);
 
 	glutMainLoop();
 	return 0;
