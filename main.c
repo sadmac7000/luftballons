@@ -39,28 +39,88 @@
 
 const float vert_data[] = {
 //coords
-	0.0f,    0.5f, -1.0f, 1.0f,
-	0.5f, -0.366f, -1.5f, 1.0f,
-	-0.5f, -0.366f, -1.0f, 1.0f,
+	-0.25f, -0.25f, -1.5f,  1.0f,
+	 0.25f, -0.25f, -1.5f,  1.0f,
+	 0.25f,  0.25f, -1.5f,  1.0f,
+	-0.25f,  0.25f, -1.5f,  1.0f,
+
+	-0.25f, -0.25f,  -1.0f, 1.0f,
+	 0.25f, -0.25f,  -1.0f, 1.0f,
+	 0.25f,  0.25f,  -1.0f, 1.0f,
+	-0.25f,  0.25f,  -1.0f, 1.0f,
+
+	-0.25f, -0.25f, -1.5f,  1.0f,
+	-0.25f, -0.25f,  -1.0f, 1.0f,
+	-0.25f,  0.25f,  -1.0f, 1.0f,
+	-0.25f,  0.25f, -1.5f,  1.0f,
+
+	 0.25f, -0.25f, -1.5f,  1.0f,
+	 0.25f, -0.25f,  -1.0f, 1.0f,
+	 0.25f,  0.25f,  -1.0f, 1.0f,
+	 0.25f,  0.25f, -1.5f,  1.0f,
+
+	-0.25f, -0.25f, -1.5f,  1.0f,
+	-0.25f, -0.25f,  -1.0f, 1.0f,
+	 0.25f, -0.25f,  -1.0f, 1.0f,
+	 0.25f, -0.25f, -1.5f,  1.0f,
+
+	-0.25f,  0.25f, -1.5f,  1.0f,
+	-0.25f,  0.25f,  -1.0f, 1.0f,
+	 0.25f,  0.25f,  -1.0f, 1.0f,
+	 0.25f,  0.25f, -1.5f,  1.0f,
 //colors
 	1.0f,    0.0f, 0.0f, 1.0f,
+	1.0f,    0.0f, 0.0f, 1.0f,
+	1.0f,    0.0f, 0.0f, 1.0f,
+	1.0f,    0.0f, 0.0f, 1.0f,
+
 	0.0f,    1.0f, 0.0f, 1.0f,
+	0.0f,    1.0f, 0.0f, 1.0f,
+	0.0f,    1.0f, 0.0f, 1.0f,
+	0.0f,    1.0f, 0.0f, 1.0f,
+
 	0.0f,    0.0f, 1.0f, 1.0f,
+	0.0f,    0.0f, 1.0f, 1.0f,
+	0.0f,    0.0f, 1.0f, 1.0f,
+	0.0f,    0.0f, 1.0f, 1.0f,
+
+	1.0f,    1.0f, 0.0f, 1.0f,
+	1.0f,    1.0f, 0.0f, 1.0f,
+	1.0f,    1.0f, 0.0f, 1.0f,
+	1.0f,    1.0f, 0.0f, 1.0f,
+
+	1.0f,    0.0f, 1.0f, 1.0f,
+	1.0f,    0.0f, 1.0f, 1.0f,
+	1.0f,    0.0f, 1.0f, 1.0f,
+	1.0f,    0.0f, 1.0f, 1.0f,
+
+	0.0f,    1.0f, 1.0f, 1.0f,
+	0.0f,    1.0f, 1.0f, 1.0f,
+	0.0f,    1.0f, 1.0f, 1.0f,
+	0.0f,    1.0f, 1.0f, 1.0f,
 };
 
-const float vert_data_2[] = {
-//coords
-	0.0f,    0.5f, -1.0f, 1.0f,
-	0.5f, -0.366f, -1.0f, 1.0f,
-	-0.5f, -0.366f, -1.5f, 1.0f,
-//colors
-	0.0f,    1.0f, 0.0f, 1.0f,
-	1.0f,    0.0f, 0.0f, 1.0f,
-	0.0f,    0.0f, 1.0f, 1.0f,
+const uint16_t elem_data[] = {
+	0, 1, 2,
+	0, 2, 3,
+
+	4, 6, 5,
+	4, 7, 6,
+
+	8, 10, 9,
+	8, 11, 10,
+
+	12, 13, 14,
+	12, 14, 15,
+
+	17, 18, 19,
+	17, 19, 16,
+
+	20, 23, 22,
+	20, 22, 21,
 };
 
 mesh_t *mesh;
-mesh_t *mesh2;
 shader_t *shader;
 camera_t *camera;
 
@@ -123,11 +183,6 @@ render(void)
 
 	get_offsets(&x, &y, 1);
 
-	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, camera->to_clip_xfrm);
-	glUniform4f(offset_loc, x, y, 0.0, 0.0);
-
-	mesh_draw(mesh2);
-
 	glutSwapBuffers();
 	glutPostRedisplay();
 }
@@ -157,7 +212,7 @@ strafe_camera(float amount)
 	vec3_scale(offset, offset, amount);
 	vec3_add(offset, camera->pos, offset);
 
-	camera_move(camera, offset, 1);
+	camera_move(camera, offset, 0);
 }
 
 void
@@ -201,7 +256,6 @@ main(int argc, char **argv)
 		{ "colorin", 4 * sizeof(float), },
 	};
 
-	uint16_t elems[] = { 0,1,2 };
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
 	glutInit(&argc, argv);
@@ -220,26 +274,18 @@ main(int argc, char **argv)
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(onkey);
 
-	vbuf = vbuf_create(6, 2, vert_regions);
-	ebuf = ebuf_create(6);
+	vbuf = vbuf_create(24, 2, vert_regions);
+	ebuf = ebuf_create(36);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(shader, 3, vert_data, 3, elems, 2, vert_regions,
+	mesh = mesh_create(shader, 24, vert_data, 36, elem_data, 2, vert_regions,
 			   GL_TRIANGLES);
-	mesh2 = mesh_create(shader, 3, vert_data_2, 3, elems, 2, vert_regions,
-			    GL_TRIANGLES);
 
 	if (mesh_add_to_vbuf(mesh, vbuf))
 		errx(1, "Could not add mesh to vertex buffer");
 
 	if (mesh_add_to_ebuf(mesh, ebuf))
-		errx(1, "Could not add mesh to element buffer");
-
-	if (mesh_add_to_vbuf(mesh2, vbuf))
-		errx(1, "Could not add mesh to vertex buffer");
-
-	if (mesh_add_to_ebuf(mesh2, ebuf))
 		errx(1, "Could not add mesh to element buffer");
 
 	vbuf_ungrab(vbuf);
