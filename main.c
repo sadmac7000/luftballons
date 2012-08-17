@@ -122,9 +122,6 @@ render(void)
 
 	get_offsets(&x, &y, 1);
 
-	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
-	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
-
 	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, camera->to_clip_xfrm);
 	glUniform4f(offset_loc, x, y, 0.0, 0.0);
 
