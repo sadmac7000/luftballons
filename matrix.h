@@ -18,9 +18,22 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * Print out a matrix for debugging.
+ **/
+static inline void matrix_print(float m[16])
+{
+	printf("%f %f %f %f\n", m[0], m[1], m[2], m[3]);
+	printf("%f %f %f %f\n", m[4], m[5], m[6], m[7]);
+	printf("%f %f %f %f\n", m[8], m[9], m[10], m[11]);
+	printf("%f %f %f %f\n", m[12], m[13], m[14], m[15]);
+}
 
 void matrix_transpose(float in[16], float out[16]);
 void matrix_multiply(float a[16], float b[16], float result[16]);
