@@ -28,8 +28,10 @@ float vec3_dot(float a[3], float b[3]);
 void vec3_cross(float a[3], float b[3], float result[3]);
 void vec3_normalize(float in[3], float out[3]);
 float vec3_magnitude(float in[3]);
+void vec3_add(float a[3], float b[3], float result[3]);
 void vec3_subtract(float a[3], float b[3], float result[3]);
 void vec3_scale(float in[3], float out[3], float factor);
+void vec3_dup(float in[3], float out[3]);
 
 #ifdef __cplusplus
 }

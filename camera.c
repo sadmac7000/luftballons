@@ -130,3 +130,38 @@ camera_update_aspect(camera_t *camera, float aspect)
 	camera->aspect = aspect;
 	camera_calc_matrix(camera);
 }
+
+/**
+ * Update the camera's target.
+ **/
+void
+camera_point(camera_t *camera, float target[3])
+{
+	vec3_dup(target, camera->target);
+	camera_calc_matrix(camera);
+}
+
+/**
+ * Move the camera.
+ **/
+void
+camera_move(camera_t *camera, float pos[3], int track)
+{
+	if (track) {
+		vec3_subtract(camera->target, camera->pos, camera->target);
+		vec3_add(camera->target, pos, camera->target);
+	}
+
+	vec3_dup(pos, camera->pos);
+	camera_calc_matrix(camera);
+}
+
+/**
+ * Zoom in on the camera's target.
+ **/
+void
+camera_zoom(camera_t *camera, float zoom)
+{
+	camera->zoom = zoom;
+	camera_calc_matrix(camera);
+}

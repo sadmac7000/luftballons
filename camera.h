@@ -34,6 +34,9 @@ extern "C" {
 
 camera_t *camera_create(float near, float far, float aspect);
 void camera_update_aspect(camera_t *camera, float aspect);
+void camera_point(camera_t *camera, float target[3]);
+void camera_move(camera_t *camera, float pos[3], int track);
+void camera_zoom(camera_t *camera, float zoom);
 
 #ifdef __cplusplus
 }

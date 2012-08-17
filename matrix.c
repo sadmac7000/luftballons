@@ -89,7 +89,7 @@ vec3_cross(float a[3], float b[3], float result[3])
 	res[2] = a[0] * b[1] - a[1] * b[0];
 
 	if (a == result || b == result)
-		memcpy(tmp_res, result, 3 * sizeof(float));
+		vec3_dup(tmp_res, result);
 }
 
 /**
@@ -110,6 +110,26 @@ vec3_normalize(float in[3], float out[3])
 	float mag = vec3_magnitude(in);
 
 	vec3_scale(in, out, 1.0 / mag);
+}
+
+/**
+ * Add a vector to a vector.
+ **/
+void
+vec3_add(float a[3], float b[3], float result[3])
+{
+	result[0] = a[0] + b[0];
+	result[1] = a[1] + b[1];
+	result[2] = a[2] + b[2];
+}
+
+/**
+ * Duplicate a vector.
+ **/
+void
+vec3_dup(float in[3], float out[3])
+{
+	memcpy(out, in, 3 * sizeof(float));
 }
 
 /**
