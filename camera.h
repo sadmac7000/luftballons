@@ -23,6 +23,7 @@ typedef struct camera {
 	float near;
 	float far;
 	float zoom;
+	float fov_scale;
 	float aspect;
 	float pos[3];
 	float target[3];
@@ -32,7 +33,7 @@ typedef struct camera {
 extern "C" {
 #endif
 
-camera_t *camera_create(float near, float far, float aspect);
+camera_t *camera_create(float near, float far, float aspect, float fov1x);
 void camera_update_aspect(camera_t *camera, float aspect);
 void camera_point(camera_t *camera, float target[3]);
 void camera_move(camera_t *camera, float pos[3], int track);

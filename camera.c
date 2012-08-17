@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 
 #include <GL/glut.h>
 
@@ -30,7 +31,7 @@
 static void
 camera_calc_matrix(camera_t *camera)
 {
-	float scale = camera->zoom;
+	float scale = camera->zoom * camera->fov_scale;
 	float near = camera->near;
 	float far = camera->far;
 	float aspect = camera->aspect;
@@ -92,20 +93,35 @@ camera_calc_matrix(camera_t *camera)
 }
 
 /**
+ * Calculate FOV scale given an FOV in degrees.
+ **/
+static float
+fov_scale(float fov1x)
+{
+	/* Convert to double-radians */
+	fov1x *= 3.14159;
+	fov1x /= 360;
+
+	return cosf(fov1x) / sinf(fov1x);
+}
+
+/**
  * Create a new camera.
  *
  * near: Near clip plane.
  * far: Far clip plane.
  * aspect: Starting aspect ratio.
+ * fov1x: Field of view at 1x magnification.
  **/
 camera_t *
-camera_create(float near, float far, float aspect)
+camera_create(float near, float far, float aspect, float fov1x)
 {
 	camera_t *ret = xmalloc(sizeof(camera_t));
 
 	ret->near = near;
 	ret->far = far;
 	ret->zoom = 1;
+	ret->fov_scale = fov_scale(fov1x);
 	ret->aspect = aspect;
 	ret->pos[0] = 0;
 	ret->pos[1] = 0;

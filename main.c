@@ -291,7 +291,7 @@ main(int argc, char **argv)
 	vbuf_ungrab(vbuf);
 	ebuf_ungrab(ebuf);
 
-	camera = camera_create(.5, 3.0, aspect);
+	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	glutMainLoop();
 	return 0;
