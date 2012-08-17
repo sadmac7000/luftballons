@@ -35,6 +35,7 @@
 #include "vbuf.h"
 #include "ebuf.h"
 #include "camera.h"
+#include "matrix.h"
 
 const float vert_data[] = {
 //coords
@@ -132,12 +133,62 @@ render(void)
 }
 
 void
+shift_camera(float amount)
+{
+	float offset[3];
+
+	vec3_subtract(camera->target, camera->pos, offset);
+	vec3_normalize(offset, offset);
+	vec3_scale(offset, offset, amount);
+	vec3_add(offset, camera->pos, offset);
+
+	camera_move(camera, offset, 1);
+}
+
+void
+strafe_camera(float amount)
+{
+	float offset[3];
+	float up[3] = { 0, 1, 0 };
+
+	vec3_subtract(camera->target, camera->pos, offset);
+	vec3_cross(offset, up, offset);
+	vec3_normalize(offset, offset);
+	vec3_scale(offset, offset, amount);
+	vec3_add(offset, camera->pos, offset);
+
+	camera_move(camera, offset, 1);
+}
+
+void
 reshape(int x, int y)
 {
 	win_sz[0] = x;
 	win_sz[1] = y;
 
 	need_reshape = 1;
+}
+
+void
+onkey(unsigned char key, int x, int y)
+{
+	(void)x;
+	(void)y;
+
+	if (key == 27)
+		exit(0);
+
+	if (key == 'w')
+		shift_camera(.1);
+
+	if (key == 's')
+		shift_camera(-.1);
+
+	if (key == 'a')
+		strafe_camera(-.1);
+
+	if (key == 'd')
+		strafe_camera(.1);
 }
 
 int
@@ -167,6 +218,7 @@ main(int argc, char **argv)
 
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
+	glutKeyboardFunc(onkey);
 
 	vbuf = vbuf_create(6, 2, vert_regions);
 	ebuf = ebuf_create(6);
