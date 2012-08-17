@@ -20,7 +20,6 @@
 
 typedef struct camera {
 	float to_clip_xfrm[16];
-	float to_cam_xfrm[16];
 	float near;
 	float far;
 	float zoom;
@@ -35,7 +34,6 @@ extern "C" {
 
 camera_t *camera_create(float near, float far, float aspect);
 void camera_update_aspect(camera_t *camera, float aspect);
-void camera_get_transform(camera_t *camera, float matrix[16]);
 
 #ifdef __cplusplus
 }

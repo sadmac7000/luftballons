@@ -30,7 +30,6 @@
 static void
 camera_calc_matrix(camera_t *camera)
 {
-	float *clip = camera->to_clip_xfrm;
 	float scale = camera->zoom;
 	float near = camera->near;
 	float far = camera->far;
@@ -54,12 +53,20 @@ camera_calc_matrix(camera_t *camera)
 		0, 0, 0, 1,
 	};
 
+	float clip[16] = {
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		0, 0, 0, 0,
+	};
+
+	float xfrm_mat[16];
+
 	clip[0] = scale / aspect;
 	clip[5] = scale;
 	clip[10] = (near + far)/(near - far);
 	clip[11] = 2*near*far/(near - far);
 	clip[14] = -1;
-	clip[15] = 0;
 
 	vec3_subtract(camera->target, camera->pos, look_vec);
 	vec3_normalize(look_vec, look_vec);
@@ -81,16 +88,8 @@ camera_calc_matrix(camera_t *camera)
 	rot_mat[9] = look_vec[1];
 	rot_mat[10] = look_vec[2];
 
-	matrix_multiply(rot_mat, trans_mat, camera->to_cam_xfrm);
-}
-
-/**
- * Get the final transform for this camera.
- **/
-void
-camera_get_transform(camera_t *camera, float matrix[16])
-{
-	matrix_multiply(camera->to_cam_xfrm, camera->to_clip_xfrm, matrix);
+	matrix_multiply(rot_mat, trans_mat, xfrm_mat);
+	matrix_multiply(xfrm_mat, clip, camera->to_clip_xfrm);
 }
 
 /**
@@ -117,7 +116,6 @@ camera_create(float near, float far, float aspect)
 	ret->target[2] = -1;
 
 	memset(ret->to_clip_xfrm, 0, 16 * sizeof(float));
-	memset(ret->to_cam_xfrm, 0, 16 * sizeof(float));
 	camera_calc_matrix(ret);
 
 	return ret;
