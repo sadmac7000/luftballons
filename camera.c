@@ -89,7 +89,7 @@ camera_calc_matrix(camera_t *camera)
 	rot_mat[10] = look_vec[2];
 
 	matrix_multiply(rot_mat, trans_mat, xfrm_mat);
-	matrix_multiply(xfrm_mat, clip, camera->to_clip_xfrm);
+	matrix_multiply(clip, xfrm_mat, camera->to_clip_xfrm);
 }
 
 /**
