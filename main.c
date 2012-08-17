@@ -73,6 +73,7 @@ handle_reshape(void)
 
 	if (! need_reshape)
 		return;
+	need_reshape = 0;
 
 	camera_update_aspect(camera, aspect);
 	glViewport(0, 0, win_sz[0], win_sz[1]);
