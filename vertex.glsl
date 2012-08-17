@@ -8,6 +8,6 @@ uniform mat4 transform;
 
 void main()
 {
-	gl_Position = transform * (position + offset);
+	gl_Position = (position + offset) * transform;
 	colorout = colorin;
 }

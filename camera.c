@@ -40,10 +40,10 @@ camera_calc_matrix(camera_t *camera)
 	float right_vec[3];
 
 	float trans_mat[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, camera->pos[2],
-		-camera->pos[0], -camera->pos[1], 0, 1,
+		1, 0, 0, -camera->pos[0],
+		0, 1, 0, -camera->pos[1],
+		0, 0, 1, -camera->pos[2],
+		0, 0, 0, 1,
 	};
 
 	float rot_mat[16] = {
