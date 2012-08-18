@@ -18,6 +18,18 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+/**
+ * A camera. Stores all perspective information for the scene.
+ *
+ * to_clip_xfrm: World-to-clipspace transformation.
+ * near: Near clip distance.
+ * far: Far clip distance.
+ * zoom: Magnification amount.
+ * fov_scale: Base magnification for FOV.
+ * aspect: Aspect ratio.
+ * pos: Point we're looking from.
+ * target: Point we're looking at.
+ **/
 typedef struct camera {
 	float to_clip_xfrm[16];
 	float near;
