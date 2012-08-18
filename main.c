@@ -126,6 +126,20 @@ camera_t *camera;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
+float frame_time = 0;
+
+struct {
+	int forward;
+	int backward;
+	int s_left;
+	int s_right;
+	int t_left;
+	int t_right;
+	int rise;
+	int fall;
+	int t_up;
+	int t_down;
+} movement = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, };
 
 void
 handle_reshape(void)
@@ -141,12 +155,10 @@ handle_reshape(void)
 }
 
 void
-get_offsets(GLfloat *x, GLfloat *y, int direction)
+get_offsets(GLfloat *x, GLfloat *y, int direction, float time)
 {
 	float period = 5000.0;
 	float scale = 3.14159 * 2.0 / period;
-
-	float time = glutGet(GLUT_ELAPSED_TIME);
 
 	float angle = fmodf(time, period) * scale;
 
@@ -158,20 +170,118 @@ get_offsets(GLfloat *x, GLfloat *y, int direction)
 }
 
 void
+update_camera(float time)
+{
+	float delta_t = time - frame_time;
+	float speed = delta_t * .001;
+	float rot_speed = .003;
+	float yaw_amt = 0;
+	float pitch_amt = 0;
+	float dir_vec[3];
+	float offset_vec[3] = { 0, 0, 0 };
+	float tmp_vec[3];
+	float up_vec[3] = { 0, 1, 0 };
+	float right_vec[3];
+	float new_pos[3];
+	float dir_vec_new[3];
+	float xz_dist;
+	float arcos;
+
+	vec3_subtract(camera->target, camera->pos, dir_vec);
+	vec3_normalize(dir_vec, dir_vec);
+	vec3_cross(up_vec, dir_vec, right_vec);
+	vec3_normalize(right_vec, right_vec);
+
+	if (movement.forward) {
+		vec3_scale(dir_vec, tmp_vec, speed);
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.backward) {
+		vec3_scale(dir_vec, tmp_vec, -speed);
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.s_left) {
+		vec3_scale(right_vec, tmp_vec, speed);
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.s_right) {
+		vec3_scale(right_vec, tmp_vec, -speed);
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.rise) {
+		tmp_vec[0] = tmp_vec[2] = 0;
+		tmp_vec[1] = speed;
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.fall) {
+		tmp_vec[0] = tmp_vec[2] = 0;
+		tmp_vec[1] = -speed;
+		vec3_add(tmp_vec, offset_vec, offset_vec);
+	}
+
+	if (movement.t_left)
+		yaw_amt -= rot_speed;
+
+	if (movement.t_right)
+		yaw_amt += rot_speed;
+
+	if (movement.t_up)
+		pitch_amt += rot_speed;
+
+	if (movement.t_down)
+		pitch_amt -= rot_speed;
+
+	if (yaw_amt) {
+		dir_vec_new[1] = dir_vec[1];
+		dir_vec_new[0] = dir_vec[0] * cosf(yaw_amt) -
+			dir_vec[2] * sinf(yaw_amt);
+		dir_vec_new[2] = dir_vec[0] * sinf(yaw_amt) +
+			dir_vec[2] * cosf(yaw_amt);
+
+		vec3_dup(dir_vec_new, dir_vec);
+	}
+
+	if (pitch_amt) {
+		vec3_normalize(dir_vec, dir_vec);
+		xz_dist = sqrtf(dir_vec[0] * dir_vec[0] + dir_vec[2] * dir_vec[2]);
+		arcos = acosf(xz_dist);
+		if (dir_vec[1] < 0)
+			arcos = -arcos;
+		dir_vec[1] = tanf(arcos + pitch_amt) * xz_dist;
+	}
+
+
+	vec3_add(camera->pos, offset_vec, new_pos);
+	camera_move(camera, new_pos, 1);
+
+	if (yaw_amt || pitch_amt) {
+		vec3_add(camera->pos, dir_vec, new_pos);
+		camera_point(camera, new_pos);
+	}
+}
+
+void
 render(void)
 {
 	GLint offset_loc;
 	GLint trans_loc;
 	GLfloat x, y;
+	float time = glutGet(GLUT_ELAPSED_TIME);
 
 	handle_reshape();
+	update_camera(time);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 
-	get_offsets(&x, &y, 0);
+	get_offsets(&x, &y, 0, time);
 
 	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
 	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
@@ -181,38 +291,10 @@ render(void)
 
 	mesh_draw(mesh);
 
-	get_offsets(&x, &y, 1);
-
 	glutSwapBuffers();
 	glutPostRedisplay();
-}
 
-void
-shift_camera(float amount)
-{
-	float offset[3];
-
-	vec3_subtract(camera->target, camera->pos, offset);
-	vec3_normalize(offset, offset);
-	vec3_scale(offset, offset, amount);
-	vec3_add(offset, camera->pos, offset);
-
-	camera_move(camera, offset, 1);
-}
-
-void
-strafe_camera(float amount)
-{
-	float offset[3];
-	float up[3] = { 0, 1, 0 };
-
-	vec3_subtract(camera->target, camera->pos, offset);
-	vec3_cross(offset, up, offset);
-	vec3_normalize(offset, offset);
-	vec3_scale(offset, offset, amount);
-	vec3_add(offset, camera->pos, offset);
-
-	camera_move(camera, offset, 0);
+	frame_time = time;
 }
 
 void
@@ -225,7 +307,7 @@ reshape(int x, int y)
 }
 
 void
-onkey(unsigned char key, int x, int y)
+tkey(unsigned char key, int x, int y, int state)
 {
 	(void)x;
 	(void)y;
@@ -234,16 +316,46 @@ onkey(unsigned char key, int x, int y)
 		exit(0);
 
 	if (key == 'w')
-		shift_camera(.1);
+		movement.forward = state;
 
 	if (key == 's')
-		shift_camera(-.1);
+		movement.backward = state;
 
 	if (key == 'a')
-		strafe_camera(-.1);
+		movement.s_left = state;
 
 	if (key == 'd')
-		strafe_camera(.1);
+		movement.s_right = state;
+
+	if (key == 'q')
+		movement.t_left = state;
+
+	if (key == 'e')
+		movement.t_right = state;
+
+	if (key == 'r')
+		movement.rise = state;
+
+	if (key == 'f')
+		movement.fall = state;
+
+	if (key == 't')
+		movement.t_up = state;
+
+	if (key == 'g')
+		movement.t_down = state;
+}
+
+void
+onkey(unsigned char key, int x, int y)
+{
+	tkey(key, x, y, 1);
+}
+
+void
+offkey(unsigned char key, int x, int y)
+{
+	tkey(key, x, y, 0);
 }
 
 int
@@ -273,6 +385,7 @@ main(int argc, char **argv)
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(onkey);
+	glutKeyboardUpFunc(offkey);
 
 	vbuf = vbuf_create(24, 2, vert_regions);
 	ebuf = ebuf_create(36);
