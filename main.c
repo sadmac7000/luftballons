@@ -32,6 +32,7 @@
 
 #include "shader.h"
 #include "mesh.h"
+#include "object.h"
 #include "vbuf.h"
 #include "ebuf.h"
 #include "camera.h"
@@ -120,7 +121,7 @@ const uint16_t elem_data[] = {
 	20, 22, 21,
 };
 
-mesh_t *mesh;
+object_t *object;
 shader_t *shader;
 camera_t *camera;
 
@@ -268,9 +269,7 @@ update_camera(float time)
 void
 render(void)
 {
-	GLint offset_loc;
-	GLint trans_loc;
-	GLfloat x, y;
+	GLfloat offset[4] = { 0, 0, 0, 0 };
 	float time = glutGet(GLUT_ELAPSED_TIME);
 
 	handle_reshape();
@@ -279,17 +278,13 @@ render(void)
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
 
-	get_offsets(&x, &y, 0, time);
+	get_offsets(&offset[0], &offset[1], 0, time);
 
-	offset_loc = glGetUniformLocation(shader->gl_handle, "offset");
-	trans_loc = glGetUniformLocation(shader->gl_handle, "transform");
+	shader_set_uniform_mat(shader, "transform", camera->to_clip_xfrm);
+	shader_set_uniform_vec(shader, "offset", offset);
 
-	glUniformMatrix4fv(trans_loc, 1, GL_FALSE, camera->to_clip_xfrm);
-	glUniform4f(offset_loc, x, y, 0.0, 0.0);
-
-	mesh_draw(mesh);
+	object_draw(object);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -363,6 +358,8 @@ main(int argc, char **argv)
 {
 	vbuf_t *vbuf;
 	ebuf_t *ebuf;
+	mesh_t *mesh;
+
 	vbuf_fmt_t vert_regions[2] = {
 		{ "position", 4 * sizeof(float), },
 		{ "colorin", 4 * sizeof(float), },
@@ -381,6 +378,7 @@ main(int argc, char **argv)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
+	glEnable(GL_DEPTH_TEST);
 
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
@@ -404,6 +402,7 @@ main(int argc, char **argv)
 	vbuf_ungrab(vbuf);
 	ebuf_ungrab(ebuf);
 
+	object = object_create(mesh);
 	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	glutMainLoop();

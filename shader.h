@@ -37,6 +37,8 @@ extern "C" {
 
 shader_t *shader_create(const char *vertex, const char *frag);
 void shader_activate(shader_t *shader, vbuf_t *buffer);
+void shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16]);
+void shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4]);
 
 #ifdef __cplusplus
 }

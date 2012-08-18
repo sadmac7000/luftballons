@@ -196,3 +196,23 @@ shader_activate(shader_t *shader, vbuf_t *buffer)
 	vbuf_activate(buffer);
 	shader_set_vertex_attrs(shader, buffer);
 }
+
+/**
+ * Set a uniform value to a 4x4 matrix.
+ **/
+void
+shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16])
+{
+	GLint loc = glGetUniformLocation(shader->gl_handle, name);
+	glUniformMatrix4fv(loc, 1, GL_FALSE, mat);
+}
+
+/**
+ * Set a uniform value to a 4 element vector.
+ **/
+void
+shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4])
+{
+	GLint loc = glGetUniformLocation(shader->gl_handle, name);
+	glUniform4fv(loc, 1, vec);
+}

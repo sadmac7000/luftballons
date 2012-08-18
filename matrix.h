@@ -19,6 +19,7 @@
 #define MATRIX_H
 
 #include <stdio.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,6 +34,15 @@ static inline void matrix_print(float m[16])
 	printf("%f %f %f %f\n", m[4], m[5], m[6], m[7]);
 	printf("%f %f %f %f\n", m[8], m[9], m[10], m[11]);
 	printf("%f %f %f %f\n", m[12], m[13], m[14], m[15]);
+}
+
+/**
+ * Write an identity matrix.
+ **/
+static inline void matrix_ident(float out[16])
+{
+	memset(out, 0, 16 * sizeof(float));
+	out[0] = out[5] = out[10] = out[15] = 1;
 }
 
 void matrix_transpose(float in[16], float out[16]);

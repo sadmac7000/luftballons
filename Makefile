@@ -27,7 +27,8 @@ luftballons_OBJS =	\
 	ebuf.o		\
 	interval.o	\
 	camera.o	\
-	matrix.o
+	matrix.o	\
+	object.o
 
 luftballons_LINK=-lglut -lGL -lm
 
