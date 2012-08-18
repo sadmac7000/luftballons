@@ -56,7 +56,33 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 	ret->ebuf = NULL;
 	ret->ebuf_pos = 0;
 
+	ret->refcount = 0;
+
 	return ret;
+}
+
+/**
+ * Get a reference to a mesh.
+ **/
+void
+mesh_grab(mesh_t *mesh)
+{
+	mesh->refcount++;
+}
+
+/**
+ * Unget a reference to a mesh.
+ **/
+void
+mesh_ungrab(mesh_t *mesh)
+{
+	if (! mesh->refcount)
+		errx(1, "Mesh refcount went negative");
+
+	if (--mesh->refcount)
+		return;
+
+	mesh_destroy(mesh);
 }
 
 /**

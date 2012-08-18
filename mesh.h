@@ -41,6 +41,8 @@ typedef struct mesh {
 
 	ebuf_t *ebuf;
 	size_t ebuf_pos;
+
+	size_t refcount;
 } mesh_t;
 
 #ifdef __cplusplus
@@ -57,6 +59,8 @@ int mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer);
 void mesh_remove_from_vbuf(mesh_t *mesh);
 void mesh_remove_from_ebuf(mesh_t *mesh);
 void mesh_draw(mesh_t *mesh);
+void mesh_grab(mesh_t *mesh);
+void mesh_ungrab(mesh_t *mesh);
 
 #ifdef __cplusplus
 }
