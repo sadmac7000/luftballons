@@ -40,35 +40,35 @@
 
 const float vert_data[] = {
 //coords
-	-0.25f, -0.25f, -1.5f,  1.0f,
-	 0.25f, -0.25f, -1.5f,  1.0f,
-	 0.25f,  0.25f, -1.5f,  1.0f,
-	-0.25f,  0.25f, -1.5f,  1.0f,
+	-0.25f, -0.25f, -0.25f,  1.0f,
+	 0.25f, -0.25f, -0.25f,  1.0f,
+	 0.25f,  0.25f, -0.25f,  1.0f,
+	-0.25f,  0.25f, -0.25f,  1.0f,
 
-	-0.25f, -0.25f,  -1.0f, 1.0f,
-	 0.25f, -0.25f,  -1.0f, 1.0f,
-	 0.25f,  0.25f,  -1.0f, 1.0f,
-	-0.25f,  0.25f,  -1.0f, 1.0f,
+	-0.25f, -0.25f,  0.25f, 1.0f,
+	 0.25f, -0.25f,  0.25f, 1.0f,
+	 0.25f,  0.25f,  0.25f, 1.0f,
+	-0.25f,  0.25f,  0.25f, 1.0f,
 
-	-0.25f, -0.25f, -1.5f,  1.0f,
-	-0.25f, -0.25f,  -1.0f, 1.0f,
-	-0.25f,  0.25f,  -1.0f, 1.0f,
-	-0.25f,  0.25f, -1.5f,  1.0f,
+	-0.25f, -0.25f, -0.25f,  1.0f,
+	-0.25f, -0.25f,  0.25f, 1.0f,
+	-0.25f,  0.25f,  0.25f, 1.0f,
+	-0.25f,  0.25f, -0.25f,  1.0f,
 
-	 0.25f, -0.25f, -1.5f,  1.0f,
-	 0.25f, -0.25f,  -1.0f, 1.0f,
-	 0.25f,  0.25f,  -1.0f, 1.0f,
-	 0.25f,  0.25f, -1.5f,  1.0f,
+	 0.25f, -0.25f, -0.25f,  1.0f,
+	 0.25f, -0.25f,  0.25f, 1.0f,
+	 0.25f,  0.25f,  0.25f, 1.0f,
+	 0.25f,  0.25f, -0.25f,  1.0f,
 
-	-0.25f, -0.25f, -1.5f,  1.0f,
-	-0.25f, -0.25f,  -1.0f, 1.0f,
-	 0.25f, -0.25f,  -1.0f, 1.0f,
-	 0.25f, -0.25f, -1.5f,  1.0f,
+	-0.25f, -0.25f, -0.25f,  1.0f,
+	-0.25f, -0.25f,  0.25f, 1.0f,
+	 0.25f, -0.25f,  0.25f, 1.0f,
+	 0.25f, -0.25f, -0.25f,  1.0f,
 
-	-0.25f,  0.25f, -1.5f,  1.0f,
-	-0.25f,  0.25f,  -1.0f, 1.0f,
-	 0.25f,  0.25f,  -1.0f, 1.0f,
-	 0.25f,  0.25f, -1.5f,  1.0f,
+	-0.25f,  0.25f, -0.25f,  1.0f,
+	-0.25f,  0.25f,  0.25f, 1.0f,
+	 0.25f,  0.25f,  0.25f, 1.0f,
+	 0.25f,  0.25f, -0.25f,  1.0f,
 //colors
 	1.0f,    0.0f, 0.0f, 1.0f,
 	1.0f,    0.0f, 0.0f, 1.0f,
@@ -269,8 +269,9 @@ update_camera(float time)
 void
 render(void)
 {
-	GLfloat offset[4] = { 0, 0, 0, 0 };
+	float offset[3] = { 0, 0, -1.25 };
 	float time = glutGet(GLUT_ELAPSED_TIME);
+	float transform[16];
 
 	handle_reshape();
 	update_camera(time);
@@ -281,8 +282,10 @@ render(void)
 
 	get_offsets(&offset[0], &offset[1], 0, time);
 
-	shader_set_uniform_mat(shader, "transform", camera->to_clip_xfrm);
-	shader_set_uniform_vec(shader, "offset", offset);
+	object_set_translation(object, offset);
+	object_get_transform_mat(object, transform);
+	matrix_multiply(camera->to_clip_xfrm, transform, transform);
+	shader_set_uniform_mat(shader, "transform", transform);
 
 	object_draw(object);
 

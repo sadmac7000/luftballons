@@ -48,7 +48,8 @@ object_draw(object_t *object)
 {
 	size_t i;
 
-	mesh_draw(object->mesh);
+	if (object->mesh)
+		mesh_draw(object->mesh);
 	
 	/* FIXME: Recursion: Bad? */
 	for (i = 0; i < object->child_count; i++)
