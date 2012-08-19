@@ -271,23 +271,17 @@ render(void)
 {
 	float offset[3] = { 0, 0, -1.25 };
 	float time = glutGet(GLUT_ELAPSED_TIME);
-	float transform[16];
 
 	handle_reshape();
 	update_camera(time);
+	get_offsets(&offset[0], &offset[1], 0, time);
+	object_set_translation(object, offset);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	get_offsets(&offset[0], &offset[1], 0, time);
-
-	object_set_translation(object, offset);
-	object_get_transform_mat(object, transform);
-	matrix_multiply(camera->to_clip_xfrm, transform, transform);
-	shader_set_uniform_mat(shader, "transform", transform);
-
-	object_draw(object);
+	object_draw(object, camera);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -405,7 +399,7 @@ main(int argc, char **argv)
 	vbuf_ungrab(vbuf);
 	ebuf_ungrab(ebuf);
 
-	object = object_create(mesh);
+	object = object_create(mesh, NULL);
 	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	glutMainLoop();

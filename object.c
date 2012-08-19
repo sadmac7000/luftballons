@@ -24,11 +24,12 @@
  * Create an object.
  **/
 object_t *
-object_create(mesh_t *mesh)
+object_create(mesh_t *mesh, object_t *parent)
 {
 	object_t *ret = xmalloc(sizeof(mesh_t));
 
 	ret->mesh = mesh;
+	ret->parent = parent;
 	mesh_grab(mesh);
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
@@ -44,16 +45,21 @@ object_create(mesh_t *mesh)
  * Draw an object in the current context.
  **/
 void
-object_draw(object_t *object)
+object_draw(object_t *object, camera_t *camera)
 {
 	size_t i;
+	float transform[16];
+
+	object_get_transform_mat(object, transform);
+	matrix_multiply(camera->to_clip_xfrm, transform, transform);
+	shader_set_uniform_mat(object->mesh->shader, "transform", transform);
 
 	if (object->mesh)
 		mesh_draw(object->mesh);
-	
+
 	/* FIXME: Recursion: Bad? */
 	for (i = 0; i < object->child_count; i++)
-		object_draw(object->children[i]);
+		object_draw(object->children[i], camera);
 }
 
 /**

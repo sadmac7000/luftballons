@@ -21,6 +21,7 @@
 #include "mesh.h"
 #include "quat.h"
 #include "shader.h"
+#include "camera.h"
 
 /**
  * A callback for setting up a shader before an object is rendered.
@@ -45,12 +46,12 @@ typedef struct object {
 extern "C" {
 #endif
 
-object_t *object_create(mesh_t *mesh);
+object_t *object_create(mesh_t *mesh, object_t *parent);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
 void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
-void object_draw(object_t *object);
+void object_draw(object_t *object, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 
 #ifdef __cplusplus
