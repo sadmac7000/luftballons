@@ -28,7 +28,8 @@ luftballons_OBJS =	\
 	interval.o	\
 	camera.o	\
 	matrix.o	\
-	object.o
+	object.o	\
+	quat.o
 
 luftballons_LINK=-lglut -lGL -lm
 
