@@ -30,10 +30,10 @@ extern "C" {
  **/
 static inline void matrix_print(float m[16])
 {
-	printf("%f %f %f %f\n", m[0], m[1], m[2], m[3]);
-	printf("%f %f %f %f\n", m[4], m[5], m[6], m[7]);
-	printf("%f %f %f %f\n", m[8], m[9], m[10], m[11]);
-	printf("%f %f %f %f\n", m[12], m[13], m[14], m[15]);
+	printf("%f %f %f %f\n", m[0], m[4], m[8], m[12]);
+	printf("%f %f %f %f\n", m[1], m[5], m[9], m[13]);
+	printf("%f %f %f %f\n", m[2], m[6], m[10], m[14]);
+	printf("%f %f %f %f\n", m[3], m[7], m[11], m[15]);
 }
 
 /**

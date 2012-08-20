@@ -41,10 +41,10 @@ camera_calc_matrix(camera_t *camera)
 	float right_vec[3];
 
 	float trans_mat[16] = {
-		1, 0, 0, -camera->pos[0],
-		0, 1, 0, -camera->pos[1],
-		0, 0, 1, -camera->pos[2],
-		0, 0, 0, 1,
+		1, 0, 0, 0,
+		0, 1, 0, 0,
+		0, 0, 1, 0,
+		-camera->pos[0], -camera->pos[1], -camera->pos[2], 1,
 	};
 
 	float rot_mat[16] = {
@@ -57,8 +57,8 @@ camera_calc_matrix(camera_t *camera)
 	float clip[16] = {
 		1, 0, 0, 0,
 		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, -1, 0,
+		0, 0, 1, -1,
+		0, 0, 0, 0,
 	};
 
 	float xfrm_mat[16];
@@ -66,7 +66,7 @@ camera_calc_matrix(camera_t *camera)
 	clip[0] = scale / aspect;
 	clip[5] = scale;
 	clip[10] = (near + far)/(near - far);
-	clip[11] = 2*near*far/(near - far);
+	clip[14] = 2*near*far/(near - far);
 
 	vec3_subtract(camera->target, camera->pos, look_vec);
 	vec3_normalize(look_vec, look_vec);
@@ -77,15 +77,15 @@ camera_calc_matrix(camera_t *camera)
 	vec3_scale(look_vec, look_vec, -1);
 
 	rot_mat[0] = right_vec[0];
-	rot_mat[1] = right_vec[1];
-	rot_mat[2] = right_vec[2];
+	rot_mat[4] = right_vec[1];
+	rot_mat[8] = right_vec[2];
 
-	rot_mat[4] = up_vec[0];
+	rot_mat[1] = up_vec[0];
 	rot_mat[5] = up_vec[1];
-	rot_mat[6] = up_vec[2];
+	rot_mat[9] = up_vec[2];
 
-	rot_mat[8] = look_vec[0];
-	rot_mat[9] = look_vec[1];
+	rot_mat[2] = look_vec[0];
+	rot_mat[6] = look_vec[1];
 	rot_mat[10] = look_vec[2];
 
 	matrix_multiply(rot_mat, trans_mat, xfrm_mat);
@@ -130,7 +130,6 @@ camera_create(float near, float far, float aspect, float fov1x)
 	ret->target[1] = 0;
 	ret->target[2] = -1;
 
-	memset(ret->to_clip_xfrm, 0, 16 * sizeof(float));
 	camera_calc_matrix(ret);
 
 	return ret;

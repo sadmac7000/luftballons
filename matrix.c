@@ -60,7 +60,7 @@ matrix_multiply(float a[16], float b[16], float result[16])
 	for (i = 0; i < 4; i++)
 		for (j = 0; j < 4; j++)
 			for (k = 0; k < 4; k++)
-				result[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
+				result[i + j * 4] += a[i + k * 4] * b[k + j * 4];
 }
 
 /**

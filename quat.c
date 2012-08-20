@@ -21,21 +21,6 @@
 #include "quat.h"
 
 /**
- * Initialize a quaternion
- **/
-void
-quat_init(quat_t *quat, float x, float y, float z, float theta)
-{
-	float s = sinf(theta / 2);
-
-	quat->c[0] = x * s;
-	quat->c[1] = y * s;
-	quat->c[2] = z * s;
-	quat->c[3] = cosf(theta);
-	quat->mul_count = 0;
-}
-
-/**
  * Normalize a quaternion
  **/
 static void
@@ -54,6 +39,23 @@ quat_normalize(quat_t *quat)
 	quat->c[1] /= mag;
 	quat->c[2] /= mag;
 	quat->c[3] /= mag;
+
+	quat->mul_count = 0;
+}
+
+/**
+ * Initialize a quaternion
+ **/
+void
+quat_init(quat_t *quat, float x, float y, float z, float theta)
+{
+	float s = sinf(theta / 2);
+
+	quat->c[0] = x * s;
+	quat->c[1] = y * s;
+	quat->c[2] = z * s;
+	quat->c[3] = cosf(theta);
+	quat_normalize(quat);
 }
 
 /**
@@ -109,17 +111,36 @@ quat_dup(quat_t *in, quat_t *out)
 void
 quat_to_matrix(quat_t *quat, float m[16])
 {
-	m[0]  = 1 - 2 * quat->c[1] * quat->c[1] - 2 * quat->c[2] * quat->c[2];
-	m[1]  =     2 * quat->c[0] * quat->c[1] - 2 * quat->c[3] * quat->c[2];
-	m[2]  =     2 * quat->c[0] * quat->c[2] + 2 * quat->c[3] * quat->c[1];
-	m[3]  = 0;
-	m[4]  =     2 * quat->c[0] * quat->c[1] + 2 * quat->c[3] * quat->c[2];
-	m[5]  = 1 - 2 * quat->c[0] * quat->c[0] - 2 * quat->c[2] * quat->c[2];
-	m[6]  =     2 * quat->c[1] * quat->c[2] - 2 * quat->c[3] * quat->c[0];
-	m[7]  = 0;
-	m[8]  =     2 * quat->c[0] * quat->c[2] - 2 * quat->c[3] * quat->c[1];
-	m[9]  =     2 * quat->c[1] * quat->c[2] + 2 * quat->c[3] * quat->c[0];
-	m[10] = 1 - 2 * quat->c[0] * quat->c[0] - 2 * quat->c[1] * quat->c[1];
-	m[11] = m[12] = m[13] = m[14] = 0;
+	float w = quat->c[3];
+	float x = quat->c[0];
+	float y = quat->c[1];
+	float z = quat->c[2];
+
+	quat_normalize(quat);
+
+	float theta = acosf(w);
+	float sin_t = sinf(theta);
+	float _x = x / sin_t;
+	float _y = y /sin_t;
+	float _z = z / sin_t;
+
+	printf("out: %f %f %f %f\n", _x, _y, _z, theta);
+
+	m[0]  = 1 - 2 * y * y - 2 * z * z;
+	m[4]  =     2 * x * y - 2 * w * z;
+	m[8]  =     2 * x * z + 2 * w * y;
+	m[12] = 0;
+
+	m[1]  =     2 * x * y + 2 * w * z;
+	m[5]  = 1 - 2 * x * x - 2 * z * z;
+	m[9]  =     2 * y * z - 2 * w * x;
+	m[13] = 0;
+
+	m[2]  =     2 * x * z - 2 * w * y;
+	m[6]  =     2 * y * z + 2 * w * x;
+	m[10] = 1 - 2 * x * x - 2 * y * y;
+	m[14] = 0;
+
+	m[3] = m[7] = m[11] = 0;
 	m[15] = 1;
 }
