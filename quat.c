@@ -54,7 +54,7 @@ quat_init(quat_t *quat, float x, float y, float z, float theta)
 	quat->c[0] = x * s;
 	quat->c[1] = y * s;
 	quat->c[2] = z * s;
-	quat->c[3] = cosf(theta);
+	quat->c[3] = cosf(theta / 2);
 	quat_normalize(quat);
 }
 
@@ -117,14 +117,6 @@ quat_to_matrix(quat_t *quat, float m[16])
 	float z = quat->c[2];
 
 	quat_normalize(quat);
-
-	float theta = acosf(w);
-	float sin_t = sinf(theta);
-	float _x = x / sin_t;
-	float _y = y /sin_t;
-	float _z = z / sin_t;
-
-	printf("out: %f %f %f %f\n", _x, _y, _z, theta);
 
 	m[0]  = 1 - 2 * y * y - 2 * z * z;
 	m[4]  =     2 * x * y - 2 * w * z;

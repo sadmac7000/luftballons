@@ -15,6 +15,9 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include <err.h>
+#include <string.h>
+
 #include "object.h"
 #include "util.h"
 #include "matrix.h"
@@ -30,7 +33,9 @@ object_create(mesh_t *mesh, object_t *parent)
 
 	ret->mesh = mesh;
 	ret->parent = parent;
-	mesh_grab(mesh);
+
+	if (mesh)
+		mesh_grab(mesh);
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	quat_init(&ret->rot, 0, 1, 0, 0);
@@ -38,7 +43,33 @@ object_create(mesh_t *mesh, object_t *parent)
 	ret->children = NULL;
 	ret->child_count = 0;
 
+	if (ret->parent)
+		object_add_child(ret->parent, ret);
+
 	return ret;
+}
+
+/**
+ * Draw an object given a global transform.
+ **/
+static void
+object_draw_matrix(object_t *object, float parent_trans[16])
+{
+	size_t i;
+	float transform[16];
+
+	object_get_transform_mat(object, transform);
+	matrix_multiply(parent_trans, transform, transform);
+
+	if (object->mesh) {
+		shader_set_uniform_mat(object->mesh->shader, "transform",
+				       transform);
+		mesh_draw(object->mesh);
+	}
+
+	/* FIXME: Recursion: Bad? */
+	for (i = 0; i < object->child_count; i++)
+		object_draw_matrix(object->children[i], transform);
 }
 
 /**
@@ -47,19 +78,7 @@ object_create(mesh_t *mesh, object_t *parent)
 void
 object_draw(object_t *object, camera_t *camera)
 {
-	size_t i;
-	float transform[16];
-
-	object_get_transform_mat(object, transform);
-	matrix_multiply(camera->to_clip_xfrm, transform, transform);
-	shader_set_uniform_mat(object->mesh->shader, "transform", transform);
-
-	if (object->mesh)
-		mesh_draw(object->mesh);
-
-	/* FIXME: Recursion: Bad? */
-	for (i = 0; i < object->child_count; i++)
-		object_draw(object->children[i], camera);
+	object_draw_matrix(object, camera->to_clip_xfrm);
 }
 
 /**
@@ -115,4 +134,48 @@ object_get_transform_mat(object_t *object, float matrix[16])
 	quat_to_matrix(&object->rot, rotate);
 
 	matrix_multiply(translate, rotate, matrix);
+}
+
+/**
+ * Add a child to an object.
+ **/
+void
+object_add_child(object_t *object, object_t *child)
+{
+	if (! object->child_count)
+		object->children = xrealloc(object->children,
+					    sizeof(object_t *));
+	else if (! (object->child_count & (object->child_count - 1)))
+		object->children = xrealloc(object->children,
+					    2 * object->child_count *
+					    sizeof(object_t *));
+
+	object->children[object->child_count++] = child;
+	child->parent = object;
+}
+
+/**
+ * Remove an object from its parent.
+ **/
+void
+object_unparent(object_t *object)
+{
+	size_t i;
+	object_t *parent;
+
+	if (! object->parent)
+		return;
+
+	parent = object->parent;
+	object->parent = NULL;
+
+	for (i = 0; i < parent->child_count; i++)
+		if (parent->children[i] == object)
+			break;
+
+	if (i == parent->child_count)
+		err(1, "Broken parent link for object");
+
+	memcpy(&parent->children[i], &parent->children[i + 1],
+	       (parent->child_count - i) * sizeof(object_t *));
 }

@@ -53,6 +53,8 @@ void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
 void object_draw(object_t *object, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
+void object_add_child(object_t *object, object_t *child);
+void object_unparent(object_t *object);
 
 #ifdef __cplusplus
 }

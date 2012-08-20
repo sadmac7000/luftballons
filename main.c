@@ -37,6 +37,7 @@
 #include "ebuf.h"
 #include "camera.h"
 #include "matrix.h"
+#include "quat.h"
 
 const float vert_data[] = {
 //coords
@@ -121,7 +122,8 @@ const uint16_t elem_data[] = {
 	20, 22, 21,
 };
 
-object_t *object;
+object_t *cube;
+object_t *cube_center;
 shader_t *shader;
 camera_t *camera;
 
@@ -155,19 +157,15 @@ handle_reshape(void)
 	glViewport(0, 0, win_sz[0], win_sz[1]);
 }
 
-void
-get_offsets(GLfloat *x, GLfloat *y, int direction, float time)
+float
+get_angle(float time)
 {
 	float period = 5000.0;
 	float scale = 3.14159 * 2.0 / period;
 
 	float angle = fmodf(time, period) * scale;
 
-	if (direction)
-		angle = 3.14159 * 2.0 - angle;
-
-	*x = cosf(angle) * 0.5;
-	*y = sinf(angle) * 0.5;
+	return angle;
 }
 
 void
@@ -269,19 +267,28 @@ update_camera(float time)
 void
 render(void)
 {
-	float offset[3] = { 0, 0, -1.25 };
+	float offset[3] = { -.5, 0, -1.25 };
 	float time = glutGet(GLUT_ELAPSED_TIME);
+	float angle;
+	quat_t cube_rot;
+	quat_t center_rot;
 
 	handle_reshape();
 	update_camera(time);
-	get_offsets(&offset[0], &offset[1], 0, time);
-	object_set_translation(object, offset);
+	angle = get_angle(time);
+
+	quat_init(&cube_rot, 0, 0, 1, angle);
+	quat_init(&center_rot, 0, 0, -1, angle);
+
+	object_set_rotation(cube, &cube_rot);
+	object_set_rotation(cube_center, &center_rot);
+	object_set_translation(cube, offset);
 
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	object_draw(object, camera);
+	object_draw(cube_center, camera);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -399,7 +406,8 @@ main(int argc, char **argv)
 	vbuf_ungrab(vbuf);
 	ebuf_ungrab(ebuf);
 
-	object = object_create(mesh, NULL);
+	cube_center = object_create(NULL, NULL);
+	cube = object_create(mesh, cube_center);
 	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	glutMainLoop();
