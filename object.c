@@ -123,12 +123,11 @@ object_set_translation(object_t *object, float vec[3])
 void
 object_get_transform_mat(object_t *object, float matrix[16])
 {
-	float translate[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		object->trans[0], object->trans[1], object->trans[2], 1,
-	};
+	MATRIX_DECL(translate,
+		    1, 0, 0, object->trans[0],
+		    0, 1, 0, object->trans[1],
+		    0, 0, 1, object->trans[2],
+		    0, 0, 0, 1);
 	float rotate[16];
 
 	quat_to_matrix(&object->rot, rotate);

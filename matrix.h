@@ -21,6 +21,15 @@
 #include <stdio.h>
 #include <string.h>
 
+#define MATRIX_DECL(matrix, a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
+	float matrix[16] = { a,e,i,m, b,f,j,n, c,g,k,o, d,h,l,p }
+
+#define MATRIX_DECL_IDENT(matrix) MATRIX_DECL(matrix,  \
+					      1,0,0,0, \
+					      0,1,0,0, \
+					      0,0,1,0, \
+					      0,0,0,1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

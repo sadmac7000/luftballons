@@ -39,27 +39,19 @@ camera_calc_matrix(camera_t *camera)
 	float look_vec[3];
 	float up_vec[] = { 0.0, 1.0, 0.0 };
 	float right_vec[3];
+	MATRIX_DECL_IDENT(rot_mat);
 
-	float trans_mat[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		-camera->pos[0], -camera->pos[1], -camera->pos[2], 1,
-	};
+	MATRIX_DECL(trans_mat,
+		    1, 0, 0, -camera->pos[0],
+		    0, 1, 0, -camera->pos[1],
+		    0, 0, 1, -camera->pos[2],
+		    0, 0, 0, 1);
 
-	float rot_mat[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, 0,
-		0, 0, 0, 1,
-	};
-
-	float clip[16] = {
-		1, 0, 0, 0,
-		0, 1, 0, 0,
-		0, 0, 1, -1,
-		0, 0, 0, 0,
-	};
+	MATRIX_DECL(clip,
+		    1, 0, 0, 0,
+		    0, 1, 0, 0,
+		    0, 0, 1, 0,
+		    0, 0, -1, 0);
 
 	float xfrm_mat[16];
 
