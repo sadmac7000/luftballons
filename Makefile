@@ -42,6 +42,7 @@ endef
 $(foreach prog,$(TEST_PROGS),$(eval $(call SET_DEPS,$(prog))))
 $(foreach prog,$(PROGS),$(eval $(call SET_DEPS,$(prog))))
 $(foreach file,$(wildcard *.c),$(eval $(shell $(CC) -MM $(file) | sed 's/\\//')))
+$(foreach file,$(wildcard *.cc),$(eval $(shell $(CXX) -MM $(file) | sed 's/\\//')))
 
 $(TEST_PROGS):
 	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
