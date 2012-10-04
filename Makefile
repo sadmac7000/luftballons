@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 CLANGFLAGS = --std=gnu99
-CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -I/usr/include/collada-dom -I/usr/include/collada-dom/1.5
+CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -I/usr/include/collada-dom -I/usr/include/collada-dom/1.4
 CC = gcc
 CXX = g++
 LINK = $(CC)
@@ -33,7 +33,7 @@ luftballons_OBJS =	\
 	dae_load.o	\
 	quat.o
 
-luftballons_LINK=-lglut -lGL -lm -lstdc++ -lcollada15dom -lboost_system
+luftballons_LINK=-lglut -lGL -lm -lstdc++ -lcollada14dom -lboost_system
 
 define SET_DEPS =
 $(1): $$($(1)_OBJS)
