@@ -54,12 +54,17 @@ typedef struct dae_parse_frame {
  * file: Name of file we're parsing.
  * count: Number of elements deep we are.
  * skip_count: Count at which we resume processing elements.
+ *
+ * float_reg: A float pointer value that represents data found previously.
+ * size_reg: A size_t that represents data found previously.
  **/
 typedef struct dae_parse_state {
 	dae_parse_frame_t *frame;
 	const char *file;
 	size_t count;
 	size_t skip_count;
+	float *float_reg;
+	size_t size_reg;
 } dae_parse_state_t;
 
 /**
@@ -81,15 +86,15 @@ static void
 dae_parse_state_push(dae_parse_state_t *state, dae_start_t start,
 		     dae_end_t end, dae_chardata_t text)
 {
-	dae_parse_frame_t *new = xmalloc(sizeof(dae_parse_frame_t));
+	dae_parse_frame_t *new_frame = xmalloc(sizeof(dae_parse_frame_t));
 
-	new->prev = state->frame;
-	state->frame = new;
+	new_frame->prev = state->frame;
+	state->frame = new_frame;
 
-	new->start = start;
-	new->end = end;
-	new->text = text;
-	new->count = state->count;
+	new_frame->start = start;
+	new_frame->end = end;
+	new_frame->text = text;
+	new_frame->count = state->count;
 }
 
 /**
@@ -132,11 +137,12 @@ dae_elem_end(void *data, const char *el)
 
 	if (state->count == state->frame->count)
 		dae_parse_state_pop(state);
-	else if (!state->skip_count && state->frame->end)
-		state->frame->end(data, el);
 
 	if (state->skip_count == state->count)
 		state->skip_count = 0;
+
+	if (!state->skip_count && state->frame->end)
+		state->frame->end(data, el);
 
 	state->count--;
 }
@@ -162,14 +168,72 @@ dae_elem_chardata(void *data, const XML_Char *s, int len)
 }
 
 /**
+ * Process a long text string into an array of floats.
+ **/
+static void
+dae_grab_floats(struct dae_parse_state *state, const XML_Char *s, int len)
+{
+	char *strtok_var;
+	char *got;
+	char *buf = xmalloc(len + 1);
+
+	size_t count;
+
+	memcpy(buf, s, len);
+	buf[len] = '\0';
+
+	state->float_reg = xmalloc(8 * state->size_reg);
+
+	while ((got = strtok_r(buf, " \t\n\r\v", &strtok_var))) {
+		buf = NULL;
+
+		if (sscanf(got, "%f", &state->float_reg[count]) != 1)
+			errx(1, "Collada file expected float at '%s'", got);
+
+		if (++count > state->size_reg)
+			errx(1, "Too many floats in Collada float array");
+	}
+
+	free(buf);
+}
+
+/**
+ * Scan an attribute array and return the given attribute's value as a size_t.
+ **/
+static size_t
+dae_attr_get_size(const char **attrs, const char *attr)
+{
+	size_t ret;
+	size_t i;
+
+	for (i = 0; attrs[i]; i += 2) {
+		if (strcmp(attrs[i], attr))
+			continue;
+
+		if (! sscanf(attrs[i + 1], "%ld", &ret))
+			errx(1, "Collada file expected int, got '%s'",
+			     attrs[i + 1]);
+
+		return ret;
+	}
+
+	errx(1, "Collada file expected attribute '%s'", attr);
+}
+
+/**
  * Geometry element start handler.
  **/
 static void
 dae_start_geom(dae_parse_state_t *state, const char *el, const char **attrs)
 {
-	(void)state;
 	(void)attrs;
-	printf("%s\n", el);
+
+	if (! strcmp(el, "float_array")) {
+		state->size_reg = dae_attr_get_size(attrs, "count");
+		dae_parse_state_push(state, NULL, NULL, dae_grab_floats);
+	} else {
+		printf("%s\n", el);
+	}
 }
 
 /**
@@ -178,7 +242,15 @@ dae_start_geom(dae_parse_state_t *state, const char *el, const char **attrs)
 static void
 dae_end_geom(dae_parse_state_t *state, const char *el)
 {
-	printf("/%s\n", el);
+	(void)state;
+
+	if (! strcmp(el, "float_array")) {
+		printf("<%ld float values> %f %f %f...\n",
+		       state->size_reg, state->float_reg[0],
+		       state->float_reg[1], state->float_reg[2]);
+	} else {
+		printf("/%s\n", el);
+	}
 }
 
 /**
@@ -201,6 +273,8 @@ dae_start_collada(dae_parse_state_t *state, const char *el, const char **attrs)
 static void
 dae_end_collada(dae_parse_state_t *state, const char *el)
 {
+	(void)state;
+	(void)el;
 	return;
 }
 
@@ -226,6 +300,9 @@ dae_do_load(const char *filename, const char *data, size_t len, size_t *count)
 	state.count = 0;
 	state.skip_count = 0;
 
+	state.float_reg = NULL;
+	state.size_reg = 0;
+
 	XML_SetUserData(parser, &state);
 	XML_SetElementHandler(parser, dae_elem_start, dae_elem_end);
 	XML_SetCharacterDataHandler(parser, dae_elem_chardata);
@@ -239,6 +316,8 @@ dae_do_load(const char *filename, const char *data, size_t len, size_t *count)
 
 	return NULL;
 }
+
+extern "C" {
 
 /**
  * Load an object or series of objects from a COLLADA file.
@@ -276,3 +355,5 @@ dae_load(const char *filename, size_t *count)
 	munmap((void *)buf, filesz);
 	return ret;
 }
+
+} /* extern "C" */

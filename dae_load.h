@@ -20,7 +20,15 @@
 
 #include "object.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 object_t **dae_load(const char *filename, size_t *count);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* DAE_LOAD_H */
 
