@@ -50,6 +50,7 @@ $(TEST_PROGS):
 $(PROGS):
 	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
 
+.PHONY: check
 check: $(TEST_PROGS)
 	@echo
 	@echo "Running checks"
@@ -71,4 +72,5 @@ clean:
 	$(call QUIET,RM,$(TEST_PROGS)) -f $(TEST_PROGS)
 	$(call QUIET,RM,$(PROGS)) -f $(PROGS)
 
+.PHONY: all
 all: $(PROGS)
