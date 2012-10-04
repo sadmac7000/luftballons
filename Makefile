@@ -3,6 +3,7 @@
 CLANGFLAGS = --std=gnu99
 CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES
 CC = gcc
+CXX = g++
 LINK = $(CC)
 RM = rm
 ifneq ($(QUIET),0)
@@ -29,9 +30,10 @@ luftballons_OBJS =	\
 	camera.o	\
 	matrix.o	\
 	object.o	\
+	dae_load.o	\
 	quat.o
 
-luftballons_LINK=-lglut -lGL -lm
+luftballons_LINK=-lglut -lGL -lm -lexpat -lstdc++
 
 define SET_DEPS =
 $(1): $$($(1)_OBJS)
@@ -55,6 +57,9 @@ check: $(TEST_PROGS)
 
 %.o: %.c
 	$(call QUIET,CC) $(CLANGFLAGS) $(CFLAGS) $(GCOV_FLAGS) -c -o $@ $<
+
+%.o: %.cc
+	$(call QUIET,CXX) $(CFLAGS) $(GCOV_FLAGS) -fpermissive -c -o $@ $<
 
 .PHONY: clean
 clean:
