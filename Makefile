@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := all
 
 CLANGFLAGS = --std=gnu99
-CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -I/usr/include/collada-dom -I/usr/include/collada-dom/1.4
+CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -isystem/usr/include/collada-dom -isystem/usr/include/collada-dom/1.4
 CC = gcc
 CXX = g++
 LINK = $(CC)
