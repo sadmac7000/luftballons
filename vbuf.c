@@ -24,7 +24,7 @@
 
 vbuf_t *current_vbuf = NULL;
 
-size_t type_sizes[] = {
+static size_t type_sizes[] = {
 	[GL_BYTE] = 1,
 	[GL_UNSIGNED_BYTE] = 1,
 	[GL_SHORT] = sizeof(short),
@@ -45,7 +45,7 @@ size_t type_sizes[] = {
 	[GL_UNSIGNED_INT_2_10_10_10_REV] = sizeof(int),
 };
 
-size_t type_sizes_max = sizeof(type_sizes) / sizeof(size_t) - 1;
+static size_t type_sizes_max = sizeof(type_sizes) / sizeof(size_t) - 1;
 
 /**
  * Find the expected size per element for a given segment in a vertex buffer.
