@@ -213,7 +213,6 @@ mesh_draw(mesh_t *mesh)
 	shader_activate(mesh->shader, mesh->vbuf);
 	ebuf_activate(mesh->ebuf);
 
-	/*glDrawArrays(mesh->type, mesh->vbuf_pos, mesh->verts);*/
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
 				 (void *)mesh->ebuf_pos, mesh->vbuf_pos);
 }
