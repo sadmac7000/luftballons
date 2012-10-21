@@ -29,6 +29,7 @@
 typedef struct vbuf_fmt {
 	char name[32];
 	size_t size;
+	GLenum type;
 } vbuf_fmt_t;
 
 /**
@@ -69,6 +70,7 @@ void vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size);
 ssize_t vbuf_locate_free_space(vbuf_t *buffer, size_t size);
 void vbuf_setup_vertex_attribute(vbuf_t *buffer,
 				   const char *name, GLint handle);
+size_t vbuf_segment_size(vbuf_fmt_t *seg);
 
 #ifdef __cplusplus
 }

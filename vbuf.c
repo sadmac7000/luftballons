@@ -24,6 +24,46 @@
 
 vbuf_t *current_vbuf = NULL;
 
+size_t type_sizes[] = {
+	[GL_BYTE] = 1,
+	[GL_UNSIGNED_BYTE] = 1,
+	[GL_SHORT] = sizeof(short),
+	[GL_UNSIGNED_SHORT] = sizeof(short),
+	[GL_INT] = sizeof(int),
+	[GL_UNSIGNED_INT] = sizeof(int),
+
+	/* Sort of a guess */
+	[GL_HALF_FLOAT] = sizeof(float) / 2,
+
+	[GL_FLOAT] = sizeof(float),
+	[GL_DOUBLE] = sizeof(double),
+
+	/* http://www.opengl.org/registry/specs/OES/OES_fixed_point.txt */
+	[GL_FIXED] = 4,
+
+	[GL_INT_2_10_10_10_REV] = sizeof(int),
+	[GL_UNSIGNED_INT_2_10_10_10_REV] = sizeof(int),
+};
+
+size_t type_sizes_max = sizeof(type_sizes) / sizeof(size_t) - 1;
+
+/**
+ * Find the expected size per element for a given segment in a vertex buffer.
+ **/
+size_t
+vbuf_segment_size(vbuf_fmt_t *seg)
+{
+	size_t ret = 0;
+
+	if (seg->type <= type_sizes_max)
+		ret = type_sizes[seg->type];
+
+	if (ret)
+		return ret * seg->size;
+
+	errx(1, "Tried to get size of invalid GL type");
+}
+
 /**
  * Create a new buffer object.
  *
@@ -42,7 +82,7 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
 	GLsizeiptr byte_size = 0;
 
 	for (i = 0; i < segments; i++)
-		byte_size += segment_descriptors[i].size;
+		byte_size += vbuf_segment_size(&segment_descriptors[i]);
 
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
@@ -90,7 +130,7 @@ vbuf_setup_vertex_attribute(vbuf_t *buffer, const char *name, GLint handle)
 		if (! strcmp(seg->name, name))
 			break;
 
-		position += seg->size * buffer->vert_count;
+		position += vbuf_segment_size(seg) * buffer->vert_count;
 	}
 
 	if (i == buffer->segments) {
@@ -100,7 +140,7 @@ vbuf_setup_vertex_attribute(vbuf_t *buffer, const char *name, GLint handle)
 
 	vbuf_activate(buffer);
 	glEnableVertexAttribArray(i);
-	glVertexAttribPointer(handle, 4, GL_FLOAT, GL_FALSE, 0,
+	glVertexAttribPointer(handle, seg->size, seg->type, GL_FALSE, 0,
 			      (void *)position);
 }
 

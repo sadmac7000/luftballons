@@ -34,7 +34,7 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 	size_t i;
 
 	for (i = 0; i < segments; i++)
-		data_size *= segment_descriptors[i].size;
+		data_size *= vbuf_segment_size(&segment_descriptors[i]);
 
 	ret->vert_data = xmalloc(data_size);
 	memcpy(ret->vert_data, vert_data, data_size);
@@ -156,12 +156,13 @@ mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer)
 	for (i = 0; i < buffer->segments; i++) {
 		seg = &buffer->segment_descriptors[i];
 
-		glBufferSubData(GL_ARRAY_BUFFER, base + offset * seg->size,
-				mesh->verts * seg->size,
+		glBufferSubData(GL_ARRAY_BUFFER,
+				base + offset * vbuf_segment_size(seg),
+				mesh->verts * vbuf_segment_size(seg),
 				mesh->vert_data + local_base);
 
-		base += seg->size * buffer->vert_count;
-		local_base += seg->size * mesh->verts;
+		base += vbuf_segment_size(seg) * buffer->vert_count;
+		local_base += vbuf_segment_size(seg) * mesh->verts;
 	}
 
 	vbuf_grab(buffer);

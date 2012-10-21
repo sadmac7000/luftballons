@@ -365,8 +365,8 @@ main(int argc, char **argv)
 	mesh_t *mesh;
 
 	vbuf_fmt_t vert_regions[2] = {
-		{ "position", 4 * sizeof(float), },
-		{ "colorin", 4 * sizeof(float), },
+		{ "position", 4, GL_FLOAT, },
+		{ "colorin", 4, GL_FLOAT, },
 	};
 
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
