@@ -68,8 +68,7 @@ void vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size);
 void vbuf_activate(vbuf_t *buffer);
 void vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size);
 ssize_t vbuf_locate_free_space(vbuf_t *buffer, size_t size);
-void vbuf_setup_vertex_attribute(vbuf_t *buffer,
-				   const char *name, GLint handle);
+void vbuf_setup_vertex_attribute(const char *name, GLint handle);
 size_t vbuf_segment_size(vbuf_fmt_t *seg);
 
 #ifdef __cplusplus

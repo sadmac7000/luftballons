@@ -210,7 +210,8 @@ mesh_draw(mesh_t *mesh)
 	if (! mesh->ebuf)
 		errx(1, "Drawing mesh without element buffer");
 
-	shader_activate(mesh->shader, mesh->vbuf);
+	vbuf_activate(mesh->vbuf);
+	shader_activate(mesh->shader);
 	ebuf_activate(mesh->ebuf);
 
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,

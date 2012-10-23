@@ -156,8 +156,8 @@ shader_create(const char *vertex, const char *frag)
 /**
  * Set vertex attributes.
  **/
-static void
-shader_set_vertex_attrs(shader_t *shader, vbuf_t *buffer)
+void
+shader_set_vertex_attrs()
 {
 	GLint attrs;
 	GLint namesz;
@@ -166,17 +166,21 @@ shader_set_vertex_attrs(shader_t *shader, vbuf_t *buffer)
 	GLint sz;
 	GLenum type;
 
-	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTES, &attrs);
-	glGetProgramiv(shader->gl_handle, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-		       &namesz);
+	if (! current_shader)
+		return;
+
+	glGetProgramiv(current_shader->gl_handle, GL_ACTIVE_ATTRIBUTES,
+		       &attrs);
+	glGetProgramiv(current_shader->gl_handle,
+		       GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &namesz);
 
 	name = xmalloc(namesz);
 
 	for (i = 0; i < attrs; i++) {
-		glGetActiveAttrib(shader->gl_handle, i, namesz,
+		glGetActiveAttrib(current_shader->gl_handle, i, namesz,
 				  NULL, &sz, &type, name);
 
-		vbuf_setup_vertex_attribute(buffer, name, i);
+		vbuf_setup_vertex_attribute(name, i);
 	}
 
 	free(name);
@@ -186,15 +190,14 @@ shader_set_vertex_attrs(shader_t *shader, vbuf_t *buffer)
  * Enter this shader into the OpenGL state.
  **/
 void
-shader_activate(shader_t *shader, vbuf_t *buffer)
+shader_activate(shader_t *shader)
 {
-	if (current_shader != shader) {
-		current_shader = shader;
-		glUseProgram(shader->gl_handle);
-	}
+	if (current_shader == shader)
+		return;
 
-	vbuf_activate(buffer);
-	shader_set_vertex_attrs(shader, buffer);
+	current_shader = shader;
+	glUseProgram(shader->gl_handle);
+	shader_set_vertex_attrs();
 }
 
 /**

@@ -22,6 +22,9 @@
 #include "vbuf.h"
 #include "util.h"
 
+/* We keep this out of shader.h to prevent circular dependency. */
+void shader_set_vertex_attrs();
+
 vbuf_t *current_vbuf = NULL;
 
 static size_t type_sizes[] = {
@@ -118,27 +121,29 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
  * Setup the vertex attribute named for the attribute handle given.
  **/
 void
-vbuf_setup_vertex_attribute(vbuf_t *buffer, const char *name, GLint handle)
+vbuf_setup_vertex_attribute(const char *name, GLint handle)
 {
 	size_t i;
 	vbuf_fmt_t *seg;
 	size_t position = 0;
 
-	for (i = 0; i < buffer->segments; i++) {
-		seg = &buffer->segment_descriptors[i];
+	if (! current_vbuf)
+		return;
+
+	for (i = 0; i < current_vbuf->segments; i++) {
+		seg = &current_vbuf->segment_descriptors[i];
 
 		if (! strcmp(seg->name, name))
 			break;
 
-		position += vbuf_segment_size(seg) * buffer->vert_count;
+		position += vbuf_segment_size(seg) * current_vbuf->vert_count;
 	}
 
-	if (i == buffer->segments) {
+	if (i == current_vbuf->segments) {
 		glDisableVertexAttribArray(i);
 		return;
 	}
 
-	vbuf_activate(buffer);
 	glEnableVertexAttribArray(i);
 	glVertexAttribPointer(handle, seg->size, seg->type, GL_FALSE, 0,
 			      (void *)position);
@@ -197,8 +202,12 @@ vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size)
 void
 vbuf_activate(vbuf_t *buffer)
 {
+	if (current_vbuf == buffer)
+		return;
+
 	current_vbuf = buffer;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+	shader_set_vertex_attrs();
 }
 
 /**
