@@ -30,11 +30,13 @@ mesh_create(size_t verts, const float *vert_data,
 	    vbuf_fmt_t *segment_descriptors, GLenum type)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
-	size_t data_size = verts;
+	size_t data_size = 0;
 	size_t i;
 
 	for (i = 0; i < segments; i++)
-		data_size *= vbuf_segment_size(&segment_descriptors[i]);
+		data_size += vbuf_segment_size(&segment_descriptors[i]);
+
+	data_size *= verts;
 
 	ret->vert_data = xmalloc(data_size);
 	memcpy(ret->vert_data, vert_data, data_size);
