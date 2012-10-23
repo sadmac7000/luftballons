@@ -24,6 +24,7 @@
 #include <err.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #include <dae.h>
 #include <dom/domCOLLADA.h>
@@ -164,15 +165,11 @@ dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *seg)
  * Copy vertex data into the buffer.
  **/
 static void * 
-dae_copy_data(domAccessorRef accessor, GLenum type, size_t idx, void *buffer)
+dae_copy_data(domParam_Array params, size_t stride, daeElementRef source,
+	      GLenum type, size_t idx, void *buffer)
 {
-	daeElementRef source;
-	domParam_Array params = accessor->getParam_array();
 	size_t i;
-	size_t stride = accessor->getStride();
 	const char *name;
-
-	source = accessor->getSource().getElement();
 
 #define ASSIGNMENT_LOOP(type) ({				\
 	type *target = (type *)buffer;				\
@@ -298,11 +295,17 @@ dae_load_polylist(domMeshRef mesh)
 	bufsize = 0;
 
 	indices = polylist->getP()->getValue();
-	for (i = 0; i < input_count; i++)
+	for (i = 0; i < input_count; i++) {
+		domParam_Array params = sources[i]->getParam_array();
+		size_t stride = sources[i]->getStride();
+		daeElementRef source = sources[i]->getSource().getElement();
+
 		for (j = inputs[i]->getOffset(); j < vert_count;
-		     j += input_stride)
-			loc = dae_copy_data(sources[i], fmt[i].type,
-					    indices[j], loc);
+		     j += input_stride) {
+			loc = dae_copy_data(params, stride, source,
+					    fmt[i].type, indices[j], loc);
+		}
+	}
 
 	ebuf = (uint16_t *)xcalloc(vert_count, sizeof(uint16_t));
 
