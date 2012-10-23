@@ -243,7 +243,10 @@ dae_load_polylist(domMeshRef mesh)
 	domSourceRef source;
 	daeTArray<domAccessorRef> sources;
 	void *data;
+	uint16_t *ebuf;
+	void *loc;
 	size_t j;
+	mesh_t *out_mesh;
 
 	pa = mesh->getPolylist_array();
 	if (! pa.getCount())
@@ -281,22 +284,40 @@ dae_load_polylist(domMeshRef mesh)
 		return NULL;
 	}
 
+	if (vert_count >= 1 << 16)
+		errx(1, "Cannot load COLLADA mesh with %lu vertices (max %hu)",
+		     vert_count, ~(uint16_t)0);
+
 	bufsize = 0;
 
 	for (i = 0; i < input_count; i++)
 		bufsize += vbuf_segment_size(&fmt[i]) * vert_count;
 
 	data = xcalloc(1, bufsize);
+	loc = data;
 	bufsize = 0;
 
 	indices = polylist->getP()->getValue();
 	for (i = 0; i < input_count; i++)
 		for (j = inputs[i]->getOffset(); j < vert_count;
 		     j += input_stride)
-			data = dae_copy_data(sources[i], fmt[i].type,
-					     indices[j], data);
+			loc = dae_copy_data(sources[i], fmt[i].type,
+					    indices[j], loc);
 
-	return NULL;
+	ebuf = (uint16_t *)xcalloc(vert_count, sizeof(uint16_t));
+
+	for (i = 0; i < vert_count; i++)
+		ebuf[i] = i;
+
+	out_mesh = mesh_create(vert_count, (float *)data, vert_count,
+			       (uint16_t *)ebuf, input_count, fmt,
+			       GL_TRIANGLES);
+
+	free(data);
+	free(ebuf);
+	free(fmt);
+
+	return object_create(out_mesh, NULL);
 }
 
 /**
