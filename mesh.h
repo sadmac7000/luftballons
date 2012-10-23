@@ -24,7 +24,7 @@
 #include "ebuf.h"
 
 typedef struct mesh {
-	char *vert_data;
+	void *vert_data;
 	size_t verts;
 	GLenum type;
 
@@ -47,8 +47,8 @@ typedef struct mesh {
 extern "C" {
 #endif
 
-mesh_t *mesh_create(size_t verts, const float *vert_data,
-		    size_t elems, const uint16_t *elem_data, size_t segments,
+mesh_t *mesh_create(size_t verts, const void *vert_data, size_t elems,
+		    const uint16_t *elem_data, size_t segments,
 		    vbuf_fmt_t *segment_descriptors, GLenum type);
 size_t mesh_data_size(mesh_t *mesh);
 void mesh_destroy(mesh_t *mesh);

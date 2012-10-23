@@ -25,7 +25,7 @@
  * Create a new mesh object.
  **/
 mesh_t *
-mesh_create(size_t verts, const float *vert_data,
+mesh_create(size_t verts, const void *vert_data,
 	    size_t elems, const uint16_t *elem_data, size_t segments,
 	    vbuf_fmt_t *segment_descriptors, GLenum type)
 {
