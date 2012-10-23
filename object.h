@@ -24,11 +24,6 @@
 #include "camera.h"
 
 /**
- * A callback for setting up a shader before an object is rendered.
- **/
-typedef void (*object_prerender_t)(shader_t *shader);
-
-/**
  * An object. That is a mesh with a position and render context and all of
  * that.
  **/
@@ -51,7 +46,7 @@ void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
 void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
-void object_draw(object_t *object, camera_t *camera);
+void object_draw(object_t *object, shader_t *shader, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_add_child(object_t *object, object_t *child);
 void object_unparent(object_t *object);

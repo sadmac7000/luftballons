@@ -34,12 +34,11 @@ static size_t type_sizes[] = {
 	[GL_UNSIGNED_SHORT] = sizeof(GLushort),
 	[GL_INT] = sizeof(GLint),
 	[GL_UNSIGNED_INT] = sizeof(GLuint),
-
-	/* Sort of a guess */
-	[GL_HALF_FLOAT] = sizeof(GLfloat) / 2,
-
 	[GL_FLOAT] = sizeof(GLfloat),
 	[GL_DOUBLE] = sizeof(GLdouble),
+
+	/* http://www.opengl.org/registry/specs/NV/half_float.txt */
+	[GL_HALF_FLOAT] = 2,
 
 	/* http://www.opengl.org/registry/specs/OES/OES_fixed_point.txt */
 	[GL_FIXED] = 4,

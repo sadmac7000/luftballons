@@ -53,7 +53,7 @@ object_create(mesh_t *mesh, object_t *parent)
  * Draw an object given a global transform.
  **/
 static void
-object_draw_matrix(object_t *object, float parent_trans[16])
+object_draw_matrix(object_t *object, shader_t *shader, float parent_trans[16])
 {
 	size_t i;
 	float transform[16];
@@ -61,24 +61,25 @@ object_draw_matrix(object_t *object, float parent_trans[16])
 	object_get_transform_mat(object, transform);
 	matrix_multiply(parent_trans, transform, transform);
 
+	shader_activate(shader);
+
 	if (object->mesh) {
-		shader_set_uniform_mat(object->mesh->shader, "transform",
-				       transform);
+		shader_set_uniform_mat(shader, "transform", transform);
 		mesh_draw(object->mesh);
 	}
 
 	/* FIXME: Recursion: Bad? */
 	for (i = 0; i < object->child_count; i++)
-		object_draw_matrix(object->children[i], transform);
+		object_draw_matrix(object->children[i], shader, transform);
 }
 
 /**
  * Draw an object in the current context.
  **/
 void
-object_draw(object_t *object, camera_t *camera)
+object_draw(object_t *object, shader_t *shader, camera_t *camera)
 {
-	object_draw_matrix(object, camera->to_clip_xfrm);
+	object_draw_matrix(object, shader, camera->to_clip_xfrm);
 }
 
 /**

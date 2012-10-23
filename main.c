@@ -288,7 +288,7 @@ render(void)
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	object_draw(cube_center, camera);
+	object_draw(cube_center, shader, camera);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -394,7 +394,7 @@ main(int argc, char **argv)
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(shader, 24, vert_data, 36, elem_data, 2, vert_regions,
+	mesh = mesh_create(24, vert_data, 36, elem_data, 2, vert_regions,
 			   GL_TRIANGLES);
 
 	if (mesh_add_to_vbuf(mesh, vbuf))

@@ -22,13 +22,11 @@
 
 #include "vbuf.h"
 #include "ebuf.h"
-#include "shader.h"
 
 typedef struct mesh {
 	char *vert_data;
 	size_t verts;
 	GLenum type;
-	shader_t *shader;
 
 	char *elem_data;
 	size_t elems;
@@ -49,7 +47,7 @@ typedef struct mesh {
 extern "C" {
 #endif
 
-mesh_t *mesh_create(shader_t *shader, size_t verts, const float *vert_data,
+mesh_t *mesh_create(size_t verts, const float *vert_data,
 		    size_t elems, const uint16_t *elem_data, size_t segments,
 		    vbuf_fmt_t *segment_descriptors, GLenum type);
 size_t mesh_data_size(mesh_t *mesh);

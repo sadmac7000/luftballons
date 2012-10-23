@@ -25,7 +25,7 @@
  * Create a new mesh object.
  **/
 mesh_t *
-mesh_create(shader_t *shader, size_t verts, const float *vert_data,
+mesh_create(size_t verts, const float *vert_data,
 	    size_t elems, const uint16_t *elem_data, size_t segments,
 	    vbuf_fmt_t *segment_descriptors, GLenum type)
 {
@@ -47,7 +47,6 @@ mesh_create(shader_t *shader, size_t verts, const float *vert_data,
 	ret->segments = segments;
 	ret->segment_descriptors = xcalloc(segments, sizeof(vbuf_fmt_t));
 
-	ret->shader = shader;
 	ret->type = type;
 
 	ret->vbuf = NULL;
@@ -211,7 +210,6 @@ mesh_draw(mesh_t *mesh)
 		errx(1, "Drawing mesh without element buffer");
 
 	vbuf_activate(mesh->vbuf);
-	shader_activate(mesh->shader);
 	ebuf_activate(mesh->ebuf);
 
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
