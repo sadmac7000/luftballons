@@ -27,64 +27,19 @@ void shader_set_vertex_attrs();
 
 vbuf_t *current_vbuf = NULL;
 
-static size_t type_sizes[] = {
-	[GL_BYTE] = sizeof(GLbyte),
-	[GL_UNSIGNED_BYTE] = sizeof(GLubyte),
-	[GL_SHORT] = sizeof(GLshort),
-	[GL_UNSIGNED_SHORT] = sizeof(GLushort),
-	[GL_INT] = sizeof(GLint),
-	[GL_UNSIGNED_INT] = sizeof(GLuint),
-	[GL_FLOAT] = sizeof(GLfloat),
-	[GL_DOUBLE] = sizeof(GLdouble),
-
-	/* http://www.opengl.org/registry/specs/NV/half_float.txt */
-	[GL_HALF_FLOAT] = 2,
-
-	/* http://www.opengl.org/registry/specs/OES/OES_fixed_point.txt */
-	[GL_FIXED] = 4,
-
-	[GL_INT_2_10_10_10_REV] = sizeof(int),
-	[GL_UNSIGNED_INT_2_10_10_10_REV] = sizeof(int),
-};
-
-static size_t type_sizes_max = sizeof(type_sizes) / sizeof(size_t) - 1;
-
-/**
- * Find the expected size per element for a given segment in a vertex buffer.
- **/
-size_t
-vbuf_segment_size(vbuf_fmt_t *seg)
-{
-	size_t ret = 0;
-
-	if (seg->type <= type_sizes_max)
-		ret = type_sizes[seg->type];
-
-	if (ret)
-		return ret * seg->size;
-
-	errx(1, "Tried to get size of invalid GL type");
-}
-
 /**
  * Create a new buffer object.
  *
  * size: Vertices the buffer should accomodate.
- * segments: Number of segments.
- * segment_descriptors: Type of each segment.
+ * format: Segments that go in this buffer.
  **/
 vbuf_t *
-vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
+vbuf_create(size_t size, vbuf_fmt_t format)
 {
 	vbuf_t *ret;
 	GLuint handle;
 	GLenum error;
-	size_t segments_sz = segments * sizeof(vbuf_fmt_t);
-	size_t i;
-	GLsizeiptr byte_size = 0;
-
-	for (i = 0; i < segments; i++)
-		byte_size += vbuf_segment_size(&segment_descriptors[i]);
+	GLsizeiptr byte_size = vbuf_fmt_vert_size(format);
 
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
@@ -105,9 +60,7 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
 	ret->vert_size = byte_size;
 	ret->vert_count = size;
 	ret->gl_handle = handle;
-	ret->segments = segments;
-	ret->segment_descriptors = xmalloc(segments_sz);
-	memcpy(ret->segment_descriptors, segment_descriptors, segments_sz);
+	ret->format = format;
 	ret->refcount = 1;
 
 	intervals_init(&ret->free);
@@ -122,29 +75,35 @@ vbuf_create(size_t size, size_t segments, vbuf_fmt_t *segment_descriptors)
 void
 vbuf_setup_vertex_attribute(const char *name, GLint handle)
 {
-	size_t i;
-	vbuf_fmt_t *seg;
 	size_t position = 0;
+	size_t elems;
+	vbuf_fmt_t iter;
+	const char *sname;
+	size_t size;
+	GLenum type;
+	int found = 0;
 
 	if (! current_vbuf)
 		return;
 
-	for (i = 0; i < current_vbuf->segments; i++) {
-		seg = &current_vbuf->segment_descriptors[i];
+	iter = current_vbuf->format;
 
-		if (! strcmp(seg->name, name))
+	while (vbuf_fmt_pop_segment(&iter, &elems, &type, &sname, &size)) {
+		if (! strcmp(sname, name)) {
+			found = 1;
 			break;
+		}
 
-		position += vbuf_segment_size(seg) * current_vbuf->vert_count;
+		position += size * current_vbuf->vert_count;
 	}
 
-	if (i == current_vbuf->segments) {
-		glDisableVertexAttribArray(i);
+	if (! found) {
+		glDisableVertexAttribArray(handle);
 		return;
 	}
 
-	glEnableVertexAttribArray(i);
-	glVertexAttribPointer(handle, seg->size, seg->type, GL_FALSE, 0,
+	glEnableVertexAttribArray(handle);
+	glVertexAttribPointer(handle, elems, type, GL_FALSE, 0,
 			      (void *)position);
 }
 

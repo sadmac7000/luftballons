@@ -86,7 +86,7 @@ dae_vert_to_pos(domInputLocalOffsetRef input)
  * Load a single vertex data source.
  **/
 static domAccessorRef
-dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *seg)
+dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *fmt)
 {
 	domSource::domTechnique_commonRef tech;
 	domInputLocalRef vinput;
@@ -96,19 +96,18 @@ dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *seg)
 	daeElementRef source_data;
 	xsInteger min, max;
 	char *c;
-	const char *semantic = input->getSemantic();
+	char *name = xstrdup(input->getSemantic());
+	size_t elems;
 	domSourceRef source = input->getSource().getElement();
 
-	if (! strcmp(semantic, "VERTEX")) {
+	if (! strcmp(name, "VERTEX")) {
+		free(name);
 		vinput = dae_vert_to_pos(input);
-		semantic = vinput->getSemantic();
+		name = xstrdup(vinput->getSemantic());
 		source = vinput->getSource().getElement();
 	}
 
-	strncpy(seg->name, semantic, 31);
-	seg->name[31] = '\0';
-	
-	for (c = seg->name; *c; *c = tolower(*c), c++);
+	for (c = name; *c; *c = tolower(*c), c++);
 
 	if (source->typeID() != domSource::ID())
 		errx(1, "COLLADA vertex input points to source that's not a"
@@ -121,31 +120,30 @@ dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *seg)
 		     " unimplemented");
 
 	accessor = tech->getAccessor();
-	seg->size = dae_get_accessor_size(accessor);
+	elems = dae_get_accessor_size(accessor);
 
 	source_data = accessor->getSource().getElement();
 
 	if (source_data->typeID() == domBool_array::ID()) {
-		seg->type = GL_UNSIGNED_BYTE;
+		vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_BYTE);
 	} else if (source_data->typeID() == domInt_array::ID()) {
 		iarray = (domInt_arrayRef)source_data;
 		min = iarray->getMinInclusive();
 		max = iarray->getMaxInclusive();
 
 		if (min >= 0 && max < 256)
-			seg->type = GL_UNSIGNED_BYTE;
+			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_BYTE);
 		else if (min >= 0 && max < 65536)
-			seg->type = GL_UNSIGNED_SHORT;
+			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_SHORT);
 		else if (min >= 0)
-			seg->type = GL_UNSIGNED_INT;
+			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_INT);
 		else if (max < 128)
-			seg->type = GL_BYTE;
+			vbuf_fmt_add(fmt, name, elems, GL_BYTE);
 		else if (max < 32768)
-			seg->type = GL_SHORT;
+			vbuf_fmt_add(fmt, name, elems, GL_SHORT);
 		else
-			seg->type = GL_INT;
+			vbuf_fmt_add(fmt, name, elems, GL_INT);
 	} else if (source_data->typeID() == domFloat_array::ID()) {
-		seg->type = GL_FLOAT;
 		farray = (domFloat_arrayRef)source_data;
 
 		/* FIXME: We're using doubles for anything more precise than
@@ -153,7 +151,9 @@ dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *seg)
 		 * bit precision from the two numbers.
 		 */
 		if (farray->getDigits() > 6 || farray->getMagnitude() > 38)
-			seg->type = GL_DOUBLE;
+			vbuf_fmt_add(fmt, name, elems, GL_DOUBLE);
+		else
+			vbuf_fmt_add(fmt, name, elems, GL_FLOAT);
 	} else {
 		errx(1, "Unsupported COLLADA source type");
 	}
@@ -234,7 +234,8 @@ dae_load_polylist(domMeshRef mesh)
 	size_t i;
 	size_t vert_count;
 	size_t bufsize;
-	vbuf_fmt_t *fmt;
+	vbuf_fmt_t fmt = 0;
+	vbuf_fmt_t iter;
 	size_t input_count;
 	size_t input_stride;
 	domSourceRef source;
@@ -244,6 +245,7 @@ dae_load_polylist(domMeshRef mesh)
 	void *loc;
 	size_t j;
 	mesh_t *out_mesh;
+	GLenum type;
 
 	pa = mesh->getPolylist_array();
 	if (! pa.getCount())
@@ -254,11 +256,9 @@ dae_load_polylist(domMeshRef mesh)
 	inputs = polylist->getInput_array();
 	input_count = inputs.getCount();
 
-	fmt = (vbuf_fmt_t *)xcalloc(input_count, sizeof (vbuf_fmt_t));
-
 	input_stride = 0;
 	for (i = 0; i < input_count; i++) {
-		sources.append(dae_load_source(inputs[i], &fmt[i]));
+		sources.append(dae_load_source(inputs[i], &fmt));
 		
 		if (inputs[i]->getOffset() > input_stride)
 			input_stride = inputs[i]->getOffset();
@@ -277,7 +277,6 @@ dae_load_polylist(domMeshRef mesh)
 		warnx("COLLADA Polylist contains non-triangle"
 		      " with %llu sides", vcounts[i]);
 
-		free(fmt);
 		return NULL;
 	}
 
@@ -285,26 +284,27 @@ dae_load_polylist(domMeshRef mesh)
 		errx(1, "Cannot load COLLADA mesh with %lu vertices (max %hu)",
 		     vert_count, ~(uint16_t)0);
 
-	bufsize = 0;
-
-	for (i = 0; i < input_count; i++)
-		bufsize += vbuf_segment_size(&fmt[i]) * vert_count;
+	bufsize = vbuf_fmt_vert_size(fmt) * vert_count;
 
 	data = xcalloc(1, bufsize);
 	loc = data;
 	bufsize = 0;
 
 	indices = polylist->getP()->getValue();
-	for (i = 0; i < input_count; i++) {
+	iter = fmt;
+	i = 0;
+	while (vbuf_fmt_pop_segment(&iter, NULL, &type, NULL, NULL)) {
 		domParam_Array params = sources[i]->getParam_array();
 		size_t stride = sources[i]->getStride();
 		daeElementRef source = sources[i]->getSource().getElement();
 
 		for (j = inputs[i]->getOffset(); j < vert_count;
 		     j += input_stride) {
-			loc = dae_copy_data(params, stride, source,
-					    fmt[i].type, indices[j], loc);
+			loc = dae_copy_data(params, stride, source, type,
+					    indices[j], loc);
 		}
+
+		i++;
 	}
 
 	ebuf = (uint16_t *)xcalloc(vert_count, sizeof(uint16_t));
@@ -313,12 +313,10 @@ dae_load_polylist(domMeshRef mesh)
 		ebuf[i] = i;
 
 	out_mesh = mesh_create(vert_count, (float *)data, vert_count,
-			       (uint16_t *)ebuf, input_count, fmt,
-			       GL_TRIANGLES);
+			       (uint16_t *)ebuf, fmt, GL_TRIANGLES);
 
 	free(data);
 	free(ebuf);
-	free(fmt);
 
 	return object_create(out_mesh, NULL);
 }

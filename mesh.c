@@ -26,15 +26,11 @@
  **/
 mesh_t *
 mesh_create(size_t verts, const void *vert_data,
-	    size_t elems, const uint16_t *elem_data, size_t segments,
-	    vbuf_fmt_t *segment_descriptors, GLenum type)
+	    size_t elems, const uint16_t *elem_data,
+	    vbuf_fmt_t format, GLenum type)
 {
 	mesh_t *ret = xmalloc(sizeof(mesh_t));
-	size_t data_size = 0;
-	size_t i;
-
-	for (i = 0; i < segments; i++)
-		data_size += vbuf_segment_size(&segment_descriptors[i]);
+	size_t data_size = vbuf_fmt_vert_size(format);
 
 	data_size *= verts;
 
@@ -46,8 +42,7 @@ mesh_create(size_t verts, const void *vert_data,
 	memcpy(ret->elem_data, elem_data, 2 * elems);
 	ret->elems = elems;
 
-	ret->segments = segments;
-	ret->segment_descriptors = xcalloc(segments, sizeof(vbuf_fmt_t));
+	ret->format = format;
 
 	ret->type = type;
 
@@ -139,8 +134,8 @@ mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer)
 	ssize_t offset = vbuf_locate_free_space(buffer, mesh->verts);
 	size_t base = 0;
 	size_t local_base = 0;
-	size_t i;
-	vbuf_fmt_t *seg;
+	size_t size;
+	vbuf_fmt_t iter;
 
 	if (offset < 0)
 		return -1;
@@ -154,16 +149,21 @@ mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer)
 
 	vbuf_activate(buffer);
 
-	for (i = 0; i < buffer->segments; i++) {
-		seg = &buffer->segment_descriptors[i];
+	/* FIXME: We could use a buffer with a superset of features with some
+	 * slightly more powerful tools.
+	 */
+	if (buffer->format != mesh->format)
+		errx(1, "Cannot load mesh in to incompatible buffer");
 
+	iter = buffer->format;
+	while (vbuf_fmt_pop_segment(&iter, NULL, NULL, NULL, &size)) {
 		glBufferSubData(GL_ARRAY_BUFFER,
-				base + offset * vbuf_segment_size(seg),
-				mesh->verts * vbuf_segment_size(seg),
+				base + offset * size,
+				mesh->verts * size,
 				mesh->vert_data + local_base);
 
-		base += vbuf_segment_size(seg) * buffer->vert_count;
-		local_base += vbuf_segment_size(seg) * mesh->verts;
+		base += size * buffer->vert_count;
+		local_base += size * mesh->verts;
 	}
 
 	vbuf_grab(buffer);

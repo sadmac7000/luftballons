@@ -21,23 +21,13 @@
 #include <GL/glut.h>
 
 #include "interval.h"
-
-/**
- * A type of vertex data that will be stored for each vertex. We use arrays of
- * these to define the complete vertex data.
- **/
-typedef struct vbuf_fmt {
-	char name[32];
-	size_t size;
-	GLenum type;
-} vbuf_fmt_t;
+#include "vbuf_fmt.h"
 
 /**
  * Wrapper around an OpenGL buffer object for vertex data buffers.
  *
  * gl_handle: OpenGL handle for the buffer.
- * segments: Number of segments in the buffer.
- * segment_descriptors: Type of data in each segment.
+ * format: Type of data in each segment.
  * vert_size: size of the data for a vertex in bytes.
  * vert_count: total verts in this buffer.
  * refcount: Reference counting.
@@ -46,8 +36,7 @@ typedef struct vbuf_fmt {
 typedef struct vbuf {
 	GLuint gl_handle;
 
-	size_t segments;
-	vbuf_fmt_t *segment_descriptors;
+	vbuf_fmt_t format;
 	size_t vert_size;
 	size_t vert_count;
 
@@ -60,8 +49,7 @@ typedef struct vbuf {
 extern "C" {
 #endif
 
-vbuf_t *vbuf_create(size_t size, size_t segments,
-		    vbuf_fmt_t *segment_descriptors);
+vbuf_t *vbuf_create(size_t size, vbuf_fmt_t format);
 void vbuf_grab(vbuf_t *buffer);
 void vbuf_ungrab(vbuf_t *buffer);
 void vbuf_drop_data(vbuf_t *buffer, size_t offset, size_t size);
@@ -69,7 +57,6 @@ void vbuf_activate(vbuf_t *buffer);
 void vbuf_alloc_region(vbuf_t *buffer, size_t offset, size_t size);
 ssize_t vbuf_locate_free_space(vbuf_t *buffer, size_t size);
 void vbuf_setup_vertex_attribute(const char *name, GLint handle);
-size_t vbuf_segment_size(vbuf_fmt_t *seg);
 
 #ifdef __cplusplus
 }

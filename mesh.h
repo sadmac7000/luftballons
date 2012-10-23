@@ -21,6 +21,7 @@
 #include <GL/glut.h>
 
 #include "vbuf.h"
+#include "vbuf_fmt.h"
 #include "ebuf.h"
 
 typedef struct mesh {
@@ -31,8 +32,7 @@ typedef struct mesh {
 	char *elem_data;
 	size_t elems;
 
-	size_t segments;
-	vbuf_fmt_t *segment_descriptors;
+	vbuf_fmt_t format;
 
 	vbuf_t *vbuf;
 	size_t vbuf_pos;
@@ -48,8 +48,7 @@ extern "C" {
 #endif
 
 mesh_t *mesh_create(size_t verts, const void *vert_data, size_t elems,
-		    const uint16_t *elem_data, size_t segments,
-		    vbuf_fmt_t *segment_descriptors, GLenum type);
+		    const uint16_t *elem_data, vbuf_fmt_t format, GLenum type);
 size_t mesh_data_size(mesh_t *mesh);
 void mesh_destroy(mesh_t *mesh);
 int mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer);

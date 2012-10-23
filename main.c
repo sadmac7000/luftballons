@@ -364,10 +364,10 @@ main(int argc, char **argv)
 	ebuf_t *ebuf;
 	mesh_t *mesh;
 
-	vbuf_fmt_t vert_regions[2] = {
-		{ "position", 4, GL_FLOAT, },
-		{ "colorin", 4, GL_FLOAT, },
-	};
+	vbuf_fmt_t vert_regions = 0;
+
+	vbuf_fmt_add(&vert_regions, "position", 4, GL_FLOAT);
+	vbuf_fmt_add(&vert_regions, "colorin", 4, GL_FLOAT);
 
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
@@ -389,12 +389,12 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	vbuf = vbuf_create(24, 2, vert_regions);
+	vbuf = vbuf_create(24, vert_regions);
 	ebuf = ebuf_create(36);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(24, vert_data, 36, elem_data, 2, vert_regions,
+	mesh = mesh_create(24, vert_data, 36, elem_data, vert_regions,
 			   GL_TRIANGLES);
 
 	if (mesh_add_to_vbuf(mesh, vbuf))
