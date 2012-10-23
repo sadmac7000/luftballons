@@ -28,18 +28,18 @@ void shader_set_vertex_attrs();
 vbuf_t *current_vbuf = NULL;
 
 static size_t type_sizes[] = {
-	[GL_BYTE] = 1,
-	[GL_UNSIGNED_BYTE] = 1,
-	[GL_SHORT] = sizeof(short),
-	[GL_UNSIGNED_SHORT] = sizeof(short),
-	[GL_INT] = sizeof(int),
-	[GL_UNSIGNED_INT] = sizeof(int),
+	[GL_BYTE] = sizeof(GLbyte),
+	[GL_UNSIGNED_BYTE] = sizeof(GLubyte),
+	[GL_SHORT] = sizeof(GLshort),
+	[GL_UNSIGNED_SHORT] = sizeof(GLushort),
+	[GL_INT] = sizeof(GLint),
+	[GL_UNSIGNED_INT] = sizeof(GLuint),
 
 	/* Sort of a guess */
-	[GL_HALF_FLOAT] = sizeof(float) / 2,
+	[GL_HALF_FLOAT] = sizeof(GLfloat) / 2,
 
-	[GL_FLOAT] = sizeof(float),
-	[GL_DOUBLE] = sizeof(double),
+	[GL_FLOAT] = sizeof(GLfloat),
+	[GL_DOUBLE] = sizeof(GLdouble),
 
 	/* http://www.opengl.org/registry/specs/OES/OES_fixed_point.txt */
 	[GL_FIXED] = 4,
