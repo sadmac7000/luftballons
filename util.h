@@ -19,6 +19,7 @@
 #define UTIL_H
 
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
 
 #define OFFSET_OF(type, member) ((uintptr_t)&((type *)0)->member)
@@ -55,6 +56,17 @@ static inline void *
 xcalloc(size_t nmemb, size_t size)
 {
 	void *ret = calloc(nmemb, size);
+
+	if (!ret)
+		errx(1, "Could not allocate memory");
+
+	return ret;
+}
+
+static inline char *
+xstrdup(const char *str)
+{
+	char *ret = strdup(str);
 
 	if (!ret)
 		errx(1, "Could not allocate memory");
