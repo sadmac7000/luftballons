@@ -139,7 +139,7 @@ interval_remove_at_pos(intervals_t *set, size_t offset_idx)
 
 	while(set->by_size[pos] != interval)
 		pos++;
-	
+
 	memmove(&set->by_size[offset_idx], &set->by_size[offset_idx + 1],
 		(set->count - offset_idx - 1) *
 		sizeof(interval_t *));
