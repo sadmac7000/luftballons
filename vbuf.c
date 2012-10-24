@@ -21,6 +21,7 @@
 
 #include "vbuf.h"
 #include "util.h"
+#include "drawlist.h"
 
 /* We keep this out of shader.h to prevent circular dependency. */
 void shader_set_vertex_attrs();
@@ -61,10 +62,12 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 	ret->vert_count = size;
 	ret->gl_handle = handle;
 	ret->format = format;
-	ret->refcount = 1;
+	ret->refcount = 0;
 
 	intervals_init(&ret->free);
 	interval_set(&ret->free, 0, size);
+
+	list_init(&ret->drawlist_link);
 
 	return ret;
 }

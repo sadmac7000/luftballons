@@ -21,6 +21,7 @@
 #include <GL/glut.h>
 
 #include "interval.h"
+#include "util.h"
 
 /**
  * Wrapper around an OpenGL buffer object for element buffers.
@@ -29,12 +30,14 @@
  * size: total verts in this buffer.
  * refcount: Reference counting.
  * free: Free space tracking.
+ * drawlist_link: Attachment for this buffer to a drawlist.
  **/
 typedef struct ebuf {
 	GLuint gl_handle;
 	size_t size;
 	unsigned int refcount;
 	intervals_t free;
+	list_head_t drawlist_link;
 } ebuf_t;
 
 #ifdef __cplusplus

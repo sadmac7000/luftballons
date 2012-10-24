@@ -80,9 +80,18 @@ typedef struct list {
 
 typedef list_node_t list_head_t;
 
-#define foreach(head_, type, member) \
+#define foreach(head_) \
 	for (list_node_t *head = (head_), *pos = head->next; pos != head; \
 	     pos = pos->next)
+
+/**
+ * Check to see if a list is empty, or if a node is not in a list.
+ */
+static inline int
+list_empty(list_node_t *node)
+{
+	return node->next == node;
+}
 
 /**
  * Initialize a list node or head.

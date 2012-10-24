@@ -46,6 +46,8 @@ object_create(mesh_t *mesh, object_t *parent)
 	if (ret->parent)
 		object_add_child(ret->parent, ret);
 
+	list_init(&ret->drawlist_link);
+
 	return ret;
 }
 

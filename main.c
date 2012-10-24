@@ -38,6 +38,7 @@
 #include "camera.h"
 #include "matrix.h"
 #include "quat.h"
+#include "drawlist.h"
 
 const float vert_data[] = {
 //coords
@@ -126,6 +127,7 @@ object_t *cube;
 object_t *cube_center;
 shader_t *shader;
 camera_t *camera;
+drawlist_t *drawlist;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -288,7 +290,7 @@ render(void)
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	object_draw(cube_center, shader, camera);
+	drawlist_draw(drawlist, shader, camera);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -360,8 +362,6 @@ offkey(unsigned char key, int x, int y)
 int
 main(int argc, char **argv)
 {
-	vbuf_t *vbuf;
-	ebuf_t *ebuf;
 	mesh_t *mesh;
 
 	vbuf_fmt_t vert_regions = 0;
@@ -389,26 +389,19 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	vbuf = vbuf_create(24, vert_regions);
-	ebuf = ebuf_create(36);
-
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
 	mesh = mesh_create(24, vert_data, 36, elem_data, vert_regions,
 			   GL_TRIANGLES);
 
-	if (mesh_add_to_vbuf(mesh, vbuf))
-		errx(1, "Could not add mesh to vertex buffer");
-
-	if (mesh_add_to_ebuf(mesh, ebuf))
-		errx(1, "Could not add mesh to element buffer");
-
-	vbuf_ungrab(vbuf);
-	ebuf_ungrab(ebuf);
+	drawlist = drawlist_create();
 
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
 	camera = camera_create(.01, 3000.0, aspect, 45);
+
+	drawlist_add_object(drawlist, cube_center);
+	drawlist_add_object(drawlist, cube);
 
 	glutMainLoop();
 	return 0;
