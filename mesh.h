@@ -24,6 +24,21 @@
 #include "vbuf_fmt.h"
 #include "ebuf.h"
 
+/**
+ * A collection of vertex data ready to be passed to a draw call.
+ *
+ * vert_data: Copy of the vertex data we will pass in to the shader.
+ * verts: Number of vertices.
+ * type: Type of GL primitives this vertex data represents.
+ * elem_data: Element buffer for this vertex data.
+ * elems: Number of elements in this vertex data.
+ * format: Format of the vertex data.
+ * vbuf: Vertex buffer we are currently copied in to.
+ * vbuf_pos: Where in the vertex buffer we've been loaded.
+ * ebuf: ELement buffer we are currently copied in to.
+ * ebuf_pos: Where in the element buffer we've been loaded.
+ * refcount: Refcount for tracking and freeing this object.
+ **/
 typedef struct mesh {
 	void *vert_data;
 	size_t verts;
