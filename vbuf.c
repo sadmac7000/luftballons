@@ -134,6 +134,7 @@ vbuf_ungrab(vbuf_t *buffer)
 	}
 
 	glDeleteBuffers(1, &buffer->gl_handle);
+	list_remove(&buffer->drawlist_link);
 
 	intervals_release(&buffer->free);
 	free(buffer);
