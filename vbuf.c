@@ -53,6 +53,9 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 	GLenum error;
 	GLsizeiptr byte_size = vbuf_fmt_vert_size(format);
 
+	if (! size)
+		return NULL;
+
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
 	glBufferData(GL_ARRAY_BUFFER, byte_size * size, NULL, GL_STATIC_DRAW);

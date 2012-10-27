@@ -46,6 +46,9 @@ ebuf_create(size_t size)
 	GLuint handle;
 	GLenum error;
 
+	if (! size)
+		return NULL;
+
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(uint16_t), NULL,
