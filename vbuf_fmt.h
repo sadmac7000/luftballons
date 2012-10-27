@@ -19,6 +19,7 @@
 #define VBUF_FMT_H
 
 #include <stdint.h>
+#include <GL/gl.h>
 
 /**
  * A format for a vertex buffer. Each bit maps to a segment name, type and
