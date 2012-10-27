@@ -28,7 +28,6 @@
  * Wrapper around an OpenGL buffer object for vertex data buffers.
  *
  * gl_handle: OpenGL handle for the buffer.
- * drawlist_link: Link to the drawlist that manages this vbuf.
  * format: Type of data in each segment.
  * vert_size: size of the data for a vertex in bytes.
  * vert_count: total verts in this buffer.
@@ -37,7 +36,6 @@
  **/
 typedef struct vbuf {
 	GLuint gl_handle;
-	list_node_t drawlist_link;
 
 	vbuf_fmt_t format;
 	size_t vert_size;

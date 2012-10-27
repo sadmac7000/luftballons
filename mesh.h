@@ -38,7 +38,9 @@
  * ebuf: ELement buffer we are currently copied in to.
  * ebuf_pos: Where in the element buffer we've been loaded.
  * refcount: Refcount for tracking and freeing this object.
+ * generation_link: Link into a bufpool generation.
  **/
+typedef struct bufpool bufpool_t;
 typedef struct mesh {
 	void *vert_data;
 	size_t verts;
@@ -48,6 +50,8 @@ typedef struct mesh {
 	size_t elems;
 
 	vbuf_fmt_t format;
+
+	list_node_t generation_link;
 
 	vbuf_t *vbuf;
 	size_t vbuf_pos;

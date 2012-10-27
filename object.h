@@ -29,7 +29,6 @@
  **/
 typedef struct object {
 	struct object *parent;
-	list_node_t drawlist_link;
 	mesh_t *mesh;
 	quat_t rot;
 	float trans[3];

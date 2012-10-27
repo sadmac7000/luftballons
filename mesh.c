@@ -54,6 +54,8 @@ mesh_create(size_t verts, const void *vert_data,
 
 	ret->refcount = 0;
 
+	list_init(&ret->generation_link);
+
 	return ret;
 }
 
@@ -89,6 +91,7 @@ mesh_destroy(mesh_t *mesh)
 {
 	mesh_remove_from_vbuf(mesh);
 	mesh_remove_from_ebuf(mesh);
+	list_remove(&mesh->generation_link);
 
 	free(mesh->vert_data);
 	free(mesh);

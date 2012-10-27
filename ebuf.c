@@ -72,8 +72,6 @@ ebuf_create(size_t size)
 	intervals_init(&ret->free);
 	interval_set(&ret->free, 0, size);
 
-	list_init(&ret->drawlist_link);
-
 	return ret;
 }
 
@@ -94,8 +92,6 @@ ebuf_ungrab(ebuf_t *buffer)
 {
 	if (--buffer->refcount)
 		return;
-
-	list_remove(&buffer->drawlist_link);
 
 	if (current_ebuf == buffer) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

@@ -21,7 +21,6 @@
 
 #include "vbuf.h"
 #include "util.h"
-#include "drawlist.h"
 
 /* We keep this out of shader.h to prevent circular dependency. */
 void shader_set_vertex_attrs();
@@ -80,8 +79,6 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 
 	intervals_init(&ret->free);
 	interval_set(&ret->free, 0, size);
-
-	list_init(&ret->drawlist_link);
 
 	return ret;
 }
@@ -148,7 +145,6 @@ vbuf_ungrab(vbuf_t *buffer)
 	}
 
 	glDeleteBuffers(1, &buffer->gl_handle);
-	list_remove(&buffer->drawlist_link);
 
 	intervals_release(&buffer->free);
 	free(buffer);

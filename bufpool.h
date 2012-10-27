@@ -15,39 +15,35 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef DRAWLIST_H
-#define DRAWLIST_H
+#ifndef BUFPOOL_H
+#define BUFPOOL_H
 
 #include "util.h"
-#include "object.h"
+#include "vbuf_fmt.h"
+#include "mesh.h"
 
 /**
- * A list of objects to draw, all at once. Objects can be added to the list and
- * then told to draw. Buffers are allocated automatically.
+ * A pool of buffer space to draw from to back an object.
  *
- * vbufs: The vertex buffers we can assign to our objects.
- * ebufs: The element buffers we can assign to our objects.
- * objects: Objects to be drawn.
- * object_count: Number of objects to be drawn;
+ * format: What vertex format these buffers are.
+ * generations: LRU list of backed meshes.
  **/
-typedef struct drawlist {
-	list_head_t vbufs;
-	list_head_t ebufs;
-	list_head_t objects;
-	size_t object_count;
-} drawlist_t;
+typedef struct bufpool {
+	vbuf_fmt_t format;
+	list_head_t generations;
+} bufpool_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-drawlist_t *drawlist_create(void);
-void drawlist_add_object(drawlist_t *drawlist, object_t *object);
-void drawlist_remove_object(drawlist_t *drawlist, object_t *object);
-void drawlist_draw(drawlist_t *drawlist, shader_t *shader, camera_t *camera);
+bufpool_t *bufpool_create(vbuf_fmt_t format);
+void bufpool_end_generation(bufpool_t *pool);
+void bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DRAWLIST_H */
+#endif /* BUFPOOL_H */
+

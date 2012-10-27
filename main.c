@@ -38,7 +38,7 @@
 #include "camera.h"
 #include "matrix.h"
 #include "quat.h"
-#include "drawlist.h"
+#include "bufpool.h"
 
 const float vert_data[] = {
 //coords
@@ -127,7 +127,6 @@ object_t *cube;
 object_t *cube_center;
 shader_t *shader;
 camera_t *camera;
-drawlist_t *drawlist;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -290,7 +289,7 @@ render(void)
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	drawlist_draw(drawlist, shader, camera);
+	object_draw(cube_center, shader, camera);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -363,6 +362,7 @@ int
 main(int argc, char **argv)
 {
 	mesh_t *mesh;
+	bufpool_t *bufpool;
 
 	vbuf_fmt_t vert_regions = 0;
 
@@ -394,14 +394,14 @@ main(int argc, char **argv)
 	mesh = mesh_create(24, vert_data, 36, elem_data, vert_regions,
 			   GL_TRIANGLES);
 
-	drawlist = drawlist_create();
+	bufpool = bufpool_create(vert_regions);
+	bufpool_add_mesh(bufpool, mesh);
+	bufpool_end_generation(bufpool);
 
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
 	camera = camera_create(.01, 3000.0, aspect, 45);
 
-	drawlist_add_object(drawlist, cube_center);
-	drawlist_add_object(drawlist, cube);
 
 	glutMainLoop();
 	return 0;
