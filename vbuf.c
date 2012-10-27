@@ -29,6 +29,17 @@ void shader_set_vertex_attrs();
 vbuf_t *current_vbuf = NULL;
 
 /**
+ * Activate a buffer. Don't check to see if it's already in service.
+ **/
+static void
+vbuf_do_activate(vbuf_t *buffer)
+{
+	current_vbuf = buffer;
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+	shader_set_vertex_attrs();
+}
+
+/**
  * Create a new buffer object.
  *
  * size: Vertices the buffer should accomodate.
@@ -48,7 +59,7 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 	error = glGetError();
 
 	if (current_vbuf)
-		vbuf_activate(current_vbuf);
+		vbuf_do_activate(current_vbuf);
 
 	if (error != GL_NO_ERROR) {
 		if (error == GL_OUT_OF_MEMORY)
@@ -167,9 +178,7 @@ vbuf_activate(vbuf_t *buffer)
 	if (current_vbuf == buffer)
 		return;
 
-	current_vbuf = buffer;
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
-	shader_set_vertex_attrs();
+	vbuf_do_activate(buffer);
 }
 
 /**

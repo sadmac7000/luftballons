@@ -25,6 +25,16 @@
 ebuf_t *current_ebuf = NULL;
 
 /**
+ * Bind an element buffer. Don't check to see if it's bound first.
+ **/
+static void
+ebuf_do_activate(ebuf_t *buffer)
+{
+	current_ebuf = buffer;
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+}
+
+/**
  * Create a new buffer object.
  *
  * size: Indices the buffer should accomodate.
@@ -43,7 +53,7 @@ ebuf_create(size_t size)
 	error = glGetError();
 
 	if (current_ebuf)
-		ebuf_activate(current_ebuf);
+		ebuf_do_activate(current_ebuf);
 
 	if (error != GL_NO_ERROR) {
 		if (error == GL_OUT_OF_MEMORY)
@@ -114,13 +124,15 @@ ebuf_alloc_region(ebuf_t *buffer, size_t offset, size_t size)
 }
 
 /**
- * Bind a vertex buffer.
+ * Bind an element buffer.
  **/
 void
 ebuf_activate(ebuf_t *buffer)
 {
-	current_ebuf = buffer;
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+	if (current_ebuf == buffer)
+		return;
+
+	ebuf_do_activate(buffer);
 }
 
 /**
