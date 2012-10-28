@@ -109,6 +109,11 @@ bufpool_create_buffers(bufpool_t *pool)
 void
 bufpool_end_generation(bufpool_t *pool)
 {
+	struct generation *gen = (struct generation *)pool->generations.next;
+
+	if (list_empty(&gen->meshes))
+		return;
+
 	bufpool_create_buffers(pool);
 	bufpool_add_generation(pool);
 }
