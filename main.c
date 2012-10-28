@@ -33,8 +33,6 @@
 #include "shader.h"
 #include "mesh.h"
 #include "object.h"
-#include "vbuf.h"
-#include "ebuf.h"
 #include "camera.h"
 #include "matrix.h"
 #include "quat.h"
