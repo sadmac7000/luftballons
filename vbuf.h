@@ -18,7 +18,7 @@
 #ifndef VBUF_H
 #define VBUF_H
 
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "interval.h"
 #include "vbuf_fmt.h"

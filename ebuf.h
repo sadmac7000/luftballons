@@ -18,7 +18,7 @@
 #ifndef EBUF_H
 #define EBUF_H
 
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "interval.h"
 #include "util.h"

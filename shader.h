@@ -18,7 +18,7 @@
 #ifndef SHADER_H
 #define SHADER_H
 
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "vbuf.h"
 

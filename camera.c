@@ -19,7 +19,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "camera.h"
 #include "util.h"

@@ -18,7 +18,7 @@
 #include <err.h>
 #include <stdint.h>
 #include <string.h>
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "vbuf_fmt.h"
 #include "util.h"

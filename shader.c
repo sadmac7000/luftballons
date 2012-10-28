@@ -25,8 +25,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include <GL/glut.h>
-
 #include "shader.h"
 #include "vbuf.h"
 #include "util.h"
