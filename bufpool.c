@@ -126,6 +126,15 @@ bufpool_notify_generation(struct generation *gen)
 	if (! list_empty(&gen->meshes))
 		return;
 
+	/* This test is designed to keep the only generation from getting
+	 * reaped, since the rest of this file tends to work on the assumption
+	 * that there is always one generation.
+	 *
+	 * It will not necessarily prevent the newest generation from getting
+	 * reaped if that becomes empty before older generations. That's a
+	 * weird case though, and the effect is just a blip in our age
+	 * accounting.
+	 */
 	if (gen->meshes.next == gen->meshes.prev)
 		return;
 
@@ -140,6 +149,9 @@ void
 bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh)
 {
 	struct generation *gen = (struct generation *)pool->generations.next;
+
+	if (gen == mesh->generation)
+		return;
 
 	if (mesh->format != pool->format)
 		errx(1, "Added mesh to wrong buffer pool");
