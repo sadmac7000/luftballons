@@ -21,6 +21,9 @@
 #include "mesh.h"
 #include "util.h"
 
+/* Special delivery from bufpool.c */
+void bufpool_notify_generation(struct generation *gen);
+
 /**
  * Create a new mesh object.
  **/
@@ -54,6 +57,7 @@ mesh_create(size_t verts, const void *vert_data,
 
 	ret->refcount = 0;
 
+	ret->generation = NULL;
 	list_init(&ret->generation_link);
 
 	return ret;
@@ -92,6 +96,11 @@ mesh_destroy(mesh_t *mesh)
 	mesh_remove_from_vbuf(mesh);
 	mesh_remove_from_ebuf(mesh);
 	list_remove(&mesh->generation_link);
+
+	if (mesh->generation)
+		bufpool_notify_generation(mesh->generation);
+
+	mesh->generation = NULL;
 
 	free(mesh->vert_data);
 	free(mesh);

@@ -114,6 +114,26 @@ bufpool_end_generation(bufpool_t *pool)
 }
 
 /**
+ * Notify that a generation has been lost.
+ *
+ * Note that this is not exposed in the header file. It is prototyped for
+ * mesh.c alone, which cannot include the header file due to circular
+ * dependency.
+ **/
+void
+bufpool_notify_generation(struct generation *gen)
+{
+	if (! list_empty(&gen->meshes))
+		return;
+
+	if (gen->meshes.next == gen->meshes.prev)
+		return;
+
+	list_remove(&gen->link);
+	free(gen);
+}
+
+/**
  * Add a mesh to this buffer pool in this generation.
  **/
 void
@@ -125,4 +145,9 @@ bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh)
 		errx(1, "Added mesh to wrong buffer pool");
 
 	list_insert(&gen->meshes, &mesh->generation_link);
+
+	if (mesh->generation)
+		bufpool_notify_generation(mesh->generation);
+
+	mesh->generation = gen;
 }

@@ -33,12 +33,13 @@
  * elem_data: Element buffer for this vertex data.
  * elems: Number of elements in this vertex data.
  * format: Format of the vertex data.
+ * generation: bufpool generation that this mesh is associated with.
+ * generation_link: Link into a bufpool generation.
  * vbuf: Vertex buffer we are currently copied in to.
  * vbuf_pos: Where in the vertex buffer we've been loaded.
  * ebuf: ELement buffer we are currently copied in to.
  * ebuf_pos: Where in the element buffer we've been loaded.
  * refcount: Refcount for tracking and freeing this object.
- * generation_link: Link into a bufpool generation.
  **/
 typedef struct bufpool bufpool_t;
 typedef struct mesh {
@@ -51,6 +52,7 @@ typedef struct mesh {
 
 	vbuf_fmt_t format;
 
+	struct generation *generation;
 	list_node_t generation_link;
 
 	vbuf_t *vbuf;
