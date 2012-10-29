@@ -34,7 +34,7 @@ static void
 vbuf_do_activate(vbuf_t *buffer)
 {
 	current_vbuf = buffer;
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer->gl_handle);
 	shader_set_vertex_attrs();
 }
 
