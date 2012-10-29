@@ -37,6 +37,7 @@
 #include "matrix.h"
 #include "quat.h"
 #include "draw_queue.h"
+#include "dae_load.h"
 
 const float vert_data[] = {
 //coords
@@ -369,6 +370,10 @@ main(int argc, char **argv)
 
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
+	size_t dae_mesh_count;
+	size_t i;
+	object_t **items;
+
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
 	glutInitWindowSize(win_sz[0], win_sz[1]);
@@ -394,12 +399,20 @@ main(int argc, char **argv)
 
 	draw_queue = draw_queue_create();
 	draw_queue_add_mesh(draw_queue, mesh);
-	draw_queue_flush(draw_queue);
 
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
 	camera = camera_create(.01, 3000.0, aspect, 45);
 
+	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
+
+	for (i = 0; i < dae_mesh_count; i++) {
+		object_add_child(cube, items[i]);
+		draw_queue_add_mesh(draw_queue, items[i]->mesh);
+	}
+
+	free(items);
+	draw_queue_flush(draw_queue);
 
 	glutMainLoop();
 	return 0;
