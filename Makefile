@@ -33,6 +33,7 @@ luftballons_OBJS =	\
 	dae_load.o	\
 	vbuf_fmt.o	\
 	bufpool.o	\
+	draw_queue.o	\
 	quat.o
 
 luftballons_LINK=-lglut -lGL -lm -lstdc++ -lcollada14dom -lboost_system

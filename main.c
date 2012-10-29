@@ -36,7 +36,7 @@
 #include "camera.h"
 #include "matrix.h"
 #include "quat.h"
-#include "bufpool.h"
+#include "draw_queue.h"
 
 const float vert_data[] = {
 //coords
@@ -360,7 +360,7 @@ int
 main(int argc, char **argv)
 {
 	mesh_t *mesh;
-	bufpool_t *bufpool;
+	draw_queue_t *draw_queue;
 
 	vbuf_fmt_t vert_regions = 0;
 
@@ -392,9 +392,9 @@ main(int argc, char **argv)
 	mesh = mesh_create(24, vert_data, 36, elem_data, vert_regions,
 			   GL_TRIANGLES);
 
-	bufpool = bufpool_create(vert_regions);
-	bufpool_add_mesh(bufpool, mesh);
-	bufpool_end_generation(bufpool);
+	draw_queue = draw_queue_create();
+	draw_queue_add_mesh(draw_queue, mesh);
+	draw_queue_flush(draw_queue);
 
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
