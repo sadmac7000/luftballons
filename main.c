@@ -283,7 +283,7 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-	glClearColor(0.0, 0.0, 0.0, 0.0);
+	glClearColor(0.5, 0.0, 0.5, 0.0);
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
