@@ -298,7 +298,7 @@ dae_load_polylist(domMeshRef mesh)
 		size_t stride = sources[i]->getStride();
 		daeElementRef source = sources[i]->getSource().getElement();
 
-		for (j = inputs[i]->getOffset(); j < vert_count;
+		for (j = inputs[i]->getOffset(); j < vert_count * input_stride;
 		     j += input_stride) {
 			loc = dae_copy_data(params, stride, source, type,
 					    indices[j], loc);
