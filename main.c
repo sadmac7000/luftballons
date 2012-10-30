@@ -366,7 +366,7 @@ main(int argc, char **argv)
 	vbuf_fmt_t vert_regions = 0;
 
 	vbuf_fmt_add(&vert_regions, "position", 4, GL_FLOAT);
-	vbuf_fmt_add(&vert_regions, "colorin", 4, GL_FLOAT);
+	vbuf_fmt_add(&vert_regions, "color", 4, GL_FLOAT);
 
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
