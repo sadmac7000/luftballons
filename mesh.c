@@ -227,5 +227,6 @@ mesh_draw(mesh_t *mesh)
 	ebuf_activate(mesh->ebuf);
 
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
-				 (void *)mesh->ebuf_pos, mesh->vbuf_pos);
+				 (void *)(mesh->ebuf_pos * sizeof(uint16_t)),
+				 mesh->vbuf_pos);
 }
