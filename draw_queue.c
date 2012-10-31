@@ -32,7 +32,6 @@ struct uniform {
  * A draw operation. More or less corresponds to a single draw call.
  **/
 struct draw_op {
-	list_node_t link;
 	shader_t *shader;
 	mesh_t *mesh;
 	struct uniform *uniforms;
@@ -50,8 +49,9 @@ draw_queue_create(void)
 	queue->pool_count = 0;
 	queue->pools = NULL;
 	
-	list_init(&queue->draw_ops);
 	queue->flags = 0;
+	queue->draw_ops = NULL;
+	queue->draw_op_count = 0;
 
 	return queue;
 }
@@ -99,6 +99,15 @@ draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
 		  float transform[16])
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
+	size_t expand_size = 4;
+
+	while (expand_size < queue->draw_op_count)
+		expand_size <<= 1;
+
+	if (expand_size == queue->draw_op_count || ! queue->draw_ops)
+		queue->draw_ops = xrealloc(queue->draw_ops,
+					   2 * expand_size *
+					   sizeof(struct draw_op *));
 
 	op->shader = shader;
 	op->mesh = mesh;
@@ -109,10 +118,9 @@ draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
 	memcpy(op->uniforms->data, transform, 16 * sizeof(float));
 	op->uniform_count = 1;
 
-	list_init(&op->link);
-	list_insert(&queue->draw_ops, &op->link);
-
 	draw_queue_add_mesh(queue, mesh);
+
+	queue->draw_ops[queue->draw_op_count++] = op;
 }
 
 /**
@@ -156,15 +164,11 @@ draw_queue_flush(draw_queue_t *queue)
 {
 	size_t i;
 	size_t j;
-	size_t count = 0;
-	struct draw_op **ops;
+	struct draw_op *op;
 	int flags = 0;
 
 	for (i = 0; i < queue->pool_count; i++)
 		bufpool_end_generation(queue->pools[i]);
-
-	foreach(&queue->draw_ops)
-		count++;
 
 	if (queue->flags & DRAW_QUEUE_CLEAR) {
 		glClearColor(0.5, 0.0, 0.5, 0.0);
@@ -176,38 +180,32 @@ draw_queue_flush(draw_queue_t *queue)
 		flags |= GL_DEPTH_BUFFER_BIT;
 	}
 
-	if (queue->flags)
+	if (flags)
 		glClear(flags);
 
-	if (! count)
+	if (! queue->draw_op_count)
 		return;
 
-	ops = xcalloc(count, sizeof(struct draw_op *));
+	for (j = 0; j < queue->draw_op_count; j++) {
+		op = queue->draw_ops[j];
+		shader_activate(op->shader);
 
-	i = 0;
-	foreach(&queue->draw_ops)
-		ops[i++] = CONTAINER_OF(pos, struct draw_op, link);
-
-	for (j = 0; j < count; j++) {
-		shader_activate(ops[j]->shader);
-
-		for (i = 0; i < ops[j]->uniform_count; i++) {
-			if (ops[j]->uniforms[i].type != MAT4)
+		for (i = 0; i < op->uniform_count; i++) {
+			if (op->uniforms[i].type != MAT4)
 				continue;
 
-			shader_set_uniform_mat(ops[j]->shader,
-					       ops[j]->uniforms[i].name,
-					       ops[j]->uniforms[i].data);
+			shader_set_uniform_mat(op->shader,
+					       op->uniforms[i].name,
+					       op->uniforms[i].data);
 		}
 
-		mesh_draw(ops[j]->mesh);
+		mesh_draw(op->mesh);
 
-		list_remove(&ops[j]->link);
-		free(ops[j]->uniforms);
-		free(ops[j]);
+		free(op->uniforms);
+		free(op);
 	}
 
-	free(ops);
+	queue->draw_op_count = 0;
 }
 
 /**

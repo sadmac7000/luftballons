@@ -33,11 +33,19 @@
 
 /**
  * A list of draw operations to be performed.
+ *
+ * pools: bufpools to back meshes we are drawing
+ * pool_count: Number of pools
+ * draw_ops: Draw operations pending
+ * draw_op_count: Number of draw operations
+ * flags: Flags to change drawing behavior
+ * clear_color: Color to clear target to before drawing
  **/
 typedef struct draw_queue {
 	bufpool_t **pools;
 	size_t pool_count;
-	list_head_t draw_ops;
+	struct draw_op **draw_ops;
+	size_t draw_op_count;
 	unsigned int flags;
 	float clear_color[4];
 } draw_queue_t;

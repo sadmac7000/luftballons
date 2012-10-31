@@ -396,9 +396,11 @@ main(int argc, char **argv)
 
 	draw_queue = draw_queue_create();
 
+	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
+	draw_queue_set_clear_depth(draw_queue, 1);
+
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
-	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 
@@ -407,8 +409,7 @@ main(int argc, char **argv)
 
 	free(items);
 
-	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
-	draw_queue_set_clear_depth(draw_queue, 1);
+	camera = camera_create(.01, 3000.0, aspect, 45);
 
 	glutMainLoop();
 	return 0;
