@@ -51,11 +51,39 @@ bufpool_create(vbuf_fmt_t format)
 	bufpool_t *ret = xmalloc(sizeof(bufpool_t));
 
 	ret->format = format;
+	ret->generation_over = 1;
 
 	list_init(&ret->generations);
 
-	bufpool_add_generation(ret);
 	return ret;
+}
+
+/**
+ * Free up some space in this bufpool.
+ **/
+static int
+bufpool_prune(bufpool_t *pool)
+{
+	struct generation *gen = (struct generation *)pool->generations.prev;
+	mesh_t *mesh;
+
+	/* 0 or 1 generations left */
+	if (pool->generations.prev == pool->generations.next)
+		return 0;
+
+	list_remove(&gen->link);
+
+	while (! list_empty(&gen->meshes)) {
+		mesh = CONTAINER_OF(gen->meshes.next, mesh_t, generation_link);
+		list_remove(&mesh->generation_link);
+		mesh->generation = NULL;
+
+		mesh_remove_from_vbuf(mesh);
+		mesh_remove_from_ebuf(mesh);
+	}
+
+	free(gen);
+	return 1;
 }
 
 /**
@@ -81,24 +109,23 @@ bufpool_create_buffers(bufpool_t *pool)
 			ebuf_size += mesh->elems;
 	}
 
-	vbuf = vbuf_create(vbuf_size, pool->format);
-	ebuf = ebuf_create(ebuf_size);
+	do {
+		vbuf = vbuf_create(vbuf_size, pool->format);
+	} while (!vbuf && bufpool_prune(pool));
+
+	do {
+		ebuf = ebuf_create(ebuf_size);
+	} while (!ebuf && bufpool_prune(pool));
 
 	/* FIXME: Prune generations on failure at least. */
-
-	if (vbuf_size && !vbuf)
-		errx(1, "Could not allocate vbuf");
-
-	if (ebuf_size && !ebuf)
-		errx(1, "Could not allocate ebuf");
 
 	foreach(&gen->meshes) {
 		mesh = CONTAINER_OF(pos, mesh_t, generation_link);
 
-		if (! mesh->vbuf)
+		if (vbuf && !mesh->vbuf)
 			mesh_add_to_vbuf(mesh, vbuf);
 
-		if (! mesh->ebuf)
+		if (ebuf && !mesh->ebuf)
 			mesh_add_to_ebuf(mesh, ebuf);
 	}
 }
@@ -109,13 +136,8 @@ bufpool_create_buffers(bufpool_t *pool)
 void
 bufpool_end_generation(bufpool_t *pool)
 {
-	struct generation *gen = (struct generation *)pool->generations.next;
-
-	if (list_empty(&gen->meshes))
-		return;
-
+	pool->generation_over = 1;
 	bufpool_create_buffers(pool);
-	bufpool_add_generation(pool);
 }
 
 /**
@@ -131,18 +153,6 @@ bufpool_notify_generation(struct generation *gen)
 	if (! list_empty(&gen->meshes))
 		return;
 
-	/* This test is designed to keep the only generation from getting
-	 * reaped, since the rest of this file tends to work on the assumption
-	 * that there is always one generation.
-	 *
-	 * It will not necessarily prevent the newest generation from getting
-	 * reaped if that becomes empty before older generations. That's a
-	 * weird case though, and the effect is just a blip in our age
-	 * accounting.
-	 */
-	if (gen->meshes.next == gen->meshes.prev)
-		return;
-
 	list_remove(&gen->link);
 	free(gen);
 }
@@ -153,7 +163,13 @@ bufpool_notify_generation(struct generation *gen)
 void
 bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh)
 {
-	struct generation *gen = (struct generation *)pool->generations.next;
+	struct generation *gen;
+
+	if (pool->generation_over)
+		bufpool_add_generation(pool);
+
+	pool->generation_over = 0;
+	gen = (struct generation *)pool->generations.next;
 
 	if (gen == mesh->generation)
 		return;
