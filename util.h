@@ -104,18 +104,6 @@ list_init(list_node_t *node)
 }
 
 /**
- * Insert an element into a list after the given element.
- **/
-static inline void
-list_insert(list_node_t *prev, list_node_t *node)
-{
-	node->next = prev->next;
-	node->prev = prev;
-	node->prev->next = node;
-	node->next->prev = node;
-}
-
-/**
  * Remove an element from a list.
  **/
 static inline void
@@ -124,6 +112,19 @@ list_remove(list_node_t *node)
 	node->next->prev = node->prev;
 	node->prev->next = node->next;
 	list_init(node);
+}
+
+/**
+ * Insert an element into a list after the given element.
+ **/
+static inline void
+list_insert(list_node_t *prev, list_node_t *node)
+{
+	list_remove(node);
+	node->next = prev->next;
+	node->prev = prev;
+	node->prev->next = node;
+	node->next->prev = node;
 }
 
 #ifdef __cplusplus
