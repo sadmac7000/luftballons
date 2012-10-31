@@ -285,10 +285,6 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-	glClearColor(0.5, 0.0, 0.5, 0.0);
-	glClearDepth(1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	draw_queue_draw(draw_queue, cube_center, shader, camera);
 	draw_queue_flush(draw_queue);
 
@@ -410,6 +406,9 @@ main(int argc, char **argv)
 		object_add_child(cube, items[i]);
 
 	free(items);
+
+	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
+	draw_queue_set_clear_depth(draw_queue, 1);
 
 	glutMainLoop();
 	return 0;
