@@ -20,6 +20,10 @@
 
 #include "bufpool.h"
 #include "mesh.h"
+#include "util.h"
+#include "object.h"
+#include "shader.h"
+#include "camera.h"
 
 /**
  * A list of draw operations to be performed.
@@ -27,6 +31,7 @@
 typedef struct draw_queue {
 	bufpool_t **pools;
 	size_t pool_count;
+	list_head_t draw_ops;
 } draw_queue_t;
 
 #ifdef __cplusplus
@@ -34,7 +39,8 @@ extern "C" {
 #endif
 
 draw_queue_t *draw_queue_create(void);
-void draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh);
+void draw_queue_draw(draw_queue_t *queue, object_t *object, shader_t *shader,
+		     camera_t *camera);
 void draw_queue_flush(draw_queue_t *queue);
 
 #ifdef __cplusplus

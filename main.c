@@ -126,6 +126,7 @@ object_t *cube;
 object_t *cube_center;
 shader_t *shader;
 camera_t *camera;
+draw_queue_t *draw_queue;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -288,7 +289,8 @@ render(void)
 	glClearDepth(1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	object_draw(cube_center, shader, camera);
+	draw_queue_draw(draw_queue, cube_center, shader, camera);
+	draw_queue_flush(draw_queue);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -361,7 +363,6 @@ int
 main(int argc, char **argv)
 {
 	mesh_t *mesh;
-	draw_queue_t *draw_queue;
 
 	vbuf_fmt_t vert_regions = 0;
 
@@ -398,7 +399,6 @@ main(int argc, char **argv)
 			   GL_TRIANGLES);
 
 	draw_queue = draw_queue_create();
-	draw_queue_add_mesh(draw_queue, mesh);
 
 	cube_center = object_create(NULL, NULL);
 	cube = object_create(mesh, cube_center);
@@ -406,13 +406,10 @@ main(int argc, char **argv)
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 
-	for (i = 0; i < dae_mesh_count; i++) {
+	for (i = 0; i < dae_mesh_count; i++)
 		object_add_child(cube, items[i]);
-		draw_queue_add_mesh(draw_queue, items[i]->mesh);
-	}
 
 	free(items);
-	draw_queue_flush(draw_queue);
 
 	glutMainLoop();
 	return 0;
