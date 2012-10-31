@@ -157,18 +157,62 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, shader_t *shader,
 }
 
 /**
+ * Execute a draw operation.
+ **/
+static int
+draw_queue_exec_op(struct draw_op *op)
+{
+	size_t i;
+
+	shader_activate(op->shader);
+
+	for (i = 0; i < op->uniform_count; i++)
+		if (op->uniforms[i].type == MAT4)
+			shader_set_uniform_mat(op->shader,
+					       op->uniforms[i].name,
+					       op->uniforms[i].data);
+
+	return mesh_draw(op->mesh);
+}
+
+/**
+ * Do as many of the draw operations as we can. Leave the rest in the queue.
+ **/
+static size_t
+draw_queue_try_flush(draw_queue_t *queue)
+{
+	size_t i;
+	size_t j;
+	struct draw_op *op;
+
+	for (i = 0; i < queue->pool_count; i++)
+		bufpool_end_generation(queue->pools[i]);
+
+	i = 0;
+	for (j = 0; j < queue->draw_op_count; j++) {
+		queue->draw_ops[i] = queue->draw_ops[j];
+		op = queue->draw_ops[i];
+
+		if (draw_queue_exec_op(op)) {
+			free(op->uniforms);
+			free(op);
+		} else {
+			i++;
+		}
+	}
+
+	queue->draw_op_count = i;
+	return queue->draw_op_count;
+}
+
+/**
  * Flush this draw queue.
  **/
 void
 draw_queue_flush(draw_queue_t *queue)
 {
-	size_t i;
-	size_t j;
-	struct draw_op *op;
 	int flags = 0;
-
-	for (i = 0; i < queue->pool_count; i++)
-		bufpool_end_generation(queue->pools[i]);
+	size_t i;
 
 	if (queue->flags & DRAW_QUEUE_CLEAR) {
 		glClearColor(0.5, 0.0, 0.5, 0.0);
@@ -183,29 +227,9 @@ draw_queue_flush(draw_queue_t *queue)
 	if (flags)
 		glClear(flags);
 
-	if (! queue->draw_op_count)
-		return;
-
-	for (j = 0; j < queue->draw_op_count; j++) {
-		op = queue->draw_ops[j];
-		shader_activate(op->shader);
-
-		for (i = 0; i < op->uniform_count; i++) {
-			if (op->uniforms[i].type != MAT4)
-				continue;
-
-			shader_set_uniform_mat(op->shader,
-					       op->uniforms[i].name,
-					       op->uniforms[i].data);
-		}
-
-		mesh_draw(op->mesh);
-
-		free(op->uniforms);
-		free(op);
-	}
-
-	queue->draw_op_count = 0;
+	while (draw_queue_try_flush(queue))
+		for (i = 0; i < queue->draw_op_count; i++)
+			draw_queue_add_mesh(queue, queue->draw_ops[i]->mesh);
 }
 
 /**

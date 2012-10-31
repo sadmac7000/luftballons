@@ -213,15 +213,18 @@ mesh_remove_from_vbuf(mesh_t *mesh)
 
 /**
  * Draw a mesh.
+ *
+ * Returns nonzero if the mesh was drawn, 0 if this mesh has no buffers to draw
+ * from.
  **/
-void
+int
 mesh_draw(mesh_t *mesh)
 {
 	if (! mesh->vbuf)
-		errx(1, "Drawing mesh without vertex buffer");
+		return 0;
 
 	if (! mesh->ebuf)
-		errx(1, "Drawing mesh without element buffer");
+		return 0;
 
 	vbuf_activate(mesh->vbuf);
 	ebuf_activate(mesh->ebuf);
@@ -229,4 +232,6 @@ mesh_draw(mesh_t *mesh)
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
 				 (void *)(mesh->ebuf_pos * sizeof(uint16_t)),
 				 mesh->vbuf_pos);
+
+	return 1;
 }

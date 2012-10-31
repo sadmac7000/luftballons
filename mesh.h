@@ -76,7 +76,7 @@ int mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer);
 int mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer);
 void mesh_remove_from_vbuf(mesh_t *mesh);
 void mesh_remove_from_ebuf(mesh_t *mesh);
-void mesh_draw(mesh_t *mesh);
+int mesh_draw(mesh_t *mesh);
 void mesh_grab(mesh_t *mesh);
 void mesh_ungrab(mesh_t *mesh);
 
