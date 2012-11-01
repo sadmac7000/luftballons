@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 object_t *object_create(mesh_t *mesh, object_t *parent);
+void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
 void object_set_rotation(object_t *object, quat_t *quat);

@@ -50,6 +50,25 @@ object_create(mesh_t *mesh, object_t *parent)
 }
 
 /**
+ * Destroy an object.
+ **/
+void
+object_destroy(object_t *object)
+{
+	object_unparent(object);
+
+	/* FIXME: Recursion: Bad? */
+	while (object->child_count)
+		object_destroy(object->children[0]);
+
+	if (object->mesh)
+		mesh_ungrab(object->mesh);
+
+	free(object->children);
+	free(object);
+}
+
+/**
  * Draw an object given a global transform.
  **/
 static void
