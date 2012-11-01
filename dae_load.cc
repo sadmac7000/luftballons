@@ -347,6 +347,151 @@ dae_load_geom(domGeometryRef geo)
 	return NULL;
 }
 
+/**
+ * Given a domNode and an object, apply all transforms specified in that node
+ * to the object.
+ **/
+static void
+dae_apply_transform(domNodeRef node, object_t *object)
+{
+	(void)node;
+	(void)object;
+}
+
+/**
+ * Given a domNode eleement to specify it, create a new object with the given
+ * parent.
+ **/
+static object_t *
+dae_process_node(domNodeRef node, object_t *parent)
+{
+	domInstance_geometry_Array arr = node->getInstance_geometry_array();
+	object_t *object;
+	domNode_Array children;
+	size_t i;
+
+	if (arr.getCount() > 1)
+		errx(1, "COLLADA import supports exactly 1 mesh per node."
+		     " Found %lu", arr.getCount());
+
+	if (arr.getCount() == 0) {
+		object = object_create(NULL, parent);
+		goto out;
+	}
+
+	object = dae_load_geom(arr[0]->getUrl().getElement());
+
+	if (! object)
+		return NULL;
+
+	if (parent)
+		object_add_child(parent, object);
+
+	dae_apply_transform(node, object);
+
+out:
+	children = node->getNode_array();
+
+	for (i = 0; i < children.getCount(); i++)
+		dae_process_node(children[i], object);
+
+	return object;
+}
+
+/**
+ * Process COLLADA nodes from a visual scene.
+ **/
+static void
+dae_process_scenes(domVisual_scene_Array &scenes,
+		   daeTArray<object_t *> &output)
+{
+	domNode_Array nodes;
+	size_t i;
+	size_t j;
+	object_t *obj;
+
+	for (i = 0; i < scenes.getCount(); i++) {
+		nodes = scenes[i]->getNode_array();
+
+		for (j = 0; j < nodes.getCount(); j++) {
+			obj = dae_process_node(nodes[j], NULL);
+			if (obj)
+				output.append(obj);
+		}
+	}
+}
+
+/**
+ * Process COLLADA nodes from the visual scene library
+ **/
+static void
+dae_get_nodes_scenes(domCOLLADA *doc, daeTArray<object_t *> &output)
+{
+	domLibrary_visual_scenes_Array lib;
+	domVisual_scene_Array scenes;
+	size_t i;
+	size_t j;
+
+	lib = doc->getLibrary_visual_scenes_array();
+
+	for (i = 0; i < lib.getCount(); i++) {
+		scenes = lib[i]->getVisual_scene_array();
+
+		for (j = 0; j < scenes.getCount(); j++)
+			dae_process_scenes(scenes, output);
+	}
+}
+
+/**
+ * Process COLLADA nodes from the node library
+ **/
+static void
+dae_get_nodes_lib(domCOLLADA *doc, daeTArray<object_t *> &output)
+{
+	domLibrary_nodes_Array lib;
+	domNode_Array nodes;
+	size_t i;
+	size_t j;
+	object_t *obj;
+
+	lib = doc->getLibrary_nodes_array();
+
+	for (i = 0; i < lib.getCount(); i++) {
+		nodes = lib[i]->getNode_array();
+
+		for (j = 0; j < nodes.getCount(); j++) {
+			obj = dae_process_node(nodes[j], NULL);
+			if (obj)
+				output.append(obj);
+		}
+	}
+}
+
+/**
+ * Get COLLADA nodes elements and process each of them
+ **/
+static object_t **
+dae_get_nodes(domCOLLADA *doc, size_t *count)
+{
+	daeTArray<object_t *> output;
+	object_t **ret;
+	size_t i;
+
+	dae_get_nodes_scenes(doc, output);
+	dae_get_nodes_lib(doc, output);
+
+	*count = output.getCount();
+	if (! output.getCount())
+		return NULL;
+
+	ret = (object_t **)xcalloc(*count, sizeof(object_t *));
+
+	for (i = 0; i < *count; i++)
+		ret[i] = output[i];
+
+	return ret;
+}
+
 extern "C" {
 
 /**
@@ -363,11 +508,6 @@ dae_load(const char *filename, size_t *count)
 	DAE dae;
 	daeElement *root;
 	domCOLLADA *doc;
-	domLibrary_geometries_Array libs;
-	domGeometry_Array geoms;
-	object_t **ret;
-	size_t n_geoms;
-	size_t i;
 
 	root = dae.open(filename);
 	if (! root)
@@ -379,31 +519,7 @@ dae_load(const char *filename, size_t *count)
 
 	doc = (domCOLLADA *)root;
 
-	libs = doc->getLibrary_geometries_array();
-	if (libs.getCount() != 1)
-		errx(1, "Bad geometry library count %lu in COLLADA file %s",
-		     libs.getCount(), filename);
-
-	geoms = libs[0]->getGeometry_array();
-	n_geoms = geoms.getCount();
-	ret = (object_t **)xcalloc(n_geoms, sizeof(object_t *));
-	*count = 0;
-
-	for (i = 0; i < n_geoms; i++) {
-		ret[*count] = dae_load_geom(geoms[i]);
-
-		if (ret[*count])
-			(*count)++;
-	}
-
-	if (*count == n_geoms)
-		return ret;
-
-	if (*count)
-		return (object_t **)xrealloc(ret, *count * sizeof(object_t *));
-
-	free(ret);
-	return NULL;
+	return dae_get_nodes(doc, count);
 }
 
 } /* extern "C" */
