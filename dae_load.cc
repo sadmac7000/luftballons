@@ -329,9 +329,9 @@ dae_load_polylist(domMeshRef mesh)
  * Returns: A new object_t pointer or NULL if this geometry isn't a mesh.
  **/
 static object_t *
-dae_load_geom(domGeometry &geo)
+dae_load_geom(domGeometryRef geo)
 {
-	domMeshRef mesh = geo.getMesh();
+	domMeshRef mesh = geo->getMesh();
 	object_t *ret;
 
 	if (! mesh)
@@ -390,7 +390,7 @@ dae_load(const char *filename, size_t *count)
 	*count = 0;
 
 	for (i = 0; i < n_geoms; i++) {
-		ret[*count] = dae_load_geom(*geoms[i]);
+		ret[*count] = dae_load_geom(geoms[i]);
 
 		if (ret[*count])
 			(*count)++;
