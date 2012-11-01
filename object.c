@@ -38,6 +38,7 @@ object_create(mesh_t *mesh, object_t *parent)
 		mesh_grab(mesh);
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
+	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
 	quat_init(&ret->rot, 0, 1, 0, 0);
 
 	ret->children = NULL;
@@ -102,6 +103,28 @@ object_draw(object_t *object, shader_t *shader, camera_t *camera)
 }
 
 /**
+ * Scale this object by the given XYZ scale factors.
+ **/
+void
+object_scale(object_t *object, float scale[3])
+{
+	object->scale[0] *= scale[0];
+	object->scale[1] *= scale[1];
+	object->scale[2] *= scale[2];
+}
+
+/**
+ * Set scale for this object to the given XYZ scale factors.
+ **/
+void
+object_set_scale(object_t *object, float scale[3])
+{
+	object->scale[0] = scale[0];
+	object->scale[1] = scale[1];
+	object->scale[2] = scale[2];
+}
+
+/**
  * Rotate this object by the given quaternion.
  **/
 void
@@ -144,9 +167,9 @@ void
 object_get_transform_mat(object_t *object, float matrix[16])
 {
 	MATRIX_DECL(translate,
-		    1, 0, 0, object->trans[0],
-		    0, 1, 0, object->trans[1],
-		    0, 0, 1, object->trans[2],
+		    object->scale[0], 0, 0, object->trans[0],
+		    0, object->scale[1], 0, object->trans[1],
+		    0, 0, object->scale[2], object->trans[2],
 		    0, 0, 0, 1);
 	float rotate[16];
 

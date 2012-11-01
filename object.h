@@ -32,6 +32,7 @@ typedef struct object {
 	mesh_t *mesh;
 	quat_t rot;
 	float trans[3];
+	float scale[3];
 
 	struct object **children;
 	size_t child_count;
@@ -45,8 +46,10 @@ object_t *object_create(mesh_t *mesh, object_t *parent);
 void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
+void object_scale(object_t *object, float scale[3]);
 void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
+void object_set_scale(object_t *object, float scale[3]);
 void object_draw(object_t *object, shader_t *shader, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_add_child(object_t *object, object_t *child);
