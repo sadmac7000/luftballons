@@ -36,6 +36,7 @@
 #include "util.h"
 #include "mesh.h"
 #include "vbuf.h"
+#include "quat.h"
 
 using namespace std;
 
@@ -350,12 +351,56 @@ dae_load_geom(domGeometryRef geo)
 /**
  * Given a domNode and an object, apply all transforms specified in that node
  * to the object.
+ *
+ * FIXME: Not sure if there's a specified order to apply transforms in. We kind
+ * of just do what's convenient.
  **/
 static void
 dae_apply_transform(domNodeRef node, object_t *object)
 {
-	(void)node;
-	(void)object;
+	domTranslate_Array trans_a = node->getTranslate_array();
+	domRotate_Array rot_a = node->getRotate_array();
+	domScale_Array scale_a = node->getScale_array();
+	domMatrix_Array mat_a = node->getMatrix_array();
+	domFloat4 fl;
+	float fl_real[3];
+	quat_t quat;
+	size_t i;
+	size_t j;
+	MATRIX_DECL_IDENT(trans_total);
+	float trans[16];
+
+	for (i = 0; i < mat_a.getCount(); i++) {
+		for (j = 0; j < 16; j++)
+			trans[j] = mat_a[i]->getValue()[j];
+
+		matrix_transpose(trans, trans);
+		matrix_multiply(trans, trans_total, trans_total);
+	}
+
+	object_apply_pretransform(object, trans_total);
+
+	for (i = 0; i < scale_a.getCount(); i++) {
+		fl = scale_a[i]->getValue();
+		fl_real[0] = fl[0];
+		fl_real[1] = fl[1];
+		fl_real[2] = fl[2];
+		object_scale(object, fl_real);
+	}
+
+	for (i = 0; i < trans_a.getCount(); i++) {
+		fl = trans_a[i]->getValue();
+		fl_real[0] = fl[0];
+		fl_real[1] = fl[1];
+		fl_real[2] = fl[2];
+		object_move(object, fl_real);
+	}
+
+	for (i = 0; i < rot_a.getCount(); i++) {
+		fl = rot_a[i]->getValue();
+		quat_init(&quat, fl[0], fl[1], fl[2], fl[3]);
+		object_rotate(object, &quat);
+	}
 }
 
 /**
