@@ -26,6 +26,15 @@
 /**
  * An object. That is a mesh with a position and render context and all of
  * that.
+ *
+ * parent: The parent of this object. Object inherits transforms from its parent
+ * mesh: The mesh to draw at this object's location
+ * rot: Amount to rotate this object.
+ * trans: Amount to translate this object.
+ * scale: Amount to scale this object.
+ * pretransform: A transform matrix to apply before our local transforms.
+ * children: List of child objects of this object.
+ * child_count: Size of the children list.
  **/
 typedef struct object {
 	struct object *parent;
@@ -33,6 +42,7 @@ typedef struct object {
 	quat_t rot;
 	float trans[3];
 	float scale[3];
+	float pretransform[16];
 
 	struct object **children;
 	size_t child_count;
@@ -54,6 +64,7 @@ void object_draw(object_t *object, shader_t *shader, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_add_child(object_t *object, object_t *child);
 void object_unparent(object_t *object);
+void object_apply_pretransform(object_t *object, float matrix[16]);
 
 #ifdef __cplusplus
 }

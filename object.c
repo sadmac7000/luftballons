@@ -24,12 +24,22 @@
 #include "quat.h"
 
 /**
+ * Set the value of the pretransform matrix.
+ **/
+void
+object_apply_pretransform(object_t *object, float matrix[16])
+{
+	memcpy(object->pretransform, matrix, 16 * sizeof(float));
+}
+
+/**
  * Create an object.
  **/
 object_t *
 object_create(mesh_t *mesh, object_t *parent)
 {
 	object_t *ret = xmalloc(sizeof(object_t));
+	MATRIX_DECL_IDENT(ident);
 
 	ret->mesh = mesh;
 	ret->parent = parent;
@@ -46,6 +56,8 @@ object_create(mesh_t *mesh, object_t *parent)
 
 	if (ret->parent)
 		object_add_child(ret->parent, ret);
+
+	object_apply_pretransform(ret, ident);
 
 	return ret;
 }
@@ -172,10 +184,12 @@ object_get_transform_mat(object_t *object, float matrix[16])
 		    0, 0, object->scale[2], object->trans[2],
 		    0, 0, 0, 1);
 	float rotate[16];
+	float translate_final[16];
 
 	quat_to_matrix(&object->rot, rotate);
 
-	matrix_multiply(translate, rotate, matrix);
+	matrix_multiply(translate, object->pretransform, translate_final);
+	matrix_multiply(translate_final, rotate, matrix);
 }
 
 /**
