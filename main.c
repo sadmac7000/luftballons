@@ -39,89 +39,6 @@
 #include "draw_queue.h"
 #include "dae_load.h"
 
-const float vert_data[] = {
-//coords
-	-0.25f, -0.25f, -0.25f,  1.0f,
-	 0.25f, -0.25f, -0.25f,  1.0f,
-	 0.25f,  0.25f, -0.25f,  1.0f,
-	-0.25f,  0.25f, -0.25f,  1.0f,
-
-	-0.25f, -0.25f,  0.25f, 1.0f,
-	 0.25f, -0.25f,  0.25f, 1.0f,
-	 0.25f,  0.25f,  0.25f, 1.0f,
-	-0.25f,  0.25f,  0.25f, 1.0f,
-
-	-0.25f, -0.25f, -0.25f,  1.0f,
-	-0.25f, -0.25f,  0.25f, 1.0f,
-	-0.25f,  0.25f,  0.25f, 1.0f,
-	-0.25f,  0.25f, -0.25f,  1.0f,
-
-	 0.25f, -0.25f, -0.25f,  1.0f,
-	 0.25f, -0.25f,  0.25f, 1.0f,
-	 0.25f,  0.25f,  0.25f, 1.0f,
-	 0.25f,  0.25f, -0.25f,  1.0f,
-
-	-0.25f, -0.25f, -0.25f,  1.0f,
-	-0.25f, -0.25f,  0.25f, 1.0f,
-	 0.25f, -0.25f,  0.25f, 1.0f,
-	 0.25f, -0.25f, -0.25f,  1.0f,
-
-	-0.25f,  0.25f, -0.25f,  1.0f,
-	-0.25f,  0.25f,  0.25f, 1.0f,
-	 0.25f,  0.25f,  0.25f, 1.0f,
-	 0.25f,  0.25f, -0.25f,  1.0f,
-//colors
-	1.0f,    0.0f, 0.0f, 1.0f,
-	1.0f,    0.0f, 0.0f, 1.0f,
-	1.0f,    0.0f, 0.0f, 1.0f,
-	1.0f,    0.0f, 0.0f, 1.0f,
-
-	0.0f,    1.0f, 0.0f, 1.0f,
-	0.0f,    1.0f, 0.0f, 1.0f,
-	0.0f,    1.0f, 0.0f, 1.0f,
-	0.0f,    1.0f, 0.0f, 1.0f,
-
-	0.0f,    0.0f, 1.0f, 1.0f,
-	0.0f,    0.0f, 1.0f, 1.0f,
-	0.0f,    0.0f, 1.0f, 1.0f,
-	0.0f,    0.0f, 1.0f, 1.0f,
-
-	1.0f,    1.0f, 0.0f, 1.0f,
-	1.0f,    1.0f, 0.0f, 1.0f,
-	1.0f,    1.0f, 0.0f, 1.0f,
-	1.0f,    1.0f, 0.0f, 1.0f,
-
-	1.0f,    0.0f, 1.0f, 1.0f,
-	1.0f,    0.0f, 1.0f, 1.0f,
-	1.0f,    0.0f, 1.0f, 1.0f,
-	1.0f,    0.0f, 1.0f, 1.0f,
-
-	0.0f,    1.0f, 1.0f, 1.0f,
-	0.0f,    1.0f, 1.0f, 1.0f,
-	0.0f,    1.0f, 1.0f, 1.0f,
-	0.0f,    1.0f, 1.0f, 1.0f,
-};
-
-const uint16_t elem_data[] = {
-	0, 2, 1,
-	0, 3, 2,
-
-	4, 5, 6,
-	4, 6, 7,
-
-	8, 9, 10,
-	8, 10, 11,
-
-	12, 14, 13,
-	12, 15, 14,
-
-	17, 19, 18,
-	17, 16, 19,
-
-	20, 22, 23,
-	20, 21, 22,
-};
-
 object_t *cube;
 object_t *cube_center;
 shader_t *shader;
@@ -358,13 +275,6 @@ offkey(unsigned char key, int x, int y)
 int
 main(int argc, char **argv)
 {
-	mesh_t *mesh;
-
-	vbuf_fmt_t vert_regions = 0;
-
-	vbuf_fmt_add(&vert_regions, "position", 4, GL_FLOAT);
-	vbuf_fmt_add(&vert_regions, "color", 4, GL_FLOAT);
-
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
 	size_t dae_mesh_count;
@@ -391,16 +301,22 @@ main(int argc, char **argv)
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 
-	mesh = mesh_create(24, vert_data, 36, elem_data, vert_regions,
-			   GL_TRIANGLES);
-
 	draw_queue = draw_queue_create();
 
 	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
 	draw_queue_set_clear_depth(draw_queue, 1);
 
 	cube_center = object_create(NULL, NULL);
-	cube = object_create(mesh, cube_center);
+
+	items = dae_load("ref_model/vcolor_cube_small.dae", &dae_mesh_count);
+
+	if (dae_mesh_count != 1)
+		errx(1, "Weird object count %zu loading reference cube",
+		     dae_mesh_count);
+
+	cube = items[0];
+	free(items);
+	object_add_child(cube_center, cube);
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 

@@ -72,14 +72,73 @@
             </accessor>
           </technique_common>
         </source>
+        <source id="Cube_001-mesh-colors">
+          <float_array id="Cube_001-mesh-colors-array" count="18">0 1 0 1 0 1 1 0 0 0 0 1 1 1 0 0 1 1</float_array>
+          <technique_common>
+            <accessor source="#Cube_001-mesh-colors-array" count="6" stride="3">
+              <param name="R" type="float"/>
+              <param name="G" type="float"/>
+              <param name="B" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
         <vertices id="Cube_001-mesh-vertices">
           <input semantic="POSITION" source="#Cube_001-mesh-positions"/>
         </vertices>
         <polylist material="Material_001" count="12">
           <input semantic="VERTEX" source="#Cube_001-mesh-vertices" offset="0"/>
           <input semantic="NORMAL" source="#Cube_001-mesh-normals" offset="1"/>
+          <input semantic="COLOR" source="#Cube_001-mesh-colors" offset="2"/>
           <vcount>3 3 3 3 3 3 3 3 3 3 3 3 </vcount>
-          <p>0 0 1 0 2 0 4 1 7 1 6 1 0 2 4 2 1 2 1 3 5 3 2 3 2 4 6 4 7 4 4 5 0 5 3 5 3 6 0 6 2 6 5 7 4 7 6 7 4 8 5 8 1 8 5 9 6 9 2 9 3 10 2 10 7 10 7 11 4 11 3 11</p>
+          <p>
+            0 0 2
+            1 0 2
+            2 0 2
+
+            4 1 0
+            7 1 0
+            6 1 0
+
+            0 2 4
+            4 2 4
+            1 2 4
+
+            1 3 1
+            5 3 1
+            2 3 1
+
+            2 4 3
+            6 4 3
+            7 4 3
+
+            4 5 5
+            0 5 5
+            3 5 5
+
+            3 6 2
+            0 6 2
+            2 6 2
+
+            5 7 0
+            4 7 0
+            6 7 0
+
+            4 8 4
+            5 8 4
+            1 8 4
+
+            5 9 1
+            6 9 1
+            2 9 1
+
+            3 10 3
+            2 10 3
+            7 10 3
+
+            7 11 5
+            4 11 5
+            3 11 5
+          </p>
         </polylist>
       </mesh>
       <extra><technique profile="MAYA"><double_sided>1</double_sided></technique></extra>
