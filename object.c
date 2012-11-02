@@ -29,7 +29,7 @@
 object_t *
 object_create(mesh_t *mesh, object_t *parent)
 {
-	object_t *ret = xmalloc(sizeof(mesh_t));
+	object_t *ret = xmalloc(sizeof(object_t));
 
 	ret->mesh = mesh;
 	ret->parent = parent;
