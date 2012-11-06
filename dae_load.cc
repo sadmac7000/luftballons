@@ -531,10 +531,8 @@ dae_get_nodes(domCOLLADA *doc, size_t *count)
 
 	ret = (object_t **)xcalloc(*count, sizeof(object_t *));
 
-	for (i = 0; i < *count; i++) {
-		dae_postprocess(doc, output[i]);
+	for (i = 0; i < *count; i++)
 		ret[i] = output[i];
-	}
 
 	return ret;
 }
