@@ -33,6 +33,7 @@ typedef struct shader {
 
 typedef enum {
 	SHADER_UNIFORM_MAT4,
+	SHADER_UNIFORM_VEC4,
 } shader_uniform_type_t;
 
 #ifdef __cplusplus
