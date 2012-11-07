@@ -19,6 +19,7 @@
 #define OBJECT_H
 
 #include "mesh.h"
+#include "material.h"
 #include "quat.h"
 #include "shader.h"
 #include "camera.h"
@@ -29,6 +30,7 @@
  *
  * parent: The parent of this object. Object inherits transforms from its parent
  * mesh: The mesh to draw at this object's location
+ * material: The material to draw with.
  * rot: Amount to rotate this object.
  * trans: Amount to translate this object.
  * scale: Amount to scale this object.
@@ -39,6 +41,7 @@
 typedef struct object {
 	struct object *parent;
 	mesh_t *mesh;
+	material_t *material;
 	quat_t rot;
 	float trans[3];
 	float scale[3];
@@ -52,7 +55,7 @@ typedef struct object {
 extern "C" {
 #endif
 
-object_t *object_create(mesh_t *mesh, object_t *parent);
+object_t *object_create(mesh_t *mesh, object_t *parent, material_t *material);
 void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
@@ -60,7 +63,7 @@ void object_scale(object_t *object, float scale[3]);
 void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
 void object_set_scale(object_t *object, float scale[3]);
-void object_draw(object_t *object, shader_t *shader, camera_t *camera);
+void object_draw(object_t *object, size_t pass, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_add_child(object_t *object, object_t *child);
 void object_unparent(object_t *object);

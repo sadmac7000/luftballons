@@ -34,6 +34,7 @@ luftballons_OBJS =	\
 	vbuf_fmt.o	\
 	bufpool.o	\
 	draw_queue.o	\
+	material.o	\
 	quat.o
 
 luftballons_LINK=-lglut -lGL -lm -lstdc++ -lcollada14dom -lboost_system

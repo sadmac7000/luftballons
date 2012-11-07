@@ -36,13 +36,14 @@ object_apply_pretransform(object_t *object, float matrix[16])
  * Create an object.
  **/
 object_t *
-object_create(mesh_t *mesh, object_t *parent)
+object_create(mesh_t *mesh, object_t *parent, material_t *material)
 {
 	object_t *ret = xmalloc(sizeof(object_t));
 	MATRIX_DECL_IDENT(ident);
 
-	ret->mesh = mesh;
 	ret->parent = parent;
+	ret->mesh = mesh;
+	ret->material = material;
 
 	if (mesh)
 		mesh_grab(mesh);
@@ -85,7 +86,7 @@ object_destroy(object_t *object)
  * Draw an object given a global transform.
  **/
 static void
-object_draw_matrix(object_t *object, shader_t *shader, float parent_trans[16])
+object_draw_matrix(object_t *object, size_t pass, float parent_trans[16])
 {
 	size_t i;
 	float transform[16];
@@ -93,25 +94,25 @@ object_draw_matrix(object_t *object, shader_t *shader, float parent_trans[16])
 	object_get_transform_mat(object, transform);
 	matrix_multiply(parent_trans, transform, transform);
 
-	shader_activate(shader);
-
-	if (object->mesh) {
-		shader_set_uniform_mat(shader, "transform", transform);
+	if (object->mesh && object->material &&
+	    material_activate(object->material, pass)) {
+		shader_set_uniform_mat(object->material->shaders[pass],
+				       "transform", transform);
 		mesh_draw(object->mesh);
 	}
 
 	/* FIXME: Recursion: Bad? */
 	for (i = 0; i < object->child_count; i++)
-		object_draw_matrix(object->children[i], shader, transform);
+		object_draw_matrix(object->children[i], pass, transform);
 }
 
 /**
  * Draw an object in the current context.
  **/
 void
-object_draw(object_t *object, shader_t *shader, camera_t *camera)
+object_draw(object_t *object, size_t pass, camera_t *camera)
 {
-	object_draw_matrix(object, shader, camera->to_clip_xfrm);
+	object_draw_matrix(object, pass, camera->to_clip_xfrm);
 }
 
 /**

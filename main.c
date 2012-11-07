@@ -306,7 +306,7 @@ main(int argc, char **argv)
 	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
 	draw_queue_set_clear_depth(draw_queue, 1);
 
-	cube_center = object_create(NULL, NULL);
+	cube_center = object_create(NULL, NULL, NULL);
 
 	items = dae_load("ref_model/vcolor_cube_small.dae", &dae_mesh_count);
 

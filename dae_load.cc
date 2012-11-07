@@ -319,7 +319,7 @@ dae_load_polylist(domMeshRef mesh)
 	free(data);
 	free(ebuf);
 
-	return object_create(out_mesh, NULL);
+	return object_create(out_mesh, NULL, NULL);
 }
 
 /**
@@ -420,7 +420,7 @@ dae_process_node(domNodeRef node, object_t *parent)
 		     " Found %lu", arr.getCount());
 
 	if (arr.getCount() == 0) {
-		object = object_create(NULL, parent);
+		object = object_create(NULL, parent, NULL);
 		goto out;
 	}
 
