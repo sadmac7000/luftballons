@@ -55,7 +55,7 @@ extern "C" {
 #endif
 
 draw_queue_t *draw_queue_create(void);
-void draw_queue_draw(draw_queue_t *queue, object_t *object, shader_t *shader,
+void draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
 		     camera_t *camera);
 void draw_queue_flush(draw_queue_t *queue);
 void draw_queue_set_clear(draw_queue_t *queue, int flag, float r, float g,

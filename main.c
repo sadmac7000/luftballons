@@ -202,7 +202,7 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-	draw_queue_draw(draw_queue, cube_center, shader, camera);
+	draw_queue_draw(draw_queue, cube_center, 0, camera);
 	draw_queue_flush(draw_queue);
 
 	glutSwapBuffers();
@@ -280,6 +280,7 @@ main(int argc, char **argv)
 	size_t dae_mesh_count;
 	size_t i;
 	object_t **items;
+	material_t *cube_material;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -300,6 +301,8 @@ main(int argc, char **argv)
 	glutKeyboardUpFunc(offkey);
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
+	cube_material = material_create();
+	material_set_pass_shader(cube_material, 0, shader);
 
 	draw_queue = draw_queue_create();
 
@@ -315,6 +318,7 @@ main(int argc, char **argv)
 		     dae_mesh_count);
 
 	cube = items[0];
+	cube->material = cube_material;
 	free(items);
 	object_add_child(cube_center, cube);
 

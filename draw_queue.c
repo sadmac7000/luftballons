@@ -30,8 +30,9 @@ struct uniform {
  * A draw operation. More or less corresponds to a single draw call.
  **/
 struct draw_op {
-	shader_t *shader;
+	material_t *material;
 	mesh_t *mesh;
+	size_t pass;
 	struct uniform *uniforms;
 	size_t uniform_count;
 };
@@ -88,12 +89,12 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  * Add a draw op to the draw queue.
  *
  * queue: The queue to add to.
- * shader: The shader to perform the draw with.
- * mesh: The mesh to draw.
+ * object: The object contianing the mesh to draw.
+ * pass: The pass we are drawing.
  * transform: The transform to apply to the mesh.
  **/
 static void
-draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
+draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 		  float transform[16])
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
@@ -107,8 +108,9 @@ draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
 					   2 * expand_size *
 					   sizeof(struct draw_op *));
 
-	op->shader = shader;
-	op->mesh = mesh;
+	op->material = object->material;
+	op->pass = pass;
+	op->mesh = object->mesh;
 	op->uniforms = xmalloc(sizeof(struct uniform));
 	op->uniforms->name = "transform";
 	op->uniforms->type = SHADER_UNIFORM_MAT4;
@@ -116,17 +118,17 @@ draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
 	memcpy(op->uniforms->data, transform, 16 * sizeof(float));
 	op->uniform_count = 1;
 
-	draw_queue_add_mesh(queue, mesh);
+	draw_queue_add_mesh(queue, object->mesh);
 
 	queue->draw_ops[queue->draw_op_count++] = op;
 }
 
 /**
- * Queue a draw operation for the given object. Use the given shader and apply
- * the given transform.
+ * Queue a draw operation for the given object. Draw for the given pass and
+ * apply the given transform.
  **/
 static void
-draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, shader_t *shader,
+draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		       float parent_trans[16])
 {
 	size_t i;
@@ -135,12 +137,12 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, shader_t *shader,
 	object_get_transform_mat(object, transform);
 	matrix_multiply(parent_trans, transform, transform);
 
-	if (object->mesh)
-		draw_queue_add_op(queue, shader, object->mesh, transform);
+	if (object->mesh && object->material)
+		draw_queue_add_op(queue, object, pass, transform);
 
 	/* FIXME: Recursion: Bad? */
 	for (i = 0; i < object->child_count; i++)
-		draw_queue_draw_matrix(queue, object->children[i], shader,
+		draw_queue_draw_matrix(queue, object->children[i], pass,
 				       transform);
 }
 
@@ -148,10 +150,10 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, shader_t *shader,
  * Queue a draw operation for the given object. Use the given shader and camera.
  **/
 void
-draw_queue_draw(draw_queue_t *queue, object_t *object, shader_t *shader,
+draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
 		camera_t *camera)
 {
-	draw_queue_draw_matrix(queue, object, shader, camera->to_clip_xfrm);
+	draw_queue_draw_matrix(queue, object, pass, camera->to_clip_xfrm);
 }
 
 /**
@@ -162,11 +164,11 @@ draw_queue_exec_op(struct draw_op *op)
 {
 	size_t i;
 
-	shader_activate(op->shader);
+	material_activate(op->material, op->pass);
 
 	for (i = 0; i < op->uniform_count; i++)
 		if (op->uniforms[i].type == SHADER_UNIFORM_MAT4)
-			shader_set_uniform_mat(op->shader,
+			shader_set_uniform_mat(op->material->shaders[op->pass],
 					       op->uniforms[i].name,
 					       op->uniforms[i].data);
 
