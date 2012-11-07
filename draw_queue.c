@@ -22,9 +22,7 @@
  **/
 struct uniform {
 	const char *name;
-	enum {
-		MAT4,
-	} type;
+	shader_uniform_type_t type;
 	void *data;
 };
 
@@ -113,7 +111,7 @@ draw_queue_add_op(draw_queue_t *queue, shader_t *shader, mesh_t *mesh,
 	op->mesh = mesh;
 	op->uniforms = xmalloc(sizeof(struct uniform));
 	op->uniforms->name = "transform";
-	op->uniforms->type = MAT4;
+	op->uniforms->type = SHADER_UNIFORM_MAT4;
 	op->uniforms->data = xcalloc(16, sizeof(float));
 	memcpy(op->uniforms->data, transform, 16 * sizeof(float));
 	op->uniform_count = 1;
@@ -167,7 +165,7 @@ draw_queue_exec_op(struct draw_op *op)
 	shader_activate(op->shader);
 
 	for (i = 0; i < op->uniform_count; i++)
-		if (op->uniforms[i].type == MAT4)
+		if (op->uniforms[i].type == SHADER_UNIFORM_MAT4)
 			shader_set_uniform_mat(op->shader,
 					       op->uniforms[i].name,
 					       op->uniforms[i].data);

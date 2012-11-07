@@ -31,6 +31,10 @@ typedef struct shader {
 	GLuint gl_handle;
 } shader_t;
 
+typedef enum {
+	SHADER_UNIFORM_MAT4,
+} shader_uniform_type_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
