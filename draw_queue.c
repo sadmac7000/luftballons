@@ -147,7 +147,8 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 }
 
 /**
- * Queue a draw operation for the given object. Use the given shader and camera.
+ * Queue a draw operation for the given object. Draw for the given pass from
+ * the perspective of the given camera.
  **/
 void
 draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
