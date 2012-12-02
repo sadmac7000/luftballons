@@ -306,6 +306,7 @@ main(int argc, char **argv)
 	glutCreateWindow(argv[0]);
 
 	glEnable(GL_CULL_FACE);
+	glEnable(GL_TEXTURE_2D);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
 	glEnable(GL_DEPTH_TEST);

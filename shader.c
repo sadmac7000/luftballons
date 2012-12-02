@@ -243,7 +243,6 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 	size_t unit = shader_allocate_tex_unit(shader);
 
 	glUniform1i(loc, (int)unit);
-	glEnable(GL_TEXTURE_2D);
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, map->map);
 
