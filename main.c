@@ -38,6 +38,7 @@
 #include "quat.h"
 #include "draw_queue.h"
 #include "dae_load.h"
+#include "texmap.h"
 
 object_t *cube;
 object_t *cube_center;
@@ -272,6 +273,18 @@ offkey(unsigned char key, int x, int y)
 	tkey(key, x, y, 0);
 }
 
+void
+assign_material(object_t *object, material_t *material)
+{
+	size_t i;
+
+	if (object->mesh)
+		object->material = material;
+
+	for (i = 0; i < object->child_count; i++)
+		assign_material(object->children[i], material);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -281,6 +294,8 @@ main(int argc, char **argv)
 	size_t i;
 	object_t **items;
 	material_t *cube_material;
+	material_t *plane_material;
+	texmap_t *plane_map;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -302,7 +317,18 @@ main(int argc, char **argv)
 
 	shader = shader_create("vertex.glsl", "fragment.glsl");
 	cube_material = material_create();
+	plane_material = material_create();
 	material_set_pass_shader(cube_material, 0, shader);
+	material_set_pass_shader(plane_material, 0, shader);
+
+	plane_map = texmap_create(0, 0);
+	material_set_uniform(plane_material, "diffusemap",
+			     SHADER_UNIFORM_SAMP2D, plane_map);
+
+	texmap_load_image(plane_map, "ref_model/P51_Mustang.png", 0);
+	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	draw_queue = draw_queue_create();
 
@@ -324,8 +350,10 @@ main(int argc, char **argv)
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 
-	for (i = 0; i < dae_mesh_count; i++)
+	for (i = 0; i < dae_mesh_count; i++) {
+		assign_material(items[i], plane_material);
 		object_add_child(cube, items[i]);
+	}
 
 	free(items);
 

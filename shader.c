@@ -124,7 +124,32 @@ shader_instantiate(void)
 	shader_t *ret = xmalloc(sizeof(shader_t));
 
 	ret->gl_handle = glCreateProgram();
+	ret->tex_unit = 0;
 	return ret;
+}
+
+/**
+ * Allocate a texture unit from this shader.
+ **/
+static size_t
+shader_allocate_tex_unit(shader_t *shader)
+{
+	GLint max;
+
+	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max);
+	if (shader->tex_unit >= (unsigned)max)
+		errx(1, "Shader out of texture units");
+
+	return shader->tex_unit++;
+}
+
+/**
+ * Notify the active shader that a draw has occurred.
+ **/
+void
+shader_notify_draw(void)
+{
+	current_shader->tex_unit = 0;
 }
 
 /**
@@ -206,6 +231,23 @@ shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16])
 {
 	GLint loc = glGetUniformLocation(shader->gl_handle, name);
 	glUniformMatrix4fv(loc, 1, GL_FALSE, mat);
+}
+
+/**
+ * Set a uniform value to a 4x4 matrix.
+ **/
+void
+shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
+{
+	GLint loc = glGetUniformLocation(shader->gl_handle, name);
+	size_t unit = shader_allocate_tex_unit(shader);
+
+	glUniform1i(loc, (int)unit);
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0 + unit);
+	glBindTexture(GL_TEXTURE_2D, map->map);
+
+	glBindSampler(unit, map->sampler);
 }
 
 /**

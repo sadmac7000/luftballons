@@ -84,12 +84,15 @@ material_set_uniform(material_t *material, const char *name,
 /**
  * Tell a shader about our uniform.
  **/
-void
+static void
 material_uniform_load(material_uniform_t *uniform, shader_t *shader)
 {
 	switch(uniform->type) {
 	case SHADER_UNIFORM_MAT4:
 		shader_set_uniform_mat(shader, uniform->name, uniform->data);
+		break;
+	case SHADER_UNIFORM_SAMP2D:
+		shader_set_uniform_samp2D(shader, uniform->name, uniform->data);
 		break;
 	default:
 		errx(1, "Invalid uniform type %d", uniform->type);

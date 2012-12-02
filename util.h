@@ -19,8 +19,10 @@
 #define UTIL_H
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <err.h>
+#include <errno.h>
 
 #define OFFSET_OF(type, member) ((uintptr_t)&((type *)0)->member)
 #define CONTAINER_OF(ptr, type, member) ((type *)(((char *)ptr) - \
@@ -125,6 +127,53 @@ list_insert(list_node_t *prev, list_node_t *node)
 	node->prev = prev;
 	node->prev->next = node;
 	node->next->prev = node;
+}
+
+/**
+ * Just like read(2) but with no risk of EINTR and aborting on other errors.
+ **/
+static inline size_t
+xread(int fd, void *buf, size_t count)
+{
+	ssize_t got;
+	size_t total = 0;
+
+	while (count) {
+		got = read(fd, buf, count);
+
+		if (! got)
+			break;
+
+		if (got < 0 && errno != EINTR)
+			errx(1, "error during read");
+
+		if (got < 0)
+			got = 0;
+
+		total += got;
+		count -= got;
+		buf = (char *)buf + got;
+	}
+
+	return total;
+}
+
+/**
+ * Abort-on-error version of dup.
+ **/
+static inline int
+xdup(int fd)
+{
+	int ret = -1;
+	errno = EINTR;
+
+	while (errno == EINTR && ret == -1)
+		ret = dup(fd);
+
+	if (ret < 0)
+		errx(1, "Could not duplicate file descriptor");
+
+	return ret;
 }
 
 #ifdef __cplusplus

@@ -15,44 +15,32 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef TEXMAP_H
+#define TEXMAP_H
 
 #include <GL/gl.h>
 
-#include "vbuf.h"
-#include "texmap.h"
-
 /**
- * A shader.
+ * A 2D texture map, usually loaded from a file.
  *
- * gl_handle: The OpenGL designation for the shader.
- * tex_unit: The next available texture unit.
+ * map: OpenGL texture ID
+ * sampler: OpenGL sampler object
  **/
-typedef struct shader {
-	GLuint gl_handle;
-	size_t tex_unit;
-} shader_t;
-
-typedef enum {
-	SHADER_UNIFORM_MAT4,
-	SHADER_UNIFORM_VEC4,
-	SHADER_UNIFORM_SAMP2D,
-} shader_uniform_type_t;
+typedef struct texmap {
+	GLuint map;
+	GLuint sampler;
+} texmap_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-shader_t *shader_create(const char *vertex, const char *frag);
-void shader_activate(shader_t *shader);
-void shader_notify_draw(void);
-void shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16]);
-void shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map);
-void shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4]);
+texmap_t *texmap_create(size_t base_level, size_t max_level);
+void texmap_load_image(texmap_t *map, const char *path, int level);
+void texmap_set_int_param(texmap_t *map, GLenum param, GLint value);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHADER_H */
+#endif /* TEXMAP_H */
