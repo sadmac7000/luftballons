@@ -29,6 +29,8 @@
 /* Prototypes for image format handlers */
 extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
 				 const char *path);
+extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
+				  const char *path);
 
 /**
  * Load image from a file into a texture map.
@@ -48,7 +50,12 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 	if (texmap_load_image_png(map, level, fd, path))
 		return;
 
-	errx(1, "Unrecognized image format");
+	lseek(fd, 0, SEEK_SET);
+
+	if (texmap_load_image_tiff(map, level, fd, path))
+		return;
+
+	errx(1, "Unrecognized image format for %s", path);
 }
 
 /**

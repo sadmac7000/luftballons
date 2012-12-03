@@ -37,9 +37,11 @@ luftballons_OBJS =	\
 	material.o	\
 	texmap.o	\
 	texmap_png.o	\
+	texmap_tiff.o	\
 	quat.o
 
-luftballons_LINK=-lglut -lGL -lm -lstdc++ -lcollada14dom -lboost_system -lpng
+luftballons_LINK=-lglut -lGL -lm -lstdc++ \
+		 -lcollada14dom -lboost_system -lpng -ltiff
 
 define SET_DEPS =
 $(1): $$($(1)_OBJS)

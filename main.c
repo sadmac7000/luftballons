@@ -326,7 +326,7 @@ main(int argc, char **argv)
 	material_set_uniform(plane_material, "diffusemap",
 			     SHADER_UNIFORM_SAMP2D, plane_map);
 
-	texmap_load_image(plane_map, "ref_model/P51_Mustang.png", 0);
+	texmap_load_image(plane_map, "ref_model/P51_Mustang.tif", 0);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
