@@ -124,10 +124,11 @@ texmap_load_image_png(texmap_t *map, GLint level, int fd)
 	stride = png_get_rowbytes(read_struct, info_struct);
 	row_pointers = xcalloc(height, sizeof(void *));
 	result = xcalloc(height, stride);
-	row_pointers[0] = result;
+	row_pointers[height - 1] = result;
 
-	for (i = 1; i < height; i++)
-		row_pointers[i] = row_pointers[i - 1] + stride;
+	/* OpenGL likes its images "Upside down" from PNG's perspective */
+	for (i = height - 2; i > 0; i--)
+		row_pointers[i] = row_pointers[i + 1] + stride;
 
 	png_read_image(read_struct, row_pointers);
 	free(row_pointers);
