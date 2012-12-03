@@ -40,6 +40,7 @@
  **/
 typedef struct object {
 	struct object *parent;
+	char *name;
 	mesh_t *mesh;
 	material_t *material;
 	quat_t rot;
@@ -56,6 +57,7 @@ extern "C" {
 #endif
 
 object_t *object_create(mesh_t *mesh, object_t *parent, material_t *material);
+void object_set_name(object_t *object, const char *name);
 void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
@@ -68,6 +70,7 @@ void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_add_child(object_t *object, object_t *child);
 void object_unparent(object_t *object);
 void object_apply_pretransform(object_t *object, float matrix[16]);
+object_t *object_lookup(object_t *object, const char *name);
 
 #ifdef __cplusplus
 }

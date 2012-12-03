@@ -24,6 +24,31 @@
 #include "quat.h"
 
 /**
+ * Find the object under this object that matches the given name.
+ *
+ * object: Object to search under.
+ * name: Regex to check names against.
+ **/
+object_t *
+object_lookup(object_t *object, const char *name)
+{
+	size_t i;
+	object_t *ret;
+
+	if (! strcmp(object->name, name))
+		return object;
+
+	for (i = 0; i < object->child_count; i++) {
+		ret = object_lookup(object->children[i], name);
+
+		if (ret)
+			return ret;
+	}
+
+	return NULL;
+}
+
+/**
  * Set the value of the pretransform matrix.
  **/
 void
@@ -44,6 +69,7 @@ object_create(mesh_t *mesh, object_t *parent, material_t *material)
 	ret->parent = parent;
 	ret->mesh = mesh;
 	ret->material = material;
+	ret->name = NULL;
 
 	if (mesh)
 		mesh_grab(mesh);
@@ -61,6 +87,16 @@ object_create(mesh_t *mesh, object_t *parent, material_t *material)
 	object_apply_pretransform(ret, ident);
 
 	return ret;
+}
+
+/**
+ * Set an object's name.
+ **/
+void
+object_set_name(object_t *object, const char *name)
+{
+	free(object->name);
+	object->name = xstrdup(name);
 }
 
 /**

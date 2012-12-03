@@ -412,6 +412,7 @@ dae_process_node(domNodeRef node, object_t *parent)
 {
 	domInstance_geometry_Array arr = node->getInstance_geometry_array();
 	object_t *object;
+	const char *name;
 	domNode_Array children;
 	size_t i;
 
@@ -435,7 +436,14 @@ dae_process_node(domNodeRef node, object_t *parent)
 	dae_apply_transform(node, object);
 
 out:
+	name = node->getName();
 	children = node->getNode_array();
+
+	if (! name)
+		name = node->getId();
+
+	if (name)
+		object_set_name(object, name);
 
 	for (i = 0; i < children.getCount(); i++)
 		dae_process_node(children[i], object);
