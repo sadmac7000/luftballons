@@ -26,7 +26,8 @@
  **/
 static void
 texmap_png_load_data(texmap_t *map, GLint level,
-		     int width, int height, int color_type, void *data)
+		     int width, int height, int color_type, void *data,
+		     const char *path)
 {
 	GLenum gl_ifmt;
 	GLenum gl_fmt;
@@ -54,7 +55,7 @@ texmap_png_load_data(texmap_t *map, GLint level,
 		gl_type = GL_UNSIGNED_BYTE;
 		break;
 	default:
-		errx(1, "Encountered unknown PNG format\n");
+		errx(1, "Encountered unknown PNG format in %s", path);
 	};
 
 	glBindTexture(GL_TEXTURE_2D, map->map);
@@ -66,7 +67,7 @@ texmap_png_load_data(texmap_t *map, GLint level,
  * Load an image from a PNG file into a texture map.
  **/
 int
-texmap_load_image_png(texmap_t *map, GLint level, int fd)
+texmap_load_image_png(texmap_t *map, GLint level, int fd, const char *path)
 {
 	png_structp read_struct;
 	png_infop info_struct;
@@ -98,7 +99,7 @@ texmap_load_image_png(texmap_t *map, GLint level, int fd)
 		err(1, "Could not create libpng info struct");
 
 	if (setjmp(png_jmpbuf(read_struct)))
-		err(1, "Could not get png data");
+		err(1, "Could not get png data, file %s", path);
 
 	png_init_io(read_struct, fp);
 	png_set_sig_bytes(read_struct, 8);
@@ -113,13 +114,14 @@ texmap_load_image_png(texmap_t *map, GLint level, int fd)
 	png_read_update_info(read_struct, info_struct);
 
 	if (color_type == PNG_COLOR_TYPE_PALETTE)
-		errx(1, "PNG palette color not supported");
+		errx(1, "PNG palette color not supported, file %s", path);
 
 	if (bit_depth != 8)
-		errx(1, "PNG bit depth other than 8 not supported");
+		errx(1, "PNG bit depth other than 8 not supported, file %s",
+		     path);
 
 	if (setjmp(png_jmpbuf(read_struct)))
-		err(1, "Could not read png");
+		err(1, "Could not read png %s", path);
 
 	stride = png_get_rowbytes(read_struct, info_struct);
 	row_pointers = xcalloc(height, sizeof(void *));
@@ -134,7 +136,8 @@ texmap_load_image_png(texmap_t *map, GLint level, int fd)
 	free(row_pointers);
 	png_destroy_read_struct(&read_struct, &info_struct, NULL);
 
-	texmap_png_load_data(map, level, width, height, color_type, result);
+	texmap_png_load_data(map, level, width, height, color_type, result,
+			     path);
 	free(result);
 	fclose(fp);
 

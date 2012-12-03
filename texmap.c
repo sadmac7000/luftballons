@@ -27,7 +27,8 @@
 #include "util.h"
 
 /* Prototypes for image format handlers */
-extern int texmap_load_image_png(texmap_t *map, GLint level, int fd);
+extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
+				 const char *path);
 
 /**
  * Load image from a file into a texture map.
@@ -44,7 +45,7 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 	if (fd < 0)
 		err(1, "Could not open image file %s", path);
 
-	if (texmap_load_image_png(map, level, fd))
+	if (texmap_load_image_png(map, level, fd, path))
 		return;
 
 	errx(1, "Unrecognized image format");
