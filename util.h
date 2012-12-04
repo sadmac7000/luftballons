@@ -176,6 +176,61 @@ xdup(int fd)
 	return ret;
 }
 
+/**
+ * When allocating a potentially expanding array of elements, how many elements
+ * should we have space for minimum.
+ **/
+#define VEC_BASE_SIZE 8
+
+/**
+ * Expand an allocated array to fit at least one more element.
+ *
+ * vec: Array to operate on.
+ * items: Number of used items in the array.
+ * item_sz: Size of each item.
+ **/
+static inline void *
+do_vec_expand(void *vec, size_t items, size_t item_sz)
+{
+	if (! vec)
+		return xcalloc(VEC_BASE_SIZE, item_sz);
+
+	if (items < VEC_BASE_SIZE)
+		return vec;
+
+	if (items & (items - 1))
+		return vec;
+
+	return xrealloc(vec, items * 2 * item_sz);
+}
+
+/**
+ * Contract an allocated array to be at least 66% used.
+ *
+ * vec: Array to operate on.
+ * items: Number of used items in the array.
+ * item_sz: Size of each item.
+ **/
+static inline void *
+do_vec_contract(void *vec, size_t items, size_t item_sz)
+{
+	size_t expected = items + items / 2;
+	size_t i;
+
+	for (i = sizeof(size_t) * 4; i; i /= 2)
+		expected |= expected >> i;
+
+	expected++;
+
+	if (expected < VEC_BASE_SIZE)
+		expected = VEC_BASE_SIZE;
+
+	return xrealloc(vec, expected * item_sz);
+}
+
+#define vec_expand(x, y) do_vec_expand((x), (y), sizeof(*(x)))
+#define vec_contract(x, y) do_vec_contract((x), (y), sizeof(*(x)))
+
 #ifdef __cplusplus
 }
 #endif

@@ -235,14 +235,7 @@ object_get_transform_mat(object_t *object, float matrix[16])
 void
 object_add_child(object_t *object, object_t *child)
 {
-	if (! object->child_count)
-		object->children = xrealloc(object->children,
-					    sizeof(object_t *));
-	else if (! (object->child_count & (object->child_count - 1)))
-		object->children = xrealloc(object->children,
-					    2 * object->child_count *
-					    sizeof(object_t *));
-
+	object->children = vec_expand(object->children, object->child_count);
 	object->children[object->child_count++] = child;
 	child->parent = object;
 }
@@ -271,4 +264,6 @@ object_unparent(object_t *object)
 
 	memcpy(&parent->children[i], &parent->children[i + 1],
 	       (parent->child_count - i) * sizeof(object_t *));
+
+	vec_contract(parent->children, parent->child_count);
 }
