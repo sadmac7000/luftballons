@@ -24,6 +24,52 @@
 #include "quat.h"
 
 /**
+ * Set up a cursor to traverse objects rooted at the given object.
+ **/
+void
+object_cursor_init(object_cursor_t *cursor, object_t *root)
+{
+	cursor->stack = NULL;
+	cursor->stack_size = 0;
+	cursor->current = root;
+}
+
+/**
+ * Move the cursor to the given child of its current position.
+ **/
+void
+object_cursor_down(object_cursor_t *cursor, size_t child)
+{
+	if (child > cursor->current->child_count)
+		errx(1, "Tried to get child %zu of object with %zu children",
+		     child, cursor->current->child_count);
+
+	cursor->stack = vec_expand(cursor->stack, cursor->stack_size);
+	cursor->stack[cursor->stack_size++] = child;
+	cursor->current = cursor->current->children[child];
+}
+
+/**
+ * Move the cursor to the parent of its current position.
+ *
+ * Returns: The index of the child we previously occupied or -1 if we're at the
+ * root.
+ **/
+ssize_t
+object_cursor_up(object_cursor_t *cursor)
+{
+	size_t ret;
+
+	if (cursor->stack_size == 0)
+		return -1;
+
+	ret = cursor->stack[--cursor->stack_size];
+	cursor->stack = vec_contract(cursor->stack, cursor->stack_size);
+	cursor->current = cursor->current->parent;
+	return ret;
+}
+
+/**
  * Find the object under this object that matches the given name.
  *
  * object: Object to search under.
@@ -105,50 +151,30 @@ object_set_name(object_t *object, const char *name)
 void
 object_destroy(object_t *object)
 {
-	object_unparent(object);
+	ssize_t up;
+	object_cursor_t cursor;
+	object_t *target;
 
-	/* FIXME: Recursion: Bad? */
-	while (object->child_count)
-		object_destroy(object->children[0]);
+	object_cursor_init(&cursor, object);
 
-	if (object->mesh)
-		mesh_ungrab(object->mesh);
+	for (;;) {
+		while (cursor.current->child_count)
+			object_cursor_down(&cursor, 0);
 
-	free(object->children);
-	free(object);
-}
+		while (! cursor.current->child_count) {
+			object = cursor.current;
+			up = object_cursor_up(&cursor);
+			
+			if (object->mesh)
+				mesh_ungrab(object->mesh);
 
-/**
- * Draw an object given a global transform.
- **/
-static void
-object_draw_matrix(object_t *object, size_t pass, float parent_trans[16])
-{
-	size_t i;
-	float transform[16];
+			free(object->children);
+			free(object);
 
-	object_get_transform_mat(object, transform);
-	matrix_multiply(parent_trans, transform, transform);
-
-	if (object->mesh && object->material &&
-	    material_activate(object->material, pass)) {
-		shader_set_uniform_mat(object->material->shaders[pass],
-				       "transform", transform);
-		mesh_draw(object->mesh);
+			if (up < 0)
+			    return;
+		}
 	}
-
-	/* FIXME: Recursion: Bad? */
-	for (i = 0; i < object->child_count; i++)
-		object_draw_matrix(object->children[i], pass, transform);
-}
-
-/**
- * Draw an object in the current context.
- **/
-void
-object_draw(object_t *object, size_t pass, camera_t *camera)
-{
-	object_draw_matrix(object, pass, camera->to_clip_xfrm);
 }
 
 /**

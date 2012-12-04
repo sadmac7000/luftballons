@@ -19,6 +19,7 @@
 #define MATRIX_H
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define MATRIX_DECL(matrix, a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
@@ -30,6 +31,19 @@
 					      0,0,1,0, \
 					      0,0,0,1)
 
+/**
+ * A stack of matrices.
+ *
+ * data: A buffer for the frames.
+ * size: Number of frames on the stack.
+ **/
+typedef struct matrix_stack {
+	float *data;
+	size_t size;
+} matrix_stack_t;
+
+#define MATRIX_STACK_DECL(x) matrix_stack_t x = { NULL, 0 }
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,7 +51,8 @@ extern "C" {
 /**
  * Print out a matrix for debugging.
  **/
-static inline void matrix_print(float m[16])
+static inline void
+matrix_print(float m[16])
 {
 	printf("%f %f %f %f\n", m[0], m[4], m[8], m[12]);
 	printf("%f %f %f %f\n", m[1], m[5], m[9], m[13]);
@@ -48,10 +63,30 @@ static inline void matrix_print(float m[16])
 /**
  * Write an identity matrix.
  **/
-static inline void matrix_ident(float out[16])
+static inline void
+matrix_ident(float out[16])
 {
 	memset(out, 0, 16 * sizeof(float));
 	out[0] = out[5] = out[10] = out[15] = 1;
+}
+
+/**
+ * Duplicate a matrix.
+ **/
+static inline void
+matrix_dup(float in[16], float out[16])
+{
+	memcpy(out, in, 16 * sizeof(float));
+}
+
+/**
+ * Free a matrix stack's data.
+ **/
+
+static inline void
+matrix_stack_release(matrix_stack_t *stack)
+{
+	free(stack->data);
 }
 
 void matrix_transpose(float in[16], float out[16]);
@@ -64,6 +99,8 @@ void vec3_add(float a[3], float b[3], float result[3]);
 void vec3_subtract(float a[3], float b[3], float result[3]);
 void vec3_scale(float in[3], float out[3], float factor);
 void vec3_dup(float in[3], float out[3]);
+void matrix_stack_push(matrix_stack_t *stack, float item[16]);
+int matrix_stack_pop(matrix_stack_t *stack, float item[16]);
 
 #ifdef __cplusplus
 }

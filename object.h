@@ -52,6 +52,15 @@ typedef struct object {
 	size_t child_count;
 } object_t;
 
+/**
+ * A cursor to iterate through a tree of objects.
+ **/
+typedef struct object_cursor {
+	struct object *current;
+	size_t *stack;
+	size_t stack_size;
+} object_cursor_t;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -65,12 +74,24 @@ void object_scale(object_t *object, float scale[3]);
 void object_set_rotation(object_t *object, quat_t *quat);
 void object_set_translation(object_t *object, float vec[3]);
 void object_set_scale(object_t *object, float scale[3]);
-void object_draw(object_t *object, size_t pass, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_reparent(object_t *object, object_t *parent);
 void object_unparent(object_t *object);
 void object_apply_pretransform(object_t *object, float matrix[16]);
 object_t *object_lookup(object_t *object, const char *name);
+
+void object_cursor_init(object_cursor_t *cursor, object_t *root);
+void object_cursor_down(object_cursor_t *cursor, size_t child);
+ssize_t object_cursor_up(object_cursor_t *cursor);
+
+/**
+ * Release an object cursor's internal data.
+ **/
+static inline void
+object_cursor_release(object_cursor_t *cursor)
+{
+	free(cursor->stack);
+}
 
 #ifdef __cplusplus
 }

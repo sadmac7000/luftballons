@@ -131,19 +131,42 @@ static void
 draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		       float parent_trans[16])
 {
-	size_t i;
+	ssize_t i = 0;
 	float transform[16];
+	object_cursor_t cursor;
+	MATRIX_STACK_DECL(pt_stack);
 
-	object_get_transform_mat(object, transform);
-	matrix_multiply(parent_trans, transform, transform);
+	object_cursor_init(&cursor, object);
+	object = cursor.current;
 
-	if (object->mesh && object->material)
-		draw_queue_add_op(queue, object, pass, transform);
+	for (;;) {
+		object_get_transform_mat(object, transform);
+		matrix_multiply(parent_trans, transform, transform);
 
-	/* FIXME: Recursion: Bad? */
-	for (i = 0; i < object->child_count; i++)
-		draw_queue_draw_matrix(queue, object->children[i], pass,
-				       transform);
+		if (object->mesh && object->material)
+			draw_queue_add_op(queue, object, pass, transform);
+
+		for (;(size_t)i >= object->child_count; i++) {
+			i = object_cursor_up(&cursor);
+
+			if (i < 0)
+				return;
+
+			matrix_dup(parent_trans, transform);
+			matrix_stack_pop(&pt_stack, parent_trans);
+
+			object = cursor.current;
+		}
+
+		object_cursor_down(&cursor, i);
+		i = 0;
+		object = cursor.current;
+		matrix_stack_push(&pt_stack, parent_trans);
+		matrix_dup(transform, parent_trans);
+	}
+
+	object_cursor_release(&cursor);
+	matrix_stack_release(&pt_stack);
 }
 
 /**

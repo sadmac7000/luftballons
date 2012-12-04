@@ -19,6 +19,49 @@
 #include <string.h>
 
 #include "matrix.h"
+#include "util.h"
+
+/**
+ * Push an item onto the matrix stack.
+ **/
+void
+matrix_stack_push(matrix_stack_t *stack, float item[16])
+{
+	float *target;
+
+	stack->data = do_vec_expand(stack->data, stack->size,
+				    16 * sizeof(float));
+
+	target = stack->data + 16 * stack->size++;
+	memcpy(target, item, 16 * sizeof(float));
+}
+
+/**
+ * Pop an item from the matrix stack.
+ *
+ * stack: Stack to pop from
+ * item: Where to store item to pop. May be NULL.
+ *
+ * Returns: 0 on success, -1 on empty stack.
+ **/
+int
+matrix_stack_pop(matrix_stack_t *stack, float item[16])
+{
+	float *target;
+
+	if (! stack->size)
+		return -1;
+
+	target = stack->data + 16 * --stack->size;
+
+	if (item)
+		memcpy(item, target, 16 * sizeof(float));
+
+	stack->data = do_vec_contract(stack->data, stack->size,
+				      16 * sizeof(float));
+
+	return 0;
+}
 
 /**
  * Transpose a matrix.
