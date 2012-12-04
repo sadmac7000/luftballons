@@ -347,13 +347,13 @@ main(int argc, char **argv)
 	cube = items[0];
 	cube->material = cube_material;
 	free(items);
-	object_add_child(cube_center, cube);
+	object_reparent(cube, cube_center);
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 
 	for (i = 0; i < dae_mesh_count; i++) {
 		assign_material(items[i], plane_material);
-		object_add_child(cube, items[i]);
+		object_reparent(items[i], cube);
 	}
 
 	free(items);

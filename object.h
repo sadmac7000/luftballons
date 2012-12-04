@@ -67,7 +67,7 @@ void object_set_translation(object_t *object, float vec[3]);
 void object_set_scale(object_t *object, float scale[3]);
 void object_draw(object_t *object, size_t pass, camera_t *camera);
 void object_get_transform_mat(object_t *object, float matrix[16]);
-void object_add_child(object_t *object, object_t *child);
+void object_reparent(object_t *object, object_t *parent);
 void object_unparent(object_t *object);
 void object_apply_pretransform(object_t *object, float matrix[16]);
 object_t *object_lookup(object_t *object, const char *name);

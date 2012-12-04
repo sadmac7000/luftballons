@@ -66,7 +66,7 @@ object_create(mesh_t *mesh, object_t *parent, material_t *material)
 	object_t *ret = xmalloc(sizeof(object_t));
 	MATRIX_DECL_IDENT(ident);
 
-	ret->parent = parent;
+	ret->parent = NULL;
 	ret->mesh = mesh;
 	ret->material = material;
 	ret->name = NULL;
@@ -81,8 +81,8 @@ object_create(mesh_t *mesh, object_t *parent, material_t *material)
 	ret->children = NULL;
 	ret->child_count = 0;
 
-	if (ret->parent)
-		object_add_child(ret->parent, ret);
+	if (parent)
+		object_reparent(ret, parent);
 
 	object_apply_pretransform(ret, ident);
 
@@ -233,11 +233,13 @@ object_get_transform_mat(object_t *object, float matrix[16])
  * Add a child to an object.
  **/
 void
-object_add_child(object_t *object, object_t *child)
+object_reparent(object_t *object, object_t *parent)
 {
-	object->children = vec_expand(object->children, object->child_count);
-	object->children[object->child_count++] = child;
-	child->parent = object;
+	object_unparent(object);
+
+	parent->children = vec_expand(parent->children, parent->child_count);
+	parent->children[parent->child_count++] = object;
+	object->parent = parent;
 }
 
 /**

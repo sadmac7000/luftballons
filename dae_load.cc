@@ -431,7 +431,7 @@ dae_process_node(domNodeRef node, object_t *parent)
 		return NULL;
 
 	if (parent)
-		object_add_child(parent, object);
+		object_reparent(object, parent);
 
 	dae_apply_transform(node, object);
 
