@@ -267,5 +267,5 @@ object_unparent(object_t *object)
 	memcpy(&parent->children[i], &parent->children[i + 1],
 	       (parent->child_count - i) * sizeof(object_t *));
 
-	vec_contract(parent->children, parent->child_count);
+	parent->children = vec_contract(parent->children, parent->child_count);
 }
