@@ -42,7 +42,6 @@
 
 object_t *cube;
 object_t *cube_center;
-shader_t *shader;
 camera_t *camera;
 draw_queue_t *draw_queue;
 
@@ -296,6 +295,8 @@ main(int argc, char **argv)
 	material_t *cube_material;
 	material_t *plane_material;
 	texmap_t *plane_map;
+	shader_t *textured_shader;
+	shader_t *vcolor_shader;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -316,11 +317,12 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	shader = shader_create("vertex.glsl", "fragment.glsl");
+	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
+	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");
 	cube_material = material_create();
 	plane_material = material_create();
-	material_set_pass_shader(cube_material, 0, shader);
-	material_set_pass_shader(plane_material, 0, shader);
+	material_set_pass_shader(cube_material, 0, vcolor_shader);
+	material_set_pass_shader(plane_material, 0, textured_shader);
 
 	plane_map = texmap_create(0, 0);
 	material_set_uniform(plane_material, "diffusemap",

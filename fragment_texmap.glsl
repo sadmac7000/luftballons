@@ -6,5 +6,5 @@ uniform sampler2D diffusemap;
 
 void main()
 {
-	gl_FragColor = colorout + texture2D(diffusemap, texcoordout.st);
+	gl_FragColor = texture2D(diffusemap, texcoordout.st);
 }
