@@ -153,7 +153,6 @@ object_destroy(object_t *object)
 {
 	ssize_t up;
 	object_cursor_t cursor;
-	object_t *target;
 
 	object_cursor_init(&cursor, object);
 
@@ -165,6 +164,8 @@ object_destroy(object_t *object)
 			object = cursor.current;
 			up = object_cursor_up(&cursor);
 			
+			object_unparent(object);
+
 			if (object->mesh)
 				mesh_ungrab(object->mesh);
 
