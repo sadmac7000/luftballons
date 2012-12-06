@@ -83,6 +83,15 @@ object_t *object_lookup(object_t *object, const char *name);
 void object_cursor_init(object_cursor_t *cursor, object_t *root);
 void object_cursor_down(object_cursor_t *cursor, size_t child);
 ssize_t object_cursor_up(object_cursor_t *cursor);
+object_t *object_cursor_start_pre(object_cursor_t *cursor, object_t *root);
+object_t *object_cursor_next_pre(object_cursor_t *cursor);
+
+/**
+ * Iterate objects using a cursor, in a pre-position order.
+ **/
+#define object_foreach_pre(cursor, obj) \
+	for ((obj) = object_cursor_start_pre(&(cursor), (obj)); (obj); \
+	     (obj) = object_cursor_next_pre(&(cursor)))
 
 /**
  * Release an object cursor's internal data.

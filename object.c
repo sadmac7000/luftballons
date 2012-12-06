@@ -24,6 +24,48 @@
 #include "quat.h"
 
 /**
+ * Set up a cursor to traverse objects rooted at the given object, and prep for
+ * a pre-order iteration.
+ *
+ * Returns: The first object in the iteration.
+ **/
+object_t *
+object_cursor_start_pre(object_cursor_t *cursor, object_t *root)
+{
+	object_cursor_init(cursor, root);
+
+	if (root->child_count)
+		object_cursor_down(cursor, 0);
+
+	return root;
+}
+
+/**
+ * Continue a cursor on a pre-order iteration of objects.
+ *
+ * Returns: The next item to iterate.
+ **/
+object_t *
+object_cursor_next_pre(object_cursor_t *cursor)
+{
+	ssize_t next = 0;
+	object_t *ret;
+
+	if (! cursor->stack_size)
+		return NULL;
+
+	ret = cursor->current;
+
+	while (next >= 0 && cursor->current->child_count < (size_t)next)
+		next = object_cursor_up(cursor);
+
+	if (next >= 0)
+		object_cursor_down(cursor, next);
+
+	return ret;
+}
+
+/**
  * Set up a cursor to traverse objects rooted at the given object.
  **/
 void
