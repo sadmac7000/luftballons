@@ -51,6 +51,8 @@ draw_queue_create(void)
 	queue->flags = 0;
 	queue->draw_ops = NULL;
 	queue->draw_op_count = 0;
+	queue->uniforms = NULL;
+	queue->uniform_count = 0;
 
 	return queue;
 }
@@ -92,10 +94,11 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  * object: The object contianing the mesh to draw.
  * pass: The pass we are drawing.
  * transform: The transform to apply to the mesh.
+ * camera: The camera we are drawing with.
  **/
 static void
 draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
-		  float transform[16])
+		  float transform[16], camera_t *camera)
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
 
@@ -104,12 +107,20 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 	op->material = object->material;
 	op->pass = pass;
 	op->mesh = object->mesh;
-	op->uniforms = xmalloc(sizeof(struct uniform));
-	op->uniforms->name = "transform";
-	op->uniforms->type = SHADER_UNIFORM_MAT4;
-	op->uniforms->data = xcalloc(16, sizeof(float));
-	memcpy(op->uniforms->data, transform, 16 * sizeof(float));
-	op->uniform_count = 1;
+	op->uniforms = xcalloc(2, sizeof(struct uniform));
+
+	op->uniforms[0].name = "transform";
+	op->uniforms[0].type = SHADER_UNIFORM_MAT4;
+	op->uniforms[0].data = xcalloc(16, sizeof(float));
+	memcpy(op->uniforms[0].data, transform, 16 * sizeof(float));
+
+	op->uniforms[1].name = "camera_transform";
+	op->uniforms[1].type = SHADER_UNIFORM_MAT4;
+	op->uniforms[1].data = xcalloc(16, sizeof(float));
+	memcpy(op->uniforms[1].data, camera->normal_xfrm,
+	       16 * sizeof(float));
+
+	op->uniform_count = 2;
 
 	draw_queue_add_mesh(queue, object->mesh);
 
@@ -122,7 +133,7 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
  **/
 static void
 draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
-		       float parent_trans[16])
+		       float parent_trans[16], camera_t *camera)
 {
 	ssize_t i = 0;
 	float transform[16];
@@ -137,7 +148,8 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		matrix_multiply(parent_trans, transform, transform);
 
 		if (object->mesh && object->material)
-			draw_queue_add_op(queue, object, pass, transform);
+			draw_queue_add_op(queue, object, pass, transform,
+					  camera);
 
 		for (;(size_t)i >= object->child_count; i++) {
 			i = object_cursor_up(&cursor);
@@ -170,7 +182,8 @@ void
 draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
 		camera_t *camera)
 {
-	draw_queue_draw_matrix(queue, object, pass, camera->to_clip_xfrm);
+	draw_queue_draw_matrix(queue, object, pass, camera->to_clip_xfrm,
+			       camera);
 }
 
 /**

@@ -40,6 +40,8 @@
  * draw_op_count: Number of draw operations
  * flags: Flags to change drawing behavior
  * clear_color: Color to clear target to before drawing
+ * uniforms: List of globally applicable uniforms
+ * uniform_count: Number of uniforms
  **/
 typedef struct draw_queue {
 	bufpool_t **pools;
@@ -48,6 +50,8 @@ typedef struct draw_queue {
 	size_t draw_op_count;
 	unsigned int flags;
 	float clear_color[4];
+	struct uniform *uniforms;
+	size_t uniform_count;
 } draw_queue_t;
 
 #ifdef __cplusplus
