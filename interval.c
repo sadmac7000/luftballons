@@ -178,24 +178,6 @@ interval_reposition_by_size(intervals_t *set, size_t idx)
 }
 
 /**
- * Make sure the interval lists are big enough to accomodate one more.
- **/
-static void
-interval_expand_storage(intervals_t *set)
-{
-	if (set->count & (set->count - 1))
-		return;
-
-	if (! set->count)
-		return;
-
-	set->by_size = xrealloc(set->by_size,
-				2 * set->count * sizeof(interval_t *));
-	set->by_start = xrealloc(set->by_start,
-				 2 * set->count * sizeof(interval_t *));
-}
-
-/**
  * Reposition an item in the size array because it has changed size.
  **/
 static void
@@ -316,7 +298,8 @@ interval_set(intervals_t *set, size_t start, size_t size)
 
 	sz_pos = interval_bisect_size(set, new->size);
 
-	interval_expand_storage(set);
+	set->by_size = vec_expand(set->by_size, set->count);
+	set->by_start = vec_expand(set->by_start, set->count);
 
 	memmove(&set->by_size[sz_pos + 1], &set->by_size[sz_pos],
 		(set->count - sz_pos) * sizeof(interval_t *));
