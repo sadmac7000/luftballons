@@ -22,6 +22,7 @@
  * A camera. Stores all perspective information for the scene.
  *
  * to_clip_xfrm: World-to-clipspace transformation.
+ * normal_xfrm: World-to-camspace transformation.
  * near: Near clip distance.
  * far: Far clip distance.
  * zoom: Magnification amount.
@@ -32,6 +33,7 @@
  **/
 typedef struct camera {
 	float to_clip_xfrm[16];
+	float normal_xfrm[16];
 	float near;
 	float far;
 	float zoom;

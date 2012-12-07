@@ -53,8 +53,6 @@ camera_calc_matrix(camera_t *camera)
 		    0, 0, 1, 0,
 		    0, 0, -1, 0);
 
-	float xfrm_mat[16];
-
 	clip[0] = scale / aspect;
 	clip[5] = scale;
 	clip[10] = (near + far)/(near - far);
@@ -80,8 +78,12 @@ camera_calc_matrix(camera_t *camera)
 	rot_mat[6] = look_vec[1];
 	rot_mat[10] = look_vec[2];
 
-	matrix_multiply(rot_mat, trans_mat, xfrm_mat);
-	matrix_multiply(clip, xfrm_mat, camera->to_clip_xfrm);
+	matrix_multiply(rot_mat, trans_mat, camera->normal_xfrm);
+	matrix_multiply(clip, camera->normal_xfrm, camera->to_clip_xfrm);
+
+	camera->normal_xfrm[12] =
+	camera->normal_xfrm[13] =
+	camera->normal_xfrm[14] = 0;
 }
 
 /**
