@@ -98,15 +98,8 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 		  float transform[16])
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
-	size_t expand_size = 4;
 
-	while (expand_size < queue->draw_op_count)
-		expand_size <<= 1;
-
-	if (expand_size == queue->draw_op_count || ! queue->draw_ops)
-		queue->draw_ops = xrealloc(queue->draw_ops,
-					   2 * expand_size *
-					   sizeof(struct draw_op *));
+	queue->draw_ops = vec_expand(queue->draw_ops, queue->draw_op_count);
 
 	op->material = object->material;
 	op->pass = pass;
