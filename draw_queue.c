@@ -64,7 +64,6 @@ static void
 draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
 {
 	size_t i;
-	size_t alloc_size = 8;
 	bufpool_t *pool;
 
 	for (i = 0; i < queue->pool_count; i++) {
@@ -75,12 +74,7 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
 		return;
 	}
 
-	while (alloc_size < queue->pool_count)
-		alloc_size <<= 1;
-
-	if (!queue->pools || alloc_size == queue->pool_count)
-		queue->pools = xrealloc(queue->pools,
-					sizeof(bufpool_t *) * alloc_size);
+	queue->pools = vec_expand(queue->pools, queue->pool_count);
 
 	pool = bufpool_create(mesh->format);
 	bufpool_add_mesh(pool, mesh);
