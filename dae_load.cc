@@ -247,6 +247,7 @@ dae_load_polylist(domMeshRef mesh)
 	size_t j;
 	mesh_t *out_mesh;
 	GLenum type;
+	object_t *ret;
 
 	pa = mesh->getPolylist_array();
 	if (! pa.getCount())
@@ -319,7 +320,9 @@ dae_load_polylist(domMeshRef mesh)
 	free(data);
 	free(ebuf);
 
-	return object_create(out_mesh, NULL, NULL);
+	ret = object_create(NULL);
+	object_set_mesh(ret, out_mesh, NULL);
+	return ret;
 }
 
 /**
@@ -421,7 +424,7 @@ dae_process_node(domNodeRef node, object_t *parent)
 		     " Found %lu", arr.getCount());
 
 	if (arr.getCount() == 0) {
-		object = object_create(NULL, parent, NULL);
+		object = object_create(parent);
 		goto out;
 	}
 

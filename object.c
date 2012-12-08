@@ -149,18 +149,14 @@ object_apply_pretransform(object_t *object, float matrix[16])
  * Create an object.
  **/
 object_t *
-object_create(mesh_t *mesh, object_t *parent, material_t *material)
+object_create(object_t *parent)
 {
 	object_t *ret = xmalloc(sizeof(object_t));
 	MATRIX_DECL_IDENT(ident);
 
 	ret->parent = NULL;
-	ret->mesh = mesh;
-	ret->material = material;
+	ret->type = OBJ_NODE;
 	ret->name = NULL;
-
-	if (mesh)
-		mesh_grab(mesh);
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
@@ -175,6 +171,38 @@ object_create(mesh_t *mesh, object_t *parent, material_t *material)
 	object_apply_pretransform(ret, ident);
 
 	return ret;
+}
+
+/**
+ * If an object is not of type OBJ_NODE, make it type OBJ_NODE, clearing out
+ * its resources in the process.
+ **/
+static void
+object_make_nodetype(object_t *object)
+{
+	if (object->type == OBJ_NODE)
+		return;
+
+	if (object->type == OBJ_MESH)
+		mesh_ungrab(object->mesh);
+
+	object->type = OBJ_NODE;
+}
+
+
+/**
+ * Set an object to mesh type and set its material.
+ **/
+void
+object_set_mesh(object_t *object, mesh_t *mesh, material_t *material)
+{
+	object_make_nodetype(object);
+
+	object->type = OBJ_MESH;
+	object->mesh = mesh;
+	object->material = material;
+
+	mesh_grab(mesh);
 }
 
 /**
@@ -208,8 +236,7 @@ object_destroy(object_t *object)
 			
 			object_unparent(object);
 
-			if (object->mesh)
-				mesh_ungrab(object->mesh);
+			object_make_nodetype(object);
 
 			free(object->children);
 			free(object);

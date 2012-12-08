@@ -25,24 +25,34 @@
 #include "camera.h"
 
 /**
+ * Types of objects we place in the scene.
+ **/
+typedef enum {
+	OBJ_NODE,
+	OBJ_MESH,
+	OBJ_CAMERA,
+	OBJ_LIGHT,
+} object_type_t;
+
+/**
  * An object. That is a mesh with a position and render context and all of
  * that.
  *
  * parent: The parent of this object. Object inherits transforms from its parent
- * mesh: The mesh to draw at this object's location
- * material: The material to draw with.
  * rot: Amount to rotate this object.
  * trans: Amount to translate this object.
  * scale: Amount to scale this object.
  * pretransform: A transform matrix to apply before our local transforms.
  * children: List of child objects of this object.
  * child_count: Size of the children list.
+ * type: What type of object this is.
+ * mesh: The mesh to draw at this object's location.
+ * material: The material to draw with.
+ * camera: A camera to position at this location.
  **/
 typedef struct object {
 	struct object *parent;
 	char *name;
-	mesh_t *mesh;
-	material_t *material;
 	quat_t rot;
 	float trans[3];
 	float scale[3];
@@ -50,6 +60,15 @@ typedef struct object {
 
 	struct object **children;
 	size_t child_count;
+
+	object_type_t type;
+	union {
+		struct {
+			mesh_t *mesh;
+			material_t *material;
+		};
+		camera_t *camera;
+	};
 } object_t;
 
 /**
@@ -65,7 +84,8 @@ typedef struct object_cursor {
 extern "C" {
 #endif
 
-object_t *object_create(mesh_t *mesh, object_t *parent, material_t *material);
+object_t *object_create(object_t *parent);
+void object_set_mesh(object_t *object, mesh_t *mesh, material_t *material);
 void object_set_name(object_t *object, const char *name);
 void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);

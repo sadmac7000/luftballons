@@ -141,7 +141,7 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		object_get_transform_mat(object, transform);
 		matrix_multiply(parent_trans, transform, transform);
 
-		if (object->mesh && object->material)
+		if (object->type == OBJ_MESH)
 			draw_queue_add_op(queue, object, pass, transform,
 					  camera);
 
