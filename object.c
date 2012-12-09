@@ -189,6 +189,16 @@ object_make_nodetype(object_t *object)
 	object->type = OBJ_NODE;
 }
 
+/**
+ * Make this object a light.
+ **/
+void
+object_make_light(object_t *object, float color[3])
+{
+	object_make_nodetype(object);
+	object->type = OBJ_LIGHT;
+	memcpy(object->light_color, color, 3 * sizeof(float));
+}
 
 /**
  * Set an object to mesh type and set its material.

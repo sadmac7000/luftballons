@@ -122,6 +122,19 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 }
 
 /**
+ * Add a light to this draw queue.
+ **/
+static void
+draw_queue_add_light(draw_queue_t *queue, object_t *object,
+		     float transform[16])
+{
+	(void)queue;
+	(void)object;
+	(void)transform;
+	return;
+}
+
+/**
  * Queue a draw operation for the given object. Draw for the given pass and
  * apply the given transform.
  **/
@@ -144,6 +157,8 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		if (object->type == OBJ_MESH)
 			draw_queue_add_op(queue, object, pass, transform,
 					  camera);
+		else if (object->type == OBJ_LIGHT)
+			draw_queue_add_light(queue, object, transform);
 
 		for (;(size_t)i >= object->child_count; i++) {
 			i = object_cursor_up(&cursor);

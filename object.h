@@ -68,6 +68,7 @@ typedef struct object {
 			material_t *material;
 		};
 		camera_t *camera;
+		float light_color[3];
 	};
 } object_t;
 
@@ -86,6 +87,7 @@ extern "C" {
 
 object_t *object_create(object_t *parent);
 void object_set_mesh(object_t *object, mesh_t *mesh, material_t *material);
+void object_make_light(object_t *object, float color[3]);
 void object_set_name(object_t *object, const char *name);
 void object_destroy(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
