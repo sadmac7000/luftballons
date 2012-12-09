@@ -47,16 +47,22 @@ camera_calc_matrix(camera_t *camera)
 		    0, 0, 1, -camera->pos[2],
 		    0, 0, 0, 1);
 
-	MATRIX_DECL(clip,
-		    1, 0, 0, 0,
-		    0, 1, 0, 0,
-		    0, 0, 1, 0,
-		    0, 0, -1, 0);
-
-	clip[0] = scale / aspect;
-	clip[5] = scale;
-	clip[10] = (near + far)/(near - far);
-	clip[14] = 2*near*far/(near - far);
+	camera->to_clip_xfrm[0] = scale / aspect;
+	camera->to_clip_xfrm[1] = 0;
+	camera->to_clip_xfrm[2] = 0;
+	camera->to_clip_xfrm[3] = 0;
+	camera->to_clip_xfrm[4] = 0;
+	camera->to_clip_xfrm[5] = scale;
+	camera->to_clip_xfrm[6] = 0;
+	camera->to_clip_xfrm[7] = 0;
+	camera->to_clip_xfrm[8] = 0;
+	camera->to_clip_xfrm[9] = 0;
+	camera->to_clip_xfrm[10] = (near + far)/(near - far);
+	camera->to_clip_xfrm[11] = -1;
+	camera->to_clip_xfrm[12] = 0;
+	camera->to_clip_xfrm[13] = 0;
+	camera->to_clip_xfrm[14] = 2*near*far/(near - far);
+	camera->to_clip_xfrm[15] = 0;
 
 	vec3_subtract(camera->target, camera->pos, look_vec);
 	vec3_normalize(look_vec, look_vec);
@@ -78,12 +84,7 @@ camera_calc_matrix(camera_t *camera)
 	rot_mat[6] = look_vec[1];
 	rot_mat[10] = look_vec[2];
 
-	matrix_multiply(rot_mat, trans_mat, camera->normal_xfrm);
-	matrix_multiply(clip, camera->normal_xfrm, camera->to_clip_xfrm);
-
-	camera->normal_xfrm[12] =
-	camera->normal_xfrm[13] =
-	camera->normal_xfrm[14] = 0;
+	matrix_multiply(rot_mat, trans_mat, camera->to_cspace_xfrm);
 }
 
 /**

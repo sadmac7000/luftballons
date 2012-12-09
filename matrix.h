@@ -82,7 +82,6 @@ matrix_dup(float in[16], float out[16])
 /**
  * Free a matrix stack's data.
  **/
-
 static inline void
 matrix_stack_release(matrix_stack_t *stack)
 {
@@ -90,6 +89,7 @@ matrix_stack_release(matrix_stack_t *stack)
 }
 
 void matrix_transpose(float in[16], float out[16]);
+int matrix_inverse_trans(float in[16], float out[16]);
 void matrix_multiply(float a[16], float b[16], float result[16]);
 float vec3_dot(float a[3], float b[3]);
 void vec3_cross(float a[3], float b[3], float result[3]);

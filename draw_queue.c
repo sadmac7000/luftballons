@@ -95,26 +95,36 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 		  float transform[16], camera_t *camera)
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
+	float normal_trans[16];
 
 	queue->draw_ops = vec_expand(queue->draw_ops, queue->draw_op_count);
+
+	memcpy(normal_trans, transform, 16 * sizeof(float));
+	normal_trans[12] = normal_trans[13] = normal_trans[14] = 0;
+	matrix_inverse_trans(normal_trans, normal_trans);
 
 	op->material = object->material;
 	op->pass = pass;
 	op->mesh = object->mesh;
-	op->uniforms = xcalloc(2, sizeof(struct uniform));
+	op->uniforms = xcalloc(3, sizeof(struct uniform));
 
 	op->uniforms[0].name = "transform";
 	op->uniforms[0].type = SHADER_UNIFORM_MAT4;
 	op->uniforms[0].data = xcalloc(16, sizeof(float));
 	memcpy(op->uniforms[0].data, transform, 16 * sizeof(float));
 
-	op->uniforms[1].name = "camera_transform";
+	op->uniforms[1].name = "normal_transform";
 	op->uniforms[1].type = SHADER_UNIFORM_MAT4;
 	op->uniforms[1].data = xcalloc(16, sizeof(float));
-	memcpy(op->uniforms[1].data, camera->normal_xfrm,
+	memcpy(op->uniforms[1].data, normal_trans, 16 * sizeof(float));
+
+	op->uniforms[2].name = "clip_transform";
+	op->uniforms[2].type = SHADER_UNIFORM_MAT4;
+	op->uniforms[2].data = xcalloc(16, sizeof(float));
+	memcpy(op->uniforms[2].data, camera->to_clip_xfrm,
 	       16 * sizeof(float));
 
-	op->uniform_count = 2;
+	op->uniform_count = 3;
 
 	draw_queue_add_mesh(queue, object->mesh);
 
@@ -191,7 +201,7 @@ void
 draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
 		camera_t *camera)
 {
-	draw_queue_draw_matrix(queue, object, pass, camera->to_clip_xfrm,
+	draw_queue_draw_matrix(queue, object, pass, camera->to_cspace_xfrm,
 			       camera);
 }
 

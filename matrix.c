@@ -64,6 +64,103 @@ matrix_stack_pop(matrix_stack_t *stack, float item[16])
 }
 
 /**
+ * Find a diagonalized product for a 3x3 submatrix of a matrix.
+ **/
+static inline float
+matrix_subdiag(float in[16], size_t i, size_t j, size_t col, int inc)
+{
+	size_t row = i ? 0:1;
+	size_t l;
+	float res = 1;
+
+	if (col >= j)
+		col++;
+	for (l = 0; l < 3; l++, row++) {
+		if (row == i)
+			row++;
+
+		if (col == j) {
+			if (col == 0 && inc < 0)
+				col = 4;
+			col += inc;
+			col %= 4;
+		}
+
+		res *= in[row + col * 4];
+
+		if (col == 0 && inc < 0)
+			col = 4;
+		col += inc;
+		col %= 4;
+	}
+
+	return res;
+}
+
+/**
+ * Find the given minor for a matrix.
+ **/
+static inline float
+matrix_minor(float in[16], size_t i, size_t j)
+{
+	return matrix_subdiag(in, i, j, 0, 1) +
+		matrix_subdiag(in, i, j, 1, 1) +
+		matrix_subdiag(in, i, j, 2, 1) -
+		matrix_subdiag(in, i, j, 0, -1) -
+		matrix_subdiag(in, i, j, 1, -1) -
+		matrix_subdiag(in, i, j, 2, -1);
+}
+
+/**
+ * Find the given cofactor for a matrix.
+ **/
+static inline float
+matrix_cofactor(float in[16], size_t i, size_t j)
+{
+	if ((i + j) & 1)
+		return -matrix_minor(in, i, j);
+	else
+		return matrix_minor(in, i, j);
+}
+
+/**
+ * Invert and transpose matrix.
+ *
+ * Returns: True if the matrix has an inverse.
+ **/
+int
+matrix_inverse_trans(float in[16], float out[16])
+{
+	float *result = out;
+	float tmp[16];
+	size_t i, j;
+	float det = 0;
+
+	if (out == in)
+		result = tmp;
+
+	for (i = 0; i < 4; i++)
+		for (j = 0; j < 4; j++)
+			result[i + j * 4] = matrix_cofactor(in, i, j);
+
+	for (i = 0; i < 4; i++)
+		det += in[i] * result[i];
+
+	/* FIXME: Small floating point error might bury us here. What to do? */
+	if (det == 0)
+		return 0;
+
+	for (i = 0; i < 4; i++)
+		for (j = 0; j < 4; j++)
+			result[i + j * 4] /= det;
+
+	if (result != out)
+		memcpy(out, result, 16 * sizeof(float));
+
+	return 1;
+}
+
+/**
  * Transpose a matrix.
  **/
 void
