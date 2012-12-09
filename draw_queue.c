@@ -148,8 +148,11 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		for (;(size_t)i >= object->child_count; i++) {
 			i = object_cursor_up(&cursor);
 
-			if (i < 0)
+			if (i < 0) {
+				object_cursor_release(&cursor);
+				matrix_stack_release(&pt_stack);
 				return;
+			}
 
 			matrix_dup(parent_trans, transform);
 			matrix_stack_pop(&pt_stack, parent_trans);
@@ -163,9 +166,6 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		matrix_stack_push(&pt_stack, parent_trans);
 		matrix_dup(transform, parent_trans);
 	}
-
-	object_cursor_release(&cursor);
-	matrix_stack_release(&pt_stack);
 }
 
 /**
