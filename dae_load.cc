@@ -216,6 +216,35 @@ dae_copy_data(domParam_Array params, size_t stride, daeElementRef source,
 }
 
 /**
+ * Set the up axis.
+ **/
+static object_t *
+dae_set_up(object_t *object, domUpAxisType up)
+{
+	MATRIX_DECL_IDENT(alteration);
+
+	if (up == UPAXISTYPE_Y_UP)
+		return object;
+
+	if (up == UPAXISTYPE_Z_UP) {
+		alteration[5] = 0;
+		alteration[6] = 1;
+		alteration[9] = -1;
+		alteration[10] = 0;
+	} else if (up == UPAXISTYPE_X_UP) {
+		alteration[0] = 0;
+		alteration[1] = -1;
+		alteration[4] = 1;
+		alteration[5] = 0;
+	}
+
+	matrix_multiply(alteration, object->pretransform,
+			object->pretransform);
+
+	return object;
+}
+
+/**
  * Load a mesh containing a polylist.
  *
  * mesh: The mesh to load.
@@ -361,49 +390,41 @@ dae_load_geom(domGeometryRef geo)
 static void
 dae_apply_transform(domNodeRef node, object_t *object)
 {
-	domTranslate_Array trans_a = node->getTranslate_array();
-	domRotate_Array rot_a = node->getRotate_array();
-	domScale_Array scale_a = node->getScale_array();
-	domMatrix_Array mat_a = node->getMatrix_array();
+	daeTArray< daeSmartRef<daeElement> > elems = node->getChildren();
 	domFloat4 fl;
-	float fl_real[3];
+	domFloat4x4 mat;
 	quat_t quat;
-	size_t i;
-	size_t j;
-	MATRIX_DECL_IDENT(trans_total);
-	float trans[16];
+	size_t i, j, k;
+	MATRIX_DECL_IDENT(xfrm_total);
 
-	for (i = 0; i < mat_a.getCount(); i++) {
-		for (j = 0; j < 16; j++)
-			trans[j] = mat_a[i]->getValue()[j];
+	for (i = 0; i < elems.getCount(); i++) {
+		MATRIX_DECL_IDENT(xfrm);
 
-		matrix_transpose(trans, trans);
-		matrix_multiply(trans, trans_total, trans_total);
+		if (elems[i]->typeID() == domTranslate::ID()) {
+			fl = ((domTranslateRef)elems[i])->getValue();
+			xfrm[12] = fl[0];
+			xfrm[13] = fl[1];
+			xfrm[14] = fl[2];
+		} else if (elems[i]->typeID() == domRotate::ID()) {
+			fl = ((domRotateRef)elems[i])->getValue();
+			quat_init(&quat, fl[0], fl[1], fl[2], fl[3]);
+			quat_to_matrix(&quat, xfrm);
+		} else if (elems[i]->typeID() == domScale::ID()) {
+			fl = ((domScaleRef)elems[i])->getValue();
+			xfrm[0] = fl[0];
+			xfrm[5] = fl[1];
+			xfrm[10] = fl[2];
+		} else if (elems[i]->typeID() == domMatrix::ID()) {
+			mat = ((domMatrixRef)elems[i])->getValue();
+			for (k = 0; k < 4; k++)
+				for (j = 0; j < 4; j++)
+					xfrm[k * 4 + j] = mat[j * 4 + k];
+		} else continue;
+
+		matrix_multiply(xfrm_total, xfrm, xfrm_total);
 	}
 
-	object_apply_pretransform(object, trans_total);
-
-	for (i = 0; i < scale_a.getCount(); i++) {
-		fl = scale_a[i]->getValue();
-		fl_real[0] = fl[0];
-		fl_real[1] = fl[1];
-		fl_real[2] = fl[2];
-		object_scale(object, fl_real);
-	}
-
-	for (i = 0; i < trans_a.getCount(); i++) {
-		fl = trans_a[i]->getValue();
-		fl_real[0] = fl[0];
-		fl_real[1] = fl[1];
-		fl_real[2] = fl[2];
-		object_move(object, fl_real);
-	}
-
-	for (i = 0; i < rot_a.getCount(); i++) {
-		fl = rot_a[i]->getValue();
-		quat_init(&quat, fl[0], fl[1], fl[2], fl[3]);
-		object_rotate(object, &quat);
-	}
+	object_apply_pretransform(object, xfrm_total);
 }
 
 /**
@@ -411,7 +432,7 @@ dae_apply_transform(domNodeRef node, object_t *object)
  * parent.
  **/
 static object_t *
-dae_process_node(domNodeRef node, object_t *parent)
+dae_process_node(domNodeRef node, object_t *parent, domUpAxisType up)
 {
 	domInstance_geometry_Array arr = node->getInstance_geometry_array();
 	object_t *object;
@@ -439,6 +460,7 @@ dae_process_node(domNodeRef node, object_t *parent)
 	dae_apply_transform(node, object);
 
 out:
+	dae_set_up(object, up);
 	name = node->getName();
 	children = node->getNode_array();
 
@@ -449,7 +471,7 @@ out:
 		object_set_name(object, name);
 
 	for (i = 0; i < children.getCount(); i++)
-		dae_process_node(children[i], object);
+		dae_process_node(children[i], object, up);
 
 	return object;
 }
@@ -459,7 +481,8 @@ out:
  **/
 static void
 dae_process_scenes(domVisual_scene_Array &scenes,
-		   daeTArray<object_t *> &output)
+		   daeTArray<object_t *> &output,
+		   domUpAxisType up)
 {
 	domNode_Array nodes;
 	size_t i;
@@ -470,7 +493,7 @@ dae_process_scenes(domVisual_scene_Array &scenes,
 		nodes = scenes[i]->getNode_array();
 
 		for (j = 0; j < nodes.getCount(); j++) {
-			obj = dae_process_node(nodes[j], NULL);
+			obj = dae_process_node(nodes[j], NULL, up);
 			if (obj)
 				output.append(obj);
 		}
@@ -481,7 +504,8 @@ dae_process_scenes(domVisual_scene_Array &scenes,
  * Process COLLADA nodes from the visual scene library
  **/
 static void
-dae_get_nodes_scenes(domCOLLADA *doc, daeTArray<object_t *> &output)
+dae_get_nodes_scenes(domCOLLADA *doc, daeTArray<object_t *> &output,
+		     domUpAxisType up)
 {
 	domLibrary_visual_scenes_Array lib;
 	domVisual_scene_Array scenes;
@@ -494,7 +518,7 @@ dae_get_nodes_scenes(domCOLLADA *doc, daeTArray<object_t *> &output)
 		scenes = lib[i]->getVisual_scene_array();
 
 		for (j = 0; j < scenes.getCount(); j++)
-			dae_process_scenes(scenes, output);
+			dae_process_scenes(scenes, output, up);
 	}
 }
 
@@ -502,7 +526,8 @@ dae_get_nodes_scenes(domCOLLADA *doc, daeTArray<object_t *> &output)
  * Process COLLADA nodes from the node library
  **/
 static void
-dae_get_nodes_lib(domCOLLADA *doc, daeTArray<object_t *> &output)
+dae_get_nodes_lib(domCOLLADA *doc, daeTArray<object_t *> &output,
+		  domUpAxisType up)
 {
 	domLibrary_nodes_Array lib;
 	domNode_Array nodes;
@@ -516,7 +541,7 @@ dae_get_nodes_lib(domCOLLADA *doc, daeTArray<object_t *> &output)
 		nodes = lib[i]->getNode_array();
 
 		for (j = 0; j < nodes.getCount(); j++) {
-			obj = dae_process_node(nodes[j], NULL);
+			obj = dae_process_node(nodes[j], NULL, up);
 			if (obj)
 				output.append(obj);
 		}
@@ -530,11 +555,13 @@ static object_t **
 dae_get_nodes(domCOLLADA *doc, size_t *count)
 {
 	daeTArray<object_t *> output;
+	domAsset::domUp_axisRef up_elem = doc->getAsset()->getUp_axis();
+	domUpAxisType up = up_elem ? up_elem->getValue() : UPAXISTYPE_Y_UP;
 	object_t **ret;
 	size_t i;
 
-	dae_get_nodes_scenes(doc, output);
-	dae_get_nodes_lib(doc, output);
+	dae_get_nodes_scenes(doc, output, up);
+	dae_get_nodes_lib(doc, output, up);
 
 	*count = output.getCount();
 	if (! output.getCount())
