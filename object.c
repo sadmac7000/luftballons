@@ -331,8 +331,8 @@ object_get_transform_mat(object_t *object, float matrix[16])
 
 	quat_to_matrix(&object->rot, rotate);
 
-	matrix_multiply(translate, object->pretransform, translate_final);
-	matrix_multiply(translate_final, rotate, matrix);
+	matrix_multiply(translate, rotate, translate_final);
+	matrix_multiply(translate_final, object->pretransform, matrix);
 }
 
 /**
