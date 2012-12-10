@@ -51,8 +51,6 @@ draw_queue_create(void)
 	queue->flags = 0;
 	queue->draw_ops = NULL;
 	queue->draw_op_count = 0;
-	queue->uniforms = NULL;
-	queue->uniform_count = 0;
 
 	return queue;
 }
