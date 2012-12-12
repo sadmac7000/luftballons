@@ -40,14 +40,28 @@
 
 using namespace std;
 
+/**
+ * A data source. Pulls streams of data out of COLLADA files.
+ **/
 class DAEDataSource {
 
-size_t elems;
+/* datum_sz: Size of a single datum. I.e. one axis in a stream of coordinates.
+ * name: Name of the type of data this stream provides.
+ * gl_type: OpenGL type of each datum.
+ * data: A buffer that will be filled with the data for this stream.
+ * params_enabled: List of what parameters are enabled.
+ * param_count: Number of parameters (3 for an xyz coordinate, etc.)
+ * used_param_count: Number of parameters we aren't supposed to ignore.
+ * stride: How many datum in a data item.
+ * source: the COLLADA source element we are using.
+ **/
 size_t datum_sz;
 char *name;
 GLenum gl_type;
 void *data;
-domParam_Array params;
+daeTArray<int> params_enabled;
+size_t param_count;
+size_t used_param_count;
 size_t stride;
 daeElementRef source;
 
@@ -163,18 +177,14 @@ grab_buffer(T array)
 	size_t i;
 	size_t mod;
 	size_t j = 0;
-	size_t param_size = this->params.getCount();
-	const char *name;
 
 	for (i = 0; i < array_size; i++) {
 		mod = i % this->stride;
 
-		if (mod >= param_size)
+		if (mod >= this->param_count)
 			continue;
 
-		name = this->params[i % param_size]->getName();
-
-		if (! (name && strlen(name)))
+		if (! this->params_enabled[mod])
 			continue;
 
 		buffer[j++] = array[i];
@@ -191,19 +201,25 @@ load_from_accessor(domAccessorRef ref)
 {
 	size_t i;
 	const char *pname;
+	domParam_Array params = ref->getParam_array();
 
-	this->params = ref->getParam_array();
 	this->stride = ref->getStride();
 	this->source = ref->getSource().getElement();
+	this->param_count = params.getCount();
 
-	this->elems = 0;
+	this->used_param_count = 0;
 
-	for (i = 0; i < this->params.getCount(); i++) {
-		pname = this->params[i]->getName();
+	for (i = 0; i < this->param_count; i++) {
+		pname = params[i]->getName();
 
-		if (pname && strlen(pname))
-			elems++;
+		if (pname && strlen(pname)) {
+			used_param_count++;
+			this->params_enabled.append(1);
+		} else {
+			this->params_enabled.append(0);
+		}
 	}
+
 
 	this->set_gl_type();
 }
@@ -229,7 +245,7 @@ public:
 void *
 copy_out(void *target, size_t idx)
 {
-	size_t span = this->elems * this->datum_sz;
+	size_t span = this->used_param_count * this->datum_sz;
 	char *src = (char *)this->data;
 	char *dst = (char *)target;
 
@@ -244,7 +260,7 @@ copy_out(void *target, size_t idx)
 void
 add_to_vbuf(vbuf_fmt_t *fmt)
 {
-	vbuf_fmt_add(fmt, this->name, this->elems, this->gl_type);
+	vbuf_fmt_add(fmt, this->name, this->used_param_count, this->gl_type);
 }
 
 /**
@@ -395,6 +411,8 @@ dae_load_polylist(domMeshRef mesh)
 	indices = polylist->getP()->getValue();
 	iter = fmt;
 	i = 0;
+	/* FIXME: Might read in wrong order since we don't use this pop thing
+	 */
 	while (vbuf_fmt_pop_segment(&iter, NULL, &type, NULL, NULL)) {
 		for (j = inputs[i]->getOffset(); j < vert_count * input_stride;
 		     j += input_stride) {
