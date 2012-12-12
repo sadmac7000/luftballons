@@ -10,5 +10,6 @@ vec4 camdir = vec4(0,0,1, 0);
 void main()
 {
 	float cos_angle = clamp(dot(normalize(normalout), normalize(camdir)), 0, 1);
-	gl_FragColor = texture2D(diffusemap, texcoordout.st) * cos_angle;
+	vec4 color = texture2D(diffusemap, texcoordout.st);
+	gl_FragColor =  vec4(color.rgb * cos_angle, color.a);
 }
