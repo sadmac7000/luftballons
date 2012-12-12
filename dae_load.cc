@@ -40,32 +40,22 @@
 
 using namespace std;
 
-/**
- * Get the number of parameters an accessor takes and uses.
- **/
-static size_t
-dae_get_accessor_size(domAccessorRef accessor)
-{
-	domParam_Array params = accessor->getParam_array();
-	const char *name;
-	size_t i;
-	size_t ret = 0;
+class DAEDataSource {
 
-	for (i = 0; i < params.getCount(); i++) {
-		name = params[i]->getName();
-
-		if (name && strlen(name))
-			ret++;
-	}
-
-	return ret;
-}
+size_t elems;
+size_t datum_sz;
+char *name;
+GLenum gl_type;
+void *data;
+domParam_Array params;
+size_t stride;
+daeElementRef source;
 
 /**
  * Given a vertex input, find the position input.
  **/
-static domInputLocalRef
-dae_vert_to_pos(domInputLocalOffsetRef input)
+domInputLocalRef
+vert_to_pos(domInputLocalOffsetRef input)
 {
 	domVerticesRef ref = input->getSource().getElement();
 	domInputLocal_Array array = ref->getInput_array();
@@ -74,36 +64,202 @@ dae_vert_to_pos(domInputLocalOffsetRef input)
 
 	for (i = 0; i < array.getCount(); i++) {
 		c = array[i]->getSemantic();
-		if (strcmp(c, "POSITION"))
-			warnx("Discarding COLLADA vertex input %s", c);
-		else
+		if (! strcmp(c, "POSITION"))
 			return array[i];
+		warnx("Discarding COLLADA vertex input %s", c);
 	}
 
 	errx(1, "COLLADA document had vertices with no position");
 }
 
 /**
- * Load a single vertex data source.
+ * Set the value of gl_type and load data. Assume we have an integer type source.
  **/
-static domAccessorRef
-dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *fmt)
+void
+set_gl_type_int()
 {
-	domSource::domTechnique_commonRef tech;
-	domInputLocalRef vinput;
-	domFloat_arrayRef farray;
-	domInt_arrayRef iarray;
-	domAccessorRef accessor;
-	daeElementRef source_data;
-	xsInteger min, max;
-	char *c;
-	char *name = xstrdup(input->getSemantic());
-	size_t elems;
+	domInt_arrayRef array = (domInt_arrayRef)this->source;
+	int min = array->getMinInclusive();
+	int max = array->getMaxInclusive();
+
+	if (min >= 0 && max < 256) {
+		this->gl_type = GL_UNSIGNED_BYTE;
+		this->grab_buffer<domListOfInts, unsigned char>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(unsigned char);
+	} else if (min >= 0 && max < 65536) {
+		this->gl_type = GL_UNSIGNED_SHORT;
+		this->grab_buffer<domListOfInts, unsigned short>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(unsigned short);
+	} else if (min >= 0) {
+		this->gl_type = GL_UNSIGNED_INT;
+		this->grab_buffer<domListOfInts, unsigned int>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(unsigned int);
+	} else if (max < 128) {
+		this->gl_type = GL_BYTE;
+		this->grab_buffer<domListOfInts, signed char>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(signed char);
+	} else if (max < 32768) {
+		this->gl_type = GL_SHORT;
+		this->grab_buffer<domListOfInts, short>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(short);
+	} else {
+		this->gl_type = GL_INT;
+		this->grab_buffer<domListOfInts, int>(((domInt_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(int);
+	}
+}
+
+/**
+ * Set the value of gl_type and load data. Assume we have a float type source.
+ **/
+void
+set_gl_type_float()
+{
+	domFloat_arrayRef array = (domFloat_arrayRef)this->source;
+
+	/* FIXME: We're using doubles for anything more precise than
+	 * default right now. Should probably calculate implied
+	 * bit precision from the two numbers.
+	 */
+	if (array->getDigits() > 6 || array->getMagnitude() > 38) {
+		this->gl_type = GL_DOUBLE;
+		this->grab_buffer<domListOfFloats, double>(((domFloat_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(double);
+	} else {
+		this->gl_type = GL_FLOAT;
+		this->grab_buffer<domListOfFloats, float>(((domFloat_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(float);
+	}
+}
+
+/**
+ * Set the value of gl_type and load data.
+ **/
+void
+set_gl_type()
+{
+	if (this->source->typeID() == domBool_array::ID()) {
+		this->gl_type = GL_UNSIGNED_BYTE;
+		this->grab_buffer<domListOfBools, unsigned char>(((domBool_arrayRef)source)->getValue());
+		this->datum_sz = sizeof(unsigned char);
+	} else if (this->source->typeID() == domInt_array::ID()) {
+		this->set_gl_type_int();
+	} else if (this->source->typeID() == domFloat_array::ID()) {
+		this->set_gl_type_float();
+	} else {
+		errx(1, "Unsupported COLLADA source type");
+	}
+}
+
+/**
+ * Fill out our data buffer with accessor contents from a COLLADA file.
+ **/
+template <typename T, typename U>
+void
+grab_buffer(T array)
+{
+	size_t array_size = array.getCount();
+	U *buffer = (U *)xcalloc(array_size, sizeof(U));
+	size_t i;
+	size_t mod;
+	size_t j = 0;
+	size_t param_size = this->params.getCount();
+	const char *name;
+
+	for (i = 0; i < array_size; i++) {
+		mod = i % this->stride;
+
+		if (mod >= param_size)
+			continue;
+
+		name = this->params[i % param_size]->getName();
+
+		if (! (name && strlen(name)))
+			continue;
+
+		buffer[j++] = array[i];
+	}
+
+	this->data = (void *)buffer;
+}
+
+/**
+ * Fill out this class with data from the given Accessor element.
+ **/
+void
+load_from_accessor(domAccessorRef ref)
+{
+	size_t i;
+	const char *pname;
+
+	this->params = ref->getParam_array();
+	this->stride = ref->getStride();
+	this->source = ref->getSource().getElement();
+
+	this->elems = 0;
+
+	for (i = 0; i < this->params.getCount(); i++) {
+		pname = this->params[i]->getName();
+
+		if (pname && strlen(pname))
+			elems++;
+	}
+
+	this->set_gl_type();
+}
+
+/**
+ * Fill out this class with data from the given Source element.
+ **/
+void
+load_from_source(domSourceRef ref)
+{
+	domSource::domTechnique_commonRef tech =
+		ref->getTechnique_common();
+
+	if (! tech)
+		errx(1, "COLLADA source without technique_common"
+		     " unimplemented");
+
+	this->load_from_accessor(tech->getAccessor());
+}
+
+public:
+
+void *
+copy_out(void *target, size_t idx)
+{
+	size_t span = this->elems * this->datum_sz;
+	char *src = (char *)this->data;
+	char *dst = (char *)target;
+
+	memcpy(dst, &src[span * idx], span);
+
+	return (void *)&dst[span];
+}
+
+/**
+ * Add this class to a vertex buffer format.
+ **/
+void
+add_to_vbuf(vbuf_fmt_t *fmt)
+{
+	vbuf_fmt_add(fmt, this->name, this->elems, this->gl_type);
+}
+
+/**
+ * Construct this class from a COLLADA input.
+ **/
+DAEDataSource(domInputLocalOffsetRef input)
+{
 	domSourceRef source = input->getSource().getElement();
+	char *name = xstrdup(input->getSemantic());
+	char *c;
+	domInputLocalRef vinput;
 
 	if (! strcmp(name, "VERTEX")) {
 		free(name);
-		vinput = dae_vert_to_pos(input);
+		vinput = vert_to_pos(input);
 		name = xstrdup(vinput->getSemantic());
 		source = vinput->getSource().getElement();
 	}
@@ -111,109 +267,23 @@ dae_load_source(domInputLocalOffsetRef input, vbuf_fmt_t *fmt)
 	for (c = name; *c; *c = tolower(*c), c++);
 
 	if (source->typeID() != domSource::ID())
-		errx(1, "COLLADA vertex input points to source that's not a"
-		     " source");
+		errx(1, "COLLADA vertex input points to source that's"
+		     " not a source");
 
-	tech = source->getTechnique_common();
-
-	if (! tech)
-		errx(1, "COLLADA source without technique_common"
-		     " unimplemented");
-
-	accessor = tech->getAccessor();
-	elems = dae_get_accessor_size(accessor);
-
-	source_data = accessor->getSource().getElement();
-
-	if (source_data->typeID() == domBool_array::ID()) {
-		vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_BYTE);
-	} else if (source_data->typeID() == domInt_array::ID()) {
-		iarray = (domInt_arrayRef)source_data;
-		min = iarray->getMinInclusive();
-		max = iarray->getMaxInclusive();
-
-		if (min >= 0 && max < 256)
-			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_BYTE);
-		else if (min >= 0 && max < 65536)
-			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_SHORT);
-		else if (min >= 0)
-			vbuf_fmt_add(fmt, name, elems, GL_UNSIGNED_INT);
-		else if (max < 128)
-			vbuf_fmt_add(fmt, name, elems, GL_BYTE);
-		else if (max < 32768)
-			vbuf_fmt_add(fmt, name, elems, GL_SHORT);
-		else
-			vbuf_fmt_add(fmt, name, elems, GL_INT);
-	} else if (source_data->typeID() == domFloat_array::ID()) {
-		farray = (domFloat_arrayRef)source_data;
-
-		/* FIXME: We're using doubles for anything more precise than
-		 * default right now. Should probably calculate implied
-		 * bit precision from the two numbers.
-		 */
-		if (farray->getDigits() > 6 || farray->getMagnitude() > 38)
-			vbuf_fmt_add(fmt, name, elems, GL_DOUBLE);
-		else
-			vbuf_fmt_add(fmt, name, elems, GL_FLOAT);
-	} else {
-		errx(1, "Unsupported COLLADA source type");
-	}
-
-	return accessor;
+	this->name = name;
+	this->load_from_source(source);
 }
 
 /**
- * Copy vertex data into the buffer.
+ * Destroy this class.
  **/
-static void * 
-dae_copy_data(domParam_Array params, size_t stride, daeElementRef source,
-	      GLenum type, size_t idx, void *buffer)
+~DAEDataSource()
 {
-	size_t i;
-	const char *name;
-
-#define ASSIGNMENT_LOOP(type) ({				\
-	type *target = (type *)buffer;				\
-								\
-	for (i = 0; i < params.getCount(); i++) {		\
-		name = params[i]->getName();			\
-		if (name && strlen(name))			\
-			*(target++) = array[idx * stride + i];	\
-	}							\
-								\
-	return (void *)target;					\
-})
-
-	if (source->typeID() == domBool_array::ID()) {
-		domListOfBools array = ((domBool_arrayRef)source)->getValue();
-		ASSIGNMENT_LOOP(unsigned char);
-	} else if (source->typeID() == domFloat_array::ID()) {
-		domListOfFloats array = ((domFloat_arrayRef)source)->getValue();
-
-		if (type == GL_DOUBLE) {
-			ASSIGNMENT_LOOP(double);
-		} else {
-			ASSIGNMENT_LOOP(float);
-		}
-	} else if (source->typeID() == domInt_array::ID()) {
-		domListOfInts array = ((domInt_arrayRef)source)->getValue();
-
-		if (type == GL_UNSIGNED_BYTE)
-			ASSIGNMENT_LOOP(unsigned char);
-		else if (type == GL_UNSIGNED_SHORT)
-			ASSIGNMENT_LOOP(unsigned short);
-		else if (type == GL_UNSIGNED_INT)
-			ASSIGNMENT_LOOP(unsigned int);
-		else if (type == GL_BYTE)
-			ASSIGNMENT_LOOP(signed char);
-		else if (type == GL_SHORT)
-			ASSIGNMENT_LOOP(short);
-		else if (type == GL_INT)
-			ASSIGNMENT_LOOP(int);
-	}
-
-	errx(1, "Got strange source data while copying vertex data");
+	free(this->name);
+	free(this->data);
 }
+
+}; /* class DAEDataSource */
 
 /**
  * Set the up axis.
@@ -269,7 +339,7 @@ dae_load_polylist(domMeshRef mesh)
 	size_t input_count;
 	size_t input_stride;
 	domSourceRef source;
-	daeTArray<domAccessorRef> sources;
+	daeTArray<DAEDataSource *> sources;
 	void *data;
 	uint16_t *ebuf;
 	void *loc;
@@ -289,7 +359,8 @@ dae_load_polylist(domMeshRef mesh)
 
 	input_stride = 0;
 	for (i = 0; i < input_count; i++) {
-		sources.append(dae_load_source(inputs[i], &fmt));
+		sources.append(new DAEDataSource(inputs[i]));
+		sources[i]->add_to_vbuf(&fmt);
 		
 		if (inputs[i]->getOffset() > input_stride)
 			input_stride = inputs[i]->getOffset();
@@ -325,15 +396,12 @@ dae_load_polylist(domMeshRef mesh)
 	iter = fmt;
 	i = 0;
 	while (vbuf_fmt_pop_segment(&iter, NULL, &type, NULL, NULL)) {
-		domParam_Array params = sources[i]->getParam_array();
-		size_t stride = sources[i]->getStride();
-		daeElementRef source = sources[i]->getSource().getElement();
-
 		for (j = inputs[i]->getOffset(); j < vert_count * input_stride;
 		     j += input_stride) {
-			loc = dae_copy_data(params, stride, source, type,
-					    indices[j], loc);
+			loc = sources[i]->copy_out(loc, indices[j]);
 		}
+
+		delete sources[i];
 
 		i++;
 	}
