@@ -262,7 +262,8 @@ draw_queue_flush(draw_queue_t *queue)
 	size_t i;
 
 	if (queue->flags & DRAW_QUEUE_CLEAR) {
-		glClearColor(0.5, 0.0, 0.5, 0.0);
+		glClearColor(queue->clear_color[0], queue->clear_color[1],
+			     queue->clear_color[2], queue->clear_color[3]);
 		flags |= GL_COLOR_BUFFER_BIT;
 	}
 
