@@ -38,6 +38,8 @@ typedef enum {
 	SHADER_UNIFORM_MAT4,
 	SHADER_UNIFORM_VEC4,
 	SHADER_UNIFORM_SAMP2D,
+	SHADER_UNIFORM_SAMP1D,
+	SHADER_UNIFORM_UINT,
 } shader_uniform_type_t;
 
 #ifdef __cplusplus
@@ -49,6 +51,7 @@ void shader_activate(shader_t *shader);
 void shader_notify_draw(void);
 void shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16]);
 void shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map);
+void shader_set_uniform_uint(shader_t *shader, const char *name, GLuint val);
 void shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4]);
 
 #ifdef __cplusplus

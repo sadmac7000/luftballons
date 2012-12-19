@@ -234,7 +234,7 @@ shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16])
 }
 
 /**
- * Set a uniform value to a 4x4 matrix.
+ * Set a uniform value to a 2D texture.
  **/
 void
 shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
@@ -247,6 +247,18 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 	glBindTexture(GL_TEXTURE_2D, map->map);
 
 	glBindSampler(unit, map->sampler);
+}
+
+/**
+ * Set a uniform value to an unsigned integer.
+ **/
+void
+shader_set_uniform_uint(shader_t *shader, const char *name, GLuint val)
+{
+	GLint loc = glGetUniformLocation(shader->gl_handle, name);
+
+	/* FIXME: use 1ui when shader supports unsigned keyword */
+	glUniform1i(loc, (int)val);
 }
 
 /**
