@@ -28,8 +28,8 @@
 /**
  * Flags for the draw queue.
  **/
-#define DRAW_QUEUE_CLEAR 1
-#define DRAW_QUEUE_CLEAR_DEPTH 2
+#define DRAW_QUEUE_CLEAR	0x1
+#define DRAW_QUEUE_CLEAR_DEPTH	0x2
 
 /**
  * A list of draw operations to be performed.
