@@ -38,7 +38,8 @@ luftballons_OBJS =	\
 	texmap.o	\
 	texmap_png.o	\
 	texmap_tiff.o	\
-	quat.o
+	quat.o		\
+	state.o
 
 luftballons_LINK=-lglut -lGL -lm -lstdc++ \
 		 -lcollada14dom -lboost_system -lpng -ltiff

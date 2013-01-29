@@ -39,6 +39,7 @@
 #include "draw_queue.h"
 #include "dae_load.h"
 #include "texmap.h"
+#include "state.h"
 
 object_t *cube;
 object_t *cube_center;
@@ -304,6 +305,7 @@ main(int argc, char **argv)
 	texmap_t *canopy_map;
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
+	state_t *state = state_create();
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -313,13 +315,9 @@ main(int argc, char **argv)
 
 	glutCreateWindow(argv[0]);
 
-	glEnable(GL_CULL_FACE);
-	glEnable(GL_TEXTURE_2D);
-	glEnable(GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);
-	glEnable(GL_DEPTH_TEST);
+	state_set_flags(state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
+			| STATE_BF_CULL | STATE_TEXTURE_2D);
+	state_enter(state);
 
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
