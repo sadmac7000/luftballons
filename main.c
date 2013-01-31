@@ -91,7 +91,7 @@ void
 update_camera(float time)
 {
 	float delta_t = time - frame_time;
-	float speed = delta_t * .001;
+	float speed = delta_t * .003;
 	float rot_speed = .003;
 	float yaw_amt = 0;
 	float pitch_amt = 0;
