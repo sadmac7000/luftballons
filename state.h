@@ -31,9 +31,13 @@
  * A bin of current misc. OpenGL state.
  *
  * flags: Flags indicating properties of this draw state.
+ * care_about: Which flags we actually care about the state of.
+ * destroyed: Indicates this state has been destroyed.
  **/
 typedef struct draw_state {
 	uint64_t flags;
+	uint64_t care_about;
+	int destroyed;
 } state_t;
 
 #ifdef __cplusplus
@@ -42,17 +46,35 @@ extern "C" {
 
 state_t *state_create(void);
 void state_enter(state_t *state);
+void state_destroy(state_t *state);
 
+/**
+ * Set the given flags in the given state.
+ **/
 static inline void
 state_set_flags(state_t *state, uint64_t flags)
 {
 	state->flags |= flags;
+	state->care_about |= flags;
 }
 
+/**
+ * Clear the given flags in the given state.
+ **/
 static inline void
 state_clear_flags(state_t *state, uint64_t flags)
 {
 	state->flags &= ~flags;
+	state->care_about |= flags;
+}
+
+/**
+ * Indicate that in the given state, the given flags may hold any value.
+ **/
+static inline void
+state_ignore_flags(state_t *state, uint64_t flags)
+{
+	state->care_about &= ~flags;
 }
 
 #ifdef __cplusplus
