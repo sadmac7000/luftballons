@@ -106,7 +106,7 @@ state_set_bf_cull(state_t *state)
  * Set up 2D texture support as this state states it should be.
  **/
 static void
-state_set_texture_2d(state_t *state)
+state_set_texture_2D(state_t *state)
 {
 	if (state->flags & STATE_TEXTURE_2D)
 		glEnable(GL_TEXTURE_2D);
@@ -139,7 +139,7 @@ state_enter(state_t *state)
 		state_set_bf_cull(state);
 	
 	if (change_flags & STATE_TEXTURE_2D)
-		state_set_texture_2d(state);
+		state_set_texture_2D(state);
 
 	if (current_state && current_state->destroyed)
 		state_do_destroy(current_state);
