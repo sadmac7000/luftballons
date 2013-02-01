@@ -146,3 +146,41 @@ state_enter(state_t *state)
 
 	current_state = state;
 }
+
+/**
+ * Set the given flags in the given state.
+ **/
+void
+state_set_flags(state_t *state, uint64_t flags)
+{
+	if (state == current_state)
+		errx(1, "Attempt to modify active state");
+
+	state->flags |= flags;
+	state->care_about |= flags;
+}
+
+/**
+ * Clear the given flags in the given state.
+ **/
+void
+state_clear_flags(state_t *state, uint64_t flags)
+{
+	if (state == current_state)
+		errx(1, "Attempt to modify active state");
+
+	state->flags &= ~flags;
+	state->care_about |= flags;
+}
+
+/**
+ * Indicate that in the given state, the given flags may hold any value.
+ **/
+void
+state_ignore_flags(state_t *state, uint64_t flags)
+{
+	if (state == current_state)
+		errx(1, "Attempt to modify active state");
+
+	state->care_about &= ~flags;
+}

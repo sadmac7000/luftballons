@@ -47,35 +47,9 @@ extern "C" {
 state_t *state_create(void);
 void state_enter(state_t *state);
 void state_destroy(state_t *state);
-
-/**
- * Set the given flags in the given state.
- **/
-static inline void
-state_set_flags(state_t *state, uint64_t flags)
-{
-	state->flags |= flags;
-	state->care_about |= flags;
-}
-
-/**
- * Clear the given flags in the given state.
- **/
-static inline void
-state_clear_flags(state_t *state, uint64_t flags)
-{
-	state->flags &= ~flags;
-	state->care_about |= flags;
-}
-
-/**
- * Indicate that in the given state, the given flags may hold any value.
- **/
-static inline void
-state_ignore_flags(state_t *state, uint64_t flags)
-{
-	state->care_about &= ~flags;
-}
+void state_set_flags(state_t *state, uint64_t flags);
+void state_clear_flags(state_t *state, uint64_t flags);
+void state_ignore_flags(state_t *state, uint64_t flags);
 
 #ifdef __cplusplus
 }
