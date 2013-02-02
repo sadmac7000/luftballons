@@ -18,6 +18,8 @@
 #ifndef STATE_H
 #define STATE_H
 
+#include "texmap.h"
+
 /* Enable depth testing in this state */
 #define STATE_DEPTH_TEST	0x1
 /* Enable alpha blending in this state */
@@ -38,6 +40,8 @@ typedef struct draw_state {
 	uint64_t flags;
 	uint64_t care_about;
 	int destroyed;
+	size_t num_colorbufs;
+	texmap_t **colorbufs;
 } state_t;
 
 #ifdef __cplusplus
@@ -50,6 +54,9 @@ void state_destroy(state_t *state);
 void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
+size_t state_append_colorbuf(state_t *state, texmap_t *texture);
+void state_clear_colorbufs(state_t *state);
+size_t state_max_colorbufs(void);
 
 #ifdef __cplusplus
 }

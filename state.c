@@ -28,6 +28,10 @@
  **/
 state_t *current_state = NULL;
 
+GLuint framebuf;
+texmap_t **framebuf_maps = NULL;
+size_t framebuf_maps_size = 0;
+
 /**
  * Create a new state object.
  **/
@@ -115,6 +119,95 @@ state_set_texture_2D(state_t *state)
 }
 
 /**
+ * Prepare to run on the default buffer.
+ **/
+static void
+state_prep_default_colorbufs(void)
+{
+	GLenum buffers[] = {
+		GL_BACK_LEFT,
+		GL_BACK_RIGHT,
+		GL_FRONT_LEFT,
+		GL_FRONT_RIGHT,
+	};
+
+	if (current_state && current_state->num_colorbufs == 0)
+		return;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glDrawBuffers(4, buffers);
+}
+
+/**
+ * Allocate a color attachment in the framebuffer.
+ **/
+static int
+state_alloc_framebuffer(texmap_t *map, GLenum *attach)
+{
+	size_t i;
+
+	/* FIXME: If malloc reuses a memory segment we could destroy a texmap
+	 * and then have a new one with the same address, which would appear to
+	 * be in the framebuffer when it isn't.
+	 *
+	 * We can get away with freed textures that aren't reallocated because
+	 * we only compare pointers, we don't dereference.
+	 */
+	for (i = 0; i < framebuf_maps_size; i++) {
+		if (framebuf_maps[i] == map)
+			break;
+	}
+
+	if (i == framebuf_maps_size) {
+		if (framebuf_maps_size == state_max_colorbufs())
+			return -1;
+
+		vec_expand(framebuf_maps, framebuf_maps_size);
+		framebuf_maps[framebuf_maps_size++] = map;
+	}
+
+	*attach = GL_COLOR_ATTACHMENT0 + i;
+	return 0;
+}
+
+/**
+ * Prepare the color buffers attached to this state.
+ **/
+static void
+state_prep_colorbufs(state_t *state)
+{
+	GLenum *buffers;
+	size_t i;
+
+	if (! state->num_colorbufs) {
+		state_prep_default_colorbufs();
+		return;
+	}
+
+	buffers = xcalloc(state->num_colorbufs, sizeof(GLenum));
+
+	if (! framebuf_maps)
+		glGenFramebuffers(1, &framebuf);
+
+	if (current_state == NULL || current_state->num_colorbufs == 0)
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuf);
+
+	i = 0;
+	while (i < state->num_colorbufs) {
+		if (! state_alloc_framebuffer(state->colorbufs[i],
+					      &buffers[i])) {
+			i++;
+		} else {
+			framebuf_maps_size = 0;
+			i = 0;
+		}
+	}
+
+	glDrawBuffers(state->num_colorbufs, buffers);
+	free(buffers);
+}
+
+/**
  * Enter the given state.
  **/
 void
@@ -123,7 +216,6 @@ state_enter(state_t *state)
 	uint64_t change_flags = state->care_about;
 	
 	if (current_state) {
-		change_flags = current_state->flags;
 		change_flags = current_state->flags ^ state->flags;
 		change_flags |= ~current_state->care_about;
 		change_flags &= state->care_about;
@@ -144,7 +236,19 @@ state_enter(state_t *state)
 	if (current_state && current_state->destroyed)
 		state_do_destroy(current_state);
 
+	state_prep_colorbufs(state);
+
 	current_state = state;
+}
+
+/**
+ * Crash if this state is the current state.
+ **/
+static void
+state_assert_not_current(state_t *state)
+{
+	if (state == current_state)
+		errx(1, "Attempt to modify active state");
 }
 
 /**
@@ -153,8 +257,7 @@ state_enter(state_t *state)
 void
 state_set_flags(state_t *state, uint64_t flags)
 {
-	if (state == current_state)
-		errx(1, "Attempt to modify active state");
+	state_assert_not_current(state);
 
 	state->flags |= flags;
 	state->care_about |= flags;
@@ -166,8 +269,7 @@ state_set_flags(state_t *state, uint64_t flags)
 void
 state_clear_flags(state_t *state, uint64_t flags)
 {
-	if (state == current_state)
-		errx(1, "Attempt to modify active state");
+	state_assert_not_current(state);
 
 	state->flags &= ~flags;
 	state->care_about |= flags;
@@ -179,8 +281,51 @@ state_clear_flags(state_t *state, uint64_t flags)
 void
 state_ignore_flags(state_t *state, uint64_t flags)
 {
-	if (state == current_state)
-		errx(1, "Attempt to modify active state");
+	state_assert_not_current(state);
 
 	state->care_about &= ~flags;
+}
+
+/**
+ * Append a color buffer to the list of output color buffers.
+ **/
+size_t
+state_append_colorbuf(state_t *state, texmap_t *texture)
+{
+	state_assert_not_current(state);
+
+	if (state->num_colorbufs == state_max_colorbufs())
+		errx(1, "Platform does not support more than "
+		     "%zu color buffers", state_max_colorbufs());
+
+	vec_expand(state->colorbufs, state->num_colorbufs);
+	state->colorbufs[state->num_colorbufs] = texture;
+
+	return state->num_colorbufs++;
+}
+
+/**
+ * Remove all color buffers from this state.
+ **/
+void
+state_clear_colorbufs(state_t *state)
+{
+	state_assert_not_current(state);
+
+	free(state->colorbufs);
+	state->colorbufs = NULL;
+	state->num_colorbufs = 0;
+}
+
+/**
+ * Get the maximum number of color buffers a state can have.
+ **/
+size_t
+state_max_colorbufs(void)
+{
+	GLint result;
+
+	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &result);
+
+	return (size_t)result;
 }
