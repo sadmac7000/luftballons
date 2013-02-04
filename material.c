@@ -115,7 +115,7 @@ material_activate(material_t *material, size_t pass)
 
 	shader_activate(material->shaders[pass]);
 
-	foreach(&material->uniforms) {
+	foreach(&material->uniforms, pos) {
 		uni = (material_uniform_t *)pos;
 
 		material_uniform_load(uni, material->shaders[pass]);

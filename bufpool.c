@@ -99,7 +99,7 @@ bufpool_create_buffers(bufpool_t *pool)
 	vbuf_t *vbuf;
 	ebuf_t *ebuf;
 
-	foreach(&gen->meshes) {
+	foreach(&gen->meshes, pos) {
 		mesh = CONTAINER_OF(pos, mesh_t, generation_link);
 
 		if (! mesh->vbuf)
@@ -119,7 +119,7 @@ bufpool_create_buffers(bufpool_t *pool)
 
 	/* FIXME: Prune generations on failure at least. */
 
-	foreach(&gen->meshes) {
+	foreach(&gen->meshes, pos) {
 		mesh = CONTAINER_OF(pos, mesh_t, generation_link);
 
 		if (vbuf && !mesh->vbuf)
