@@ -80,10 +80,44 @@ texmap_create(size_t base_level, size_t max_level)
 }
 
 /**
+ * Increase the refcount of a texmap.
+ **/
+void
+texmap_grab(texmap_t *texmap)
+{
+	texmap->refcount++;
+}
+
+/**
+ * Decrease the refcount of a texmap.
+ **/
+void
+texmap_ungrab(texmap_t *texmap)
+{
+	if (--texmap->refcount)
+		return;
+
+	glDeleteSamplers(1, &texmap->sampler);
+	glDeleteTextures(1, &texmap->map);
+	free(texmap);
+}
+
+/**
  * Set an OpenGL parameter for this texture map.
  **/
 void
 texmap_set_int_param(texmap_t *map, GLenum param, GLint value)
 {
 	glSamplerParameteri(map->sampler, param, value);
+}
+
+/**
+ * Initialize a blank texmap.
+ **/
+void
+texmap_init_blank(texmap_t *map, int level, int width, int height)
+{
+	glBindTexture(GL_TEXTURE_2D, map->map);
+	glTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA, width, height, 0, GL_RGBA,
+		     GL_UNSIGNED_BYTE, NULL);
 }
