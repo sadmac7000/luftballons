@@ -40,7 +40,8 @@ refcount_add_destructor(refcounter_t *counter, void (*callback)(void *),
 {
 	refcount_destructor_t *dest;
 
-	vec_expand(counter->destructors, counter->num_destructors);
+	counter->destructors = vec_expand(counter->destructors,
+					  counter->num_destructors);
 
 	dest = &counter->destructors[counter->num_destructors++];
 	dest->callback = callback;

@@ -154,7 +154,7 @@ state_alloc_framebuffer(texmap_t *map, GLenum *attach)
 		if (framebuf_maps_size == state_max_colorbufs())
 			return -1;
 
-		vec_expand(framebuf_maps, framebuf_maps_size);
+		framebuf_maps = vec_expand(framebuf_maps, framebuf_maps_size);
 		framebuf_maps[framebuf_maps_size++] = map;
 	}
 
