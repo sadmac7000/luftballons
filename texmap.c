@@ -59,6 +59,19 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 }
 
 /**
+ * Destroy a texmap
+ **/
+static void
+texmap_destructor(void *texmap_)
+{
+	texmap_t *texmap = texmap_;
+
+	glDeleteSamplers(1, &texmap->sampler);
+	glDeleteTextures(1, &texmap->map);
+	free(texmap);
+}
+
+/**
  * Create a texture map, and load it with contents from a file.
  *
  * base_level: Base mipmap level
@@ -76,6 +89,9 @@ texmap_create(size_t base_level, size_t max_level)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_level);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_level);
 
+	refcount_init(&map->refcount);
+	refcount_add_destructor(&map->refcount, texmap_destructor, map);
+
 	return map;
 }
 
@@ -85,7 +101,7 @@ texmap_create(size_t base_level, size_t max_level)
 void
 texmap_grab(texmap_t *texmap)
 {
-	texmap->refcount++;
+	refcount_grab(&texmap->refcount);
 }
 
 /**
@@ -94,12 +110,7 @@ texmap_grab(texmap_t *texmap)
 void
 texmap_ungrab(texmap_t *texmap)
 {
-	if (--texmap->refcount)
-		return;
-
-	glDeleteSamplers(1, &texmap->sampler);
-	glDeleteTextures(1, &texmap->map);
-	free(texmap);
+	refcount_ungrab(&texmap->refcount);
 }
 
 /**

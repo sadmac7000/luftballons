@@ -20,6 +20,8 @@
 
 #include <GL/gl.h>
 
+#include "refcount.h"
+
 /**
  * A 2D texture map, usually loaded from a file.
  *
@@ -32,7 +34,7 @@ typedef struct texmap {
 	/* FIXME: Separating samplers and textures is actually useful. Also
 	 * using both while having them stuck together potentially isn't. */
 	GLuint sampler;
-	size_t refcount;
+	refcounter_t refcount;
 } texmap_t;
 
 #ifdef __cplusplus
