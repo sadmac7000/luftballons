@@ -22,6 +22,7 @@
 
 #include "interval.h"
 #include "vbuf_fmt.h"
+#include "refcount.h"
 #include "util.h"
 
 /**
@@ -41,7 +42,7 @@ typedef struct vbuf {
 	size_t vert_size;
 	size_t vert_count;
 
-	unsigned int refcount;
+	refcounter_t refcount;
 
 	intervals_t free;
 } vbuf_t;

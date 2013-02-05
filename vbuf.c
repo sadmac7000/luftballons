@@ -39,6 +39,25 @@ vbuf_do_activate(vbuf_t *buffer)
 }
 
 /**
+ * Destroy a vbuf.
+ **/
+static void
+vbuf_destructor(void *buffer_)
+{
+	vbuf_t *buffer = buffer_;
+
+	if (current_vbuf == buffer) {
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		current_vbuf = NULL;
+	}
+
+	glDeleteBuffers(1, &buffer->gl_handle);
+
+	intervals_release(&buffer->free);
+	free(buffer);
+}
+
+/**
  * Create a new buffer object.
  *
  * size: Vertices the buffer should accomodate.
@@ -75,7 +94,9 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 	ret->vert_count = size;
 	ret->gl_handle = handle;
 	ret->format = format;
-	ret->refcount = 0;
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, vbuf_destructor, ret);
 
 	intervals_init(&ret->free);
 	interval_set(&ret->free, 0, size);
@@ -127,7 +148,7 @@ vbuf_setup_vertex_attribute(const char *name, GLint handle)
 void
 vbuf_grab(vbuf_t *buffer)
 {
-	buffer->refcount++;
+	refcount_grab(&buffer->refcount);
 }
 
 /**
@@ -136,18 +157,7 @@ vbuf_grab(vbuf_t *buffer)
 void
 vbuf_ungrab(vbuf_t *buffer)
 {
-	if (--buffer->refcount)
-		return;
-
-	if (current_vbuf == buffer) {
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		current_vbuf = NULL;
-	}
-
-	glDeleteBuffers(1, &buffer->gl_handle);
-
-	intervals_release(&buffer->free);
-	free(buffer);
+	refcount_ungrab(&buffer->refcount);
 }
 
 /**
