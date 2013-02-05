@@ -65,7 +65,7 @@ refcount_ungrab(refcounter_t *counter)
 {
 	size_t i;
 
-	if (counter->count--)
+	if (--counter->count)
 		return;
 
 	for (i = counter->num_destructors; i; i--) {
