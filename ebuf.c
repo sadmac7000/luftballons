@@ -35,6 +35,25 @@ ebuf_do_activate(ebuf_t *buffer)
 }
 
 /**
+ * Decrease a buffer's refcount. If the count becomes zero, free it.
+ **/
+static void
+ebuf_destructor(void *buffer_)
+{
+	ebuf_t *buffer = buffer_;
+
+	if (current_ebuf == buffer) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		current_ebuf = NULL;
+	}
+
+	glDeleteBuffers(1, &buffer->gl_handle);
+
+	intervals_release(&buffer->free);
+	free(buffer);
+}
+
+/**
  * Create a new buffer object.
  *
  * size: Indices the buffer should accomodate.
@@ -67,7 +86,9 @@ ebuf_create(size_t size)
 
 	ret->gl_handle = handle;
 	ret->size = size;
-	ret->refcount = 0;
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, ebuf_destructor, ret);
 
 	intervals_init(&ret->free);
 	interval_set(&ret->free, 0, size);
@@ -81,7 +102,7 @@ ebuf_create(size_t size)
 void
 ebuf_grab(ebuf_t *buffer)
 {
-	buffer->refcount++;
+	refcount_grab(&buffer->refcount);
 }
 
 /**
@@ -90,18 +111,7 @@ ebuf_grab(ebuf_t *buffer)
 void
 ebuf_ungrab(ebuf_t *buffer)
 {
-	if (--buffer->refcount)
-		return;
-
-	if (current_ebuf == buffer) {
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		current_ebuf = NULL;
-	}
-
-	glDeleteBuffers(1, &buffer->gl_handle);
-
-	intervals_release(&buffer->free);
-	free(buffer);
+	refcount_ungrab(&buffer->refcount);
 }
 
 /**

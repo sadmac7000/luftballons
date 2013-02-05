@@ -21,6 +21,7 @@
 #include <GL/gl.h>
 
 #include "interval.h"
+#include "refcount.h"
 #include "util.h"
 
 /**
@@ -34,7 +35,7 @@
 typedef struct ebuf {
 	GLuint gl_handle;
 	size_t size;
-	unsigned int refcount;
+	refcounter_t refcount;
 	intervals_t free;
 } ebuf_t;
 
