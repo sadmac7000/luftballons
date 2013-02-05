@@ -123,13 +123,6 @@ state_set_texture_2D(state_t *state)
 static void
 state_prep_default_colorbufs(void)
 {
-	GLenum buffers[] = {
-		GL_BACK_LEFT,
-		GL_BACK_RIGHT,
-		GL_FRONT_LEFT,
-		GL_FRONT_RIGHT,
-	};
-
 	if (current_state && current_state->num_colorbufs == 0)
 		return;
 
