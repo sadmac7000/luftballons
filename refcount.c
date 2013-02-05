@@ -16,6 +16,7 @@
  **/
 
 #include <string.h>
+#include <err.h>
 
 #include "refcount.h"
 #include "util.h"
@@ -64,6 +65,9 @@ void
 refcount_ungrab(refcounter_t *counter)
 {
 	size_t i;
+
+	if (! counter->count)
+		errx(1, "Refcount went negative");
 
 	if (--counter->count)
 		return;
