@@ -23,6 +23,7 @@
 #include "vbuf.h"
 #include "vbuf_fmt.h"
 #include "ebuf.h"
+#include "refcount.h"
 
 /**
  * A collection of vertex data ready to be passed to a draw call.
@@ -61,7 +62,7 @@ typedef struct mesh {
 	ebuf_t *ebuf;
 	size_t ebuf_pos;
 
-	size_t refcount;
+	refcounter_t refcount;
 } mesh_t;
 
 #ifdef __cplusplus
@@ -71,7 +72,6 @@ extern "C" {
 mesh_t *mesh_create(size_t verts, const void *vert_data, size_t elems,
 		    const uint16_t *elem_data, vbuf_fmt_t format, GLenum type);
 size_t mesh_data_size(mesh_t *mesh);
-void mesh_destroy(mesh_t *mesh);
 int mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer);
 int mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer);
 void mesh_remove_from_vbuf(mesh_t *mesh);

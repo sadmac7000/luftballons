@@ -26,6 +26,26 @@
 void bufpool_notify_generation(struct generation *gen);
 
 /**
+ * Destroy and free a mesh object.
+ **/
+static void
+mesh_destructor(void *mesh_)
+{
+	mesh_t *mesh = mesh_;
+	mesh_remove_from_vbuf(mesh);
+	mesh_remove_from_ebuf(mesh);
+	list_remove(&mesh->generation_link);
+
+	if (mesh->generation)
+		bufpool_notify_generation(mesh->generation);
+
+	mesh->generation = NULL;
+
+	free(mesh->vert_data);
+	free(mesh);
+}
+
+/**
  * Create a new mesh object.
  **/
 mesh_t *
@@ -56,7 +76,8 @@ mesh_create(size_t verts, const void *vert_data,
 	ret->ebuf = NULL;
 	ret->ebuf_pos = 0;
 
-	ret->refcount = 0;
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, mesh_destructor, ret);
 
 	ret->generation = NULL;
 	list_init(&ret->generation_link);
@@ -70,7 +91,7 @@ mesh_create(size_t verts, const void *vert_data,
 void
 mesh_grab(mesh_t *mesh)
 {
-	mesh->refcount++;
+	refcount_grab(&mesh->refcount);
 }
 
 /**
@@ -79,32 +100,7 @@ mesh_grab(mesh_t *mesh)
 void
 mesh_ungrab(mesh_t *mesh)
 {
-	if (! mesh->refcount)
-		errx(1, "Mesh refcount went negative");
-
-	if (--mesh->refcount)
-		return;
-
-	mesh_destroy(mesh);
-}
-
-/**
- * Destroy and free a mesh object.
- **/
-void
-mesh_destroy(mesh_t *mesh)
-{
-	mesh_remove_from_vbuf(mesh);
-	mesh_remove_from_ebuf(mesh);
-	list_remove(&mesh->generation_link);
-
-	if (mesh->generation)
-		bufpool_notify_generation(mesh->generation);
-
-	mesh->generation = NULL;
-
-	free(mesh->vert_data);
-	free(mesh);
+	refcount_ungrab(&mesh->refcount);
 }
 
 /**
