@@ -38,8 +38,7 @@ size_t framebuf_maps_size = 0;
 state_t *
 state_create(void)
 {
-	state_t *state = xmalloc(sizeof(state_t));
-	memset(state, 0, sizeof(state_t));
+	state_t *state = xcalloc(1, sizeof(state_t));
 
 	return state;
 }
