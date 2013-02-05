@@ -135,7 +135,7 @@ state_prep_default_colorbufs(void)
 		return;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDrawBuffers(4, buffers);
+	glDrawBuffer(GL_BACK);
 }
 
 /**
