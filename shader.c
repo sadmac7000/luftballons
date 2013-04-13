@@ -32,6 +32,55 @@
 static shader_t *current_shader = NULL;
 
 /**
+ * Destructor for a shader uniform.
+ **/
+static void
+shader_uniform_destructor(void *v)
+{
+	shader_uniform_t *uniform = v;
+
+	free(uniform->name);
+	free(uniform);
+}
+
+/**
+ * Create a uniform object.
+ **/
+shader_uniform_t *
+shader_uniform_create(const char *name, shader_uniform_type_t type,
+		      shader_uniform_value_t value)
+{
+	shader_uniform_t *ret = xmalloc(sizeof(shader_uniform_t));
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, shader_uniform_destructor,
+				ret);
+	ret->type = type;
+	ret->value = value;
+	ret->name = xstrdup(name);
+
+	return ret;
+}
+
+/**
+ * Grab a uniform.
+ **/
+void
+shader_uniform_grab(shader_uniform_t *uniform)
+{
+	refcount_grab(&uniform->refcount);
+}
+
+/**
+ * Ungrab a uniform.
+ **/
+void
+shader_uniform_ungrab(shader_uniform_t *uniform)
+{
+	refcount_ungrab(&uniform->refcount);
+}
+
+/**
  * Compile a shader from a string containing glsl.
  **/
 static GLuint
@@ -125,6 +174,8 @@ shader_instantiate(void)
 
 	ret->gl_handle = glCreateProgram();
 	ret->tex_unit = 0;
+	ret->uniforms = NULL;
+	ret->uniform_count = 0;
 	return ret;
 }
 
@@ -269,4 +320,56 @@ shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4])
 {
 	GLint loc = glGetUniformLocation(shader->gl_handle, name);
 	glUniform4fv(loc, 1, vec);
+}
+
+/**
+ * Set a uniform value.
+ **/
+void
+shader_set_uniform(shader_t *shader, shader_uniform_t *uniform)
+{
+	size_t i;
+
+	shader_uniform_grab(uniform);
+
+	for (i = 0; i < shader->uniform_count; i++) {
+		if (strcmp(shader->uniforms[i]->name, uniform->name))
+			continue;
+
+		if (shader->uniforms[i] == uniform)
+			return;
+
+		shader_uniform_ungrab(shader->uniforms[i]);
+		shader->uniforms[i] = uniform;
+	}
+
+	if (i == shader->uniform_count) {
+		shader->uniforms = vec_expand(shader->uniforms, shader->uniform_count);
+		shader->uniforms[shader->uniform_count++] = uniform;
+	}
+
+	switch (uniform->type) {
+		case SHADER_UNIFORM_MAT4:
+			shader_set_uniform_mat(shader, uniform->name,
+					       uniform->value.data_ptr);
+			break;
+		case SHADER_UNIFORM_VEC4:
+			shader_set_uniform_vec(shader, uniform->name,
+					       uniform->value.data_ptr);
+			break;
+		case SHADER_UNIFORM_SAMP2D:
+			shader_set_uniform_samp2D(shader, uniform->name,
+						  uniform->value.data_ptr);
+			break;
+		/* case SHADER_UNIFORM_SAMP1D:
+			shader_set_uniform_samp1D(shader, uniform->name,
+						  uniform->value.data_ptr);
+			break; */
+		case SHADER_UNIFORM_UINT:
+			shader_set_uniform_uint(shader, uniform->name,
+						uniform->value.uint);
+			break;
+		default:
+			errx(1, "Unreachable statement");
+	}
 }

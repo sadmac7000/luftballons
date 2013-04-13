@@ -36,9 +36,11 @@ size_t framebuf_maps_size = 0;
  * Create a new state object.
  **/
 state_t *
-state_create(void)
+state_create(shader_t *shader)
 {
 	state_t *state = xcalloc(1, sizeof(state_t));
+
+	state->shader = shader;
 
 	return state;
 }
@@ -206,7 +208,13 @@ void
 state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
-	
+	size_t i;
+
+	for (i = 0; i < state->num_uniforms; i++)
+		shader_set_uniform(state->shader, state->uniforms[i]);
+
+	shader_activate(state->shader);
+
 	if (current_state) {
 		change_flags = current_state->flags ^ state->flags;
 		change_flags |= ~current_state->care_about;
@@ -321,3 +329,29 @@ state_max_colorbufs(void)
 
 	return (size_t)result;
 }
+
+/**
+ * Set a uniform that is applied when this state is entered.
+ **/
+void
+state_set_uniform(state_t *state, shader_uniform_t *uniform)
+{
+	size_t i;
+
+	shader_uniform_grab(uniform);
+
+	for (i = 0; i < state->num_uniforms; i++) {
+		if (strcmp(state->uniforms[i]->name, uniform->name))
+			continue;
+
+		shader_uniform_ungrab(state->uniforms[i]);
+		state->uniforms[i] = uniform;
+	}
+
+	state->uniforms = vec_expand(state->uniforms, state->num_uniforms);
+	state->uniforms[state->num_uniforms++] = uniform;
+
+	if (state == current_state)
+		shader_set_uniform(state->shader, uniform);
+}
+

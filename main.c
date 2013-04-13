@@ -305,7 +305,7 @@ main(int argc, char **argv)
 	texmap_t *canopy_map;
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
-	state_t *state = state_create();
+	state_t *state;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -315,10 +315,6 @@ main(int argc, char **argv)
 
 	glutCreateWindow(argv[0]);
 
-	state_set_flags(state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
-			| STATE_BF_CULL | STATE_TEXTURE_2D);
-	state_enter(state);
-
 	glutDisplayFunc(render);
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(onkey);
@@ -326,6 +322,12 @@ main(int argc, char **argv)
 
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");
+
+	state = state_create(vcolor_shader);
+	state_set_flags(state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
+			| STATE_BF_CULL | STATE_TEXTURE_2D);
+	state_enter(state);
+
 	cube_material = material_create();
 	plane_material = material_create();
 	canopy_material = material_create();
