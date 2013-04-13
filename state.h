@@ -38,6 +38,7 @@
  * destroyed: Indicates this state has been destroyed.
  * num_colorbufs, colorbufs: Vector of color buffers to render to.
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
+ * shader: Shader to load in this state.
  **/
 typedef struct state {
 	uint64_t flags;
@@ -45,9 +46,9 @@ typedef struct state {
 	int destroyed;
 	size_t num_colorbufs;
 	texmap_t **colorbufs;
-	shader_t *shader;
 	size_t num_uniforms;
 	shader_uniform_t **uniforms;
+	shader_t *shader;
 } state_t;
 
 #ifdef __cplusplus
