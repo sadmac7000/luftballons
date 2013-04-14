@@ -38,6 +38,7 @@
  * destroyed: Indicates this state has been destroyed.
  * num_colorbufs, colorbufs: Vector of color buffers to render to.
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
+ * num_dependants, dependants: Number of states depending on this state.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
  **/
@@ -49,6 +50,8 @@ typedef struct state {
 	texmap_t **colorbufs;
 	size_t num_uniforms;
 	shader_uniform_t **uniforms;
+	size_t num_dependants;
+	size_t dependencies;
 	shader_t *shader;
 	int mat_id;
 } state_t;
@@ -68,6 +71,7 @@ void state_clear_colorbufs(state_t *state);
 void state_set_uniform(state_t *state, shader_uniform_t *uniform);
 size_t state_max_colorbufs(void);
 int state_material_active(int mat_id);
+void state_depends_on(state_t *state, state_t *other);
 
 #ifdef __cplusplus
 }

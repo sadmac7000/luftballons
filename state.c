@@ -47,6 +47,18 @@ state_create(shader_t *shader)
 }
 
 /**
+ * Mark that a state depends on another state.
+ **/
+void
+state_depends_on(state_t *state, state_t *other)
+{
+	other->dependants = vec_expand(other->dependants,
+				       other->num_dependants);
+
+	other->dependants[other->num_dependants++] = state;
+}
+
+/**
  * Destroy a state object. Don't defer until the state is no longer active.
  **/
 static void
