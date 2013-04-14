@@ -301,6 +301,7 @@ state_append_colorbuf(state_t *state, texmap_t *texture)
 
 	vec_expand(state->colorbufs, state->num_colorbufs);
 	state->colorbufs[state->num_colorbufs] = texture;
+	texmap_grab(texture);
 
 	return state->num_colorbufs++;
 }
@@ -311,7 +312,12 @@ state_append_colorbuf(state_t *state, texmap_t *texture)
 void
 state_clear_colorbufs(state_t *state)
 {
+	size_t i;
+
 	state_assert_not_current(state);
+
+	for(i = 0; i < state->num_colorbufs; i++)
+		texmap_ungrab(state->colorbufs[i]);
 
 	free(state->colorbufs);
 	state->colorbufs = NULL;
