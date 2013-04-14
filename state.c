@@ -42,7 +42,7 @@ state_destructor(void *data)
 	state_t *state = data;
 
 	for (i = 0; i < state->num_uniforms; i++)
-		shader_uniform_ungrab(state->uniforms[i]);
+		uniform_ungrab(state->uniforms[i]);
 
 	for (i = 0; i < state->num_dependants; i++)
 		state_ungrab(state->dependants[i]);
@@ -370,17 +370,17 @@ state_max_colorbufs(void)
  * Set a uniform that is applied when this state is entered.
  **/
 void
-state_set_uniform(state_t *state, shader_uniform_t *uniform)
+state_set_uniform(state_t *state, uniform_t *uniform)
 {
 	size_t i;
 
-	shader_uniform_grab(uniform);
+	uniform_grab(uniform);
 
 	for (i = 0; i < state->num_uniforms; i++) {
 		if (strcmp(state->uniforms[i]->name, uniform->name))
 			continue;
 
-		shader_uniform_ungrab(state->uniforms[i]);
+		uniform_ungrab(state->uniforms[i]);
 		state->uniforms[i] = uniform;
 		return;
 	}

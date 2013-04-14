@@ -24,7 +24,7 @@
  **/
 struct draw_op {
 	mesh_t *mesh;
-	shader_uniform_t **uniforms;
+	uniform_t **uniforms;
 	size_t uniform_count;
 	int mat_id;
 };
@@ -85,7 +85,7 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object,
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
 	float normal_trans[16];
-	shader_uniform_value_t tmp;
+	uniform_value_t tmp;
 
 	queue->draw_ops = vec_expand(queue->draw_ops, queue->draw_op_count);
 
@@ -99,18 +99,18 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object,
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, transform, 16 * sizeof(float));
-	op->uniforms[0] = shader_uniform_create("transform", SHADER_UNIFORM_MAT4, tmp);
-	shader_uniform_grab(op->uniforms[0]);
+	op->uniforms[0] = uniform_create("transform", UNIFORM_MAT4, tmp);
+	uniform_grab(op->uniforms[0]);
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, normal_trans, 16 * sizeof(float));
-	op->uniforms[1] = shader_uniform_create("normal_transform", SHADER_UNIFORM_MAT4, tmp);
-	shader_uniform_grab(op->uniforms[1]);
+	op->uniforms[1] = uniform_create("normal_transform", UNIFORM_MAT4, tmp);
+	uniform_grab(op->uniforms[1]);
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, camera->to_clip_xfrm, 16 * sizeof(float));
-	op->uniforms[2] = shader_uniform_create("clip_transform", SHADER_UNIFORM_MAT4, tmp);
-	shader_uniform_grab(op->uniforms[2]);
+	op->uniforms[2] = uniform_create("clip_transform", UNIFORM_MAT4, tmp);
+	uniform_grab(op->uniforms[2]);
 
 	op->uniform_count = 3;
 
@@ -228,7 +228,7 @@ draw_queue_try_flush(draw_queue_t *queue)
 
 		if (draw_queue_exec_op(op)) {
 			for (k = 0; k < op->uniform_count; k++)
-				shader_uniform_ungrab(op->uniforms[k]);
+				uniform_ungrab(op->uniforms[k]);
 			free(op->uniforms);
 			free(op);
 		} else {

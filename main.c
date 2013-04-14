@@ -315,7 +315,7 @@ main(int argc, char **argv)
 	texmap_t *canopy_map;
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
-	shader_uniform_value_t uvtmp;
+	uniform_value_t uvtmp;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -361,8 +361,7 @@ main(int argc, char **argv)
 
 	uvtmp.data_ptr = canopy_map;
 	state_set_uniform(canopy_state,
-			  shader_uniform_create("diffusemap",
-						SHADER_UNIFORM_SAMP2D, uvtmp));
+			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
 
 	texmap_load_image(plane_map, "ref_model/P51_Mustang.tif", 0);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -371,8 +370,7 @@ main(int argc, char **argv)
 
 	uvtmp.data_ptr = plane_map;
 	state_set_uniform(plane_state,
-			  shader_uniform_create("diffusemap",
-						SHADER_UNIFORM_SAMP2D, uvtmp));
+			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
 
 	draw_queue = draw_queue_create();
 	draw_queue_set_clear_color(draw_queue, 0.5, 0.0, 0.5, 1.0);

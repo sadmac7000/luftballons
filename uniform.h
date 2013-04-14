@@ -15,41 +15,54 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef UNIFORM_H
+#define UNIFORM_H
 
 #include <GL/gl.h>
 
-#include "vbuf.h"
-#include "texmap.h"
 #include "refcount.h"
-#include "uniform.h"
 
 /**
- * A shader.
- *
- * gl_handle: The OpenGL designation for the shader.
- * tex_unit: The next available texture unit.
+ * Type of a shader uniform.
  **/
-typedef struct shader {
-	GLuint gl_handle;
-	size_t tex_unit;
-	uniform_t **uniforms;
-	size_t uniform_count;
-} shader_t;
+typedef enum {
+	UNIFORM_MAT4,
+	UNIFORM_VEC4,
+	UNIFORM_SAMP2D,
+	UNIFORM_SAMP1D,
+	UNIFORM_UINT,
+} uniform_type_t;
+
+/**
+ * Uniform values.
+ **/
+typedef union uniform_value {
+	void *data_ptr;
+	GLuint uint;
+} uniform_value_t;
+
+/**
+ * A uniform.
+ **/
+typedef struct uniform {
+	char *name;
+	uniform_type_t type;
+	uniform_value_t value;
+	refcounter_t refcount;
+} uniform_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-shader_t *shader_create(const char *vertex, const char *frag);
-void shader_activate(shader_t *shader);
-void shader_notify_draw(void);
-void shader_set_uniform(shader_t *shader, uniform_t *uniform);
-void shader_set_temp_uniform(uniform_t *uniform);
+uniform_t *uniform_create(const char *name,
+			  uniform_type_t type,
+			  uniform_value_t value);
+void uniform_grab(uniform_t *uniform);
+void uniform_ungrab(uniform_t *uniform);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHADER_H */
+#endif /* UNIFORM_H */

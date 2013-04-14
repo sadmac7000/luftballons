@@ -32,55 +32,6 @@
 static shader_t *current_shader = NULL;
 
 /**
- * Destructor for a shader uniform.
- **/
-static void
-shader_uniform_destructor(void *v)
-{
-	shader_uniform_t *uniform = v;
-
-	free(uniform->name);
-	free(uniform);
-}
-
-/**
- * Create a uniform object.
- **/
-shader_uniform_t *
-shader_uniform_create(const char *name, shader_uniform_type_t type,
-		      shader_uniform_value_t value)
-{
-	shader_uniform_t *ret = xmalloc(sizeof(shader_uniform_t));
-
-	refcount_init(&ret->refcount);
-	refcount_add_destructor(&ret->refcount, shader_uniform_destructor,
-				ret);
-	ret->type = type;
-	ret->value = value;
-	ret->name = xstrdup(name);
-
-	return ret;
-}
-
-/**
- * Grab a uniform.
- **/
-void
-shader_uniform_grab(shader_uniform_t *uniform)
-{
-	refcount_grab(&uniform->refcount);
-}
-
-/**
- * Ungrab a uniform.
- **/
-void
-shader_uniform_ungrab(shader_uniform_t *uniform)
-{
-	refcount_ungrab(&uniform->refcount);
-}
-
-/**
  * Compile a shader from a string containing glsl.
  **/
 static GLuint
@@ -294,27 +245,27 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
  * Apply a uniform to a shader, in OpenGL terms.
  **/
 static void
-shader_uniform_apply(shader_t *shader, shader_uniform_t *uniform)
+shader_apply_uniform(shader_t *shader, uniform_t *uniform)
 {
 	GLint loc = glGetUniformLocation(shader->gl_handle, uniform->name);
 
 	switch (uniform->type) {
-		case SHADER_UNIFORM_MAT4:
+		case UNIFORM_MAT4:
 			glUniformMatrix4fv(loc, 1, GL_FALSE,
 					   uniform->value.data_ptr);
 			break;
-		case SHADER_UNIFORM_VEC4:
+		case UNIFORM_VEC4:
 			glUniform4fv(loc, 1, uniform->value.data_ptr);
 			break;
-		case SHADER_UNIFORM_SAMP2D:
+		case UNIFORM_SAMP2D:
 			shader_set_uniform_samp2D(shader, uniform->name,
 						  uniform->value.data_ptr);
 			break;
-		/* case SHADER_UNIFORM_SAMP1D:
+		/* case UNIFORM_SAMP1D:
 			shader_set_uniform_samp1D(shader, uniform->name,
 						  uniform->value.data_ptr);
 			break; */
-		case SHADER_UNIFORM_UINT:
+		case UNIFORM_UINT:
 			/* FIXME: use 1ui when shader supports unsigned keyword */
 			glUniform1i(loc, (int)uniform->value.uint);
 			break;
@@ -327,18 +278,18 @@ shader_uniform_apply(shader_t *shader, shader_uniform_t *uniform)
  * Set a uniform value.
  **/
 void
-shader_set_uniform(shader_t *shader, shader_uniform_t *uniform)
+shader_set_uniform(shader_t *shader, uniform_t *uniform)
 {
 	size_t i;
 
-	shader_uniform_grab(uniform);
-	shader_uniform_apply(shader, uniform);
+	uniform_grab(uniform);
+	shader_apply_uniform(shader, uniform);
 
 	for (i = 0; i < shader->uniform_count; i++) {
 		if (strcmp(shader->uniforms[i]->name, uniform->name))
 			continue;
 
-		shader_uniform_ungrab(shader->uniforms[i]);
+		uniform_ungrab(shader->uniforms[i]);
 		shader->uniforms[i] = uniform;
 		return;
 	}
@@ -351,7 +302,7 @@ shader_set_uniform(shader_t *shader, shader_uniform_t *uniform)
  * Set an unstored uniform for the current shader.
  **/
 void
-shader_set_temp_uniform(shader_uniform_t *uniform)
+shader_set_temp_uniform(uniform_t *uniform)
 {
-	shader_uniform_apply(current_shader, uniform);
+	shader_apply_uniform(current_shader, uniform);
 }

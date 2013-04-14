@@ -49,7 +49,7 @@ typedef struct state {
 	size_t num_colorbufs;
 	texmap_t **colorbufs;
 	size_t num_uniforms;
-	shader_uniform_t **uniforms;
+	uniform_t **uniforms;
 	size_t num_dependants;
 	struct state **dependants;
 	size_t dependencies;
@@ -70,7 +70,7 @@ void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
 size_t state_append_colorbuf(state_t *state, texmap_t *texture);
-void state_set_uniform(state_t *state, shader_uniform_t *uniform);
+void state_set_uniform(state_t *state, uniform_t *uniform);
 size_t state_max_colorbufs(void);
 int state_material_active(int mat_id);
 void state_depends_on(state_t *state, state_t *other);
