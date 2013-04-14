@@ -20,6 +20,7 @@
 
 #include "texmap.h"
 #include "shader.h"
+#include "refcount.h"
 
 /* Enable depth testing in this state */
 #define STATE_DEPTH_TEST	0x1
@@ -35,25 +36,26 @@
  *
  * flags: Flags indicating properties of this draw state.
  * care_about: Which flags we actually care about the state of.
- * destroyed: Indicates this state has been destroyed.
  * num_colorbufs, colorbufs: Vector of color buffers to render to.
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
  * num_dependants, dependants: Number of states depending on this state.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
+ * refcount: Reference counter.
  **/
 typedef struct state {
 	uint64_t flags;
 	uint64_t care_about;
-	int destroyed;
 	size_t num_colorbufs;
 	texmap_t **colorbufs;
 	size_t num_uniforms;
 	shader_uniform_t **uniforms;
 	size_t num_dependants;
+	struct state **dependants;
 	size_t dependencies;
 	shader_t *shader;
 	int mat_id;
+	refcounter_t refcount;
 } state_t;
 
 #ifdef __cplusplus
@@ -62,7 +64,8 @@ extern "C" {
 
 state_t *state_create(shader_t *shader);
 void state_enter(state_t *state);
-void state_destroy(state_t *state);
+void state_grab(state_t *state);
+void state_ungrab(state_t *state);
 void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);

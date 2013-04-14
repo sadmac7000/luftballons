@@ -33,6 +33,28 @@ texmap_t **framebuf_maps = NULL;
 size_t framebuf_maps_size = 0;
 
 /**
+ * Destroy a state object. Don't defer until the state is no longer active.
+ **/
+static void
+state_destructor(void *data)
+{
+	size_t i;
+	state_t *state = data;
+
+	state_clear_colorbufs(state);
+
+	for (i = 0; i < state->num_uniforms; i++)
+		shader_uniform_ungrab(state->uniforms[i]);
+
+	for (i = 0; i < state->num_dependants; i++)
+		state_ungrab(state->dependants[i]);
+
+	free(state->uniforms);
+	free(state->dependants);
+	free(state);
+}
+
+/**
  * Create a new state object.
  **/
 state_t *
@@ -43,7 +65,28 @@ state_create(shader_t *shader)
 	state->shader = shader;
 	state->mat_id = -1;
 
+	refcount_init(&state->refcount);
+	refcount_add_destructor(&state->refcount, state_destructor, state);
+
 	return state;
+}
+
+/**
+ * Grab a state object.
+ **/
+void
+state_grab(state_t *state)
+{
+	refcount_grab(&state->refcount);
+}
+
+/**
+ * Ungrab a state object.
+ **/
+void
+state_ungrab(state_t *state)
+{
+	refcount_ungrab(&state->refcount);
 }
 
 /**
@@ -56,27 +99,8 @@ state_depends_on(state_t *state, state_t *other)
 				       other->num_dependants);
 
 	other->dependants[other->num_dependants++] = state;
-}
 
-/**
- * Destroy a state object. Don't defer until the state is no longer active.
- **/
-static void
-state_do_destroy(state_t *state)
-{
-	free(state);
-}
-
-/**
- * Destroy a state object.
- **/
-void
-state_destroy(state_t *state)
-{
-	state->destroyed = 1;
-
-	if (state != current_state)
-		state_do_destroy(state);
+	state_grab(state);
 }
 
 /**
@@ -221,7 +245,13 @@ void
 state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
+	state_t *tmp = NULL;
 	size_t i;
+
+	if (current_state == state)
+		return;
+
+	state_grab(state);
 
 	for (i = 0; i < state->num_uniforms; i++)
 		shader_set_uniform(state->shader, state->uniforms[i]);
@@ -246,12 +276,15 @@ state_enter(state_t *state)
 	if (change_flags & STATE_TEXTURE_2D)
 		state_set_texture_2D(state);
 
-	if (current_state && current_state->destroyed)
-		state_do_destroy(current_state);
-
 	state_prep_colorbufs(state);
 
+	if (current_state)
+		tmp = current_state;
+
 	current_state = state;
+
+	if (tmp)
+		state_ungrab(tmp);
 }
 
 /**

@@ -337,16 +337,19 @@ main(int argc, char **argv)
 	state_set_flags(cube_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL);
 	cube_state->mat_id = 0;
+	state_grab(cube_state);
 
 	canopy_state = state_create(textured_shader);
 	state_set_flags(canopy_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	canopy_state->mat_id = 1;
+	state_grab(canopy_state);
 
 	plane_state = state_create(textured_shader);
 	state_set_flags(plane_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	plane_state->mat_id = 2;
+	state_grab(plane_state);
 
 	canopy_map = texmap_create(0, 0);
 	plane_map = texmap_create(0, 0);
