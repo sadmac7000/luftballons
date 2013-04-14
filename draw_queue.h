@@ -57,9 +57,9 @@ extern "C" {
 draw_queue_t *draw_queue_create(void);
 void draw_queue_draw(draw_queue_t *queue, object_t *object, camera_t *camera);
 void draw_queue_flush(draw_queue_t *queue);
-void draw_queue_set_clear(draw_queue_t *queue, int flag, float r, float g,
-			  float b, float a);
-void draw_queue_set_clear_depth(draw_queue_t *queue, int flag);
+void draw_queue_clear(draw_queue_t *queue, int color, int depth);
+void draw_queue_set_clear_color(draw_queue_t *queue,
+				float r, float g, float b, float a);
 
 #ifdef __cplusplus
 }

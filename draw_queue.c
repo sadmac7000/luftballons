@@ -261,6 +261,8 @@ draw_queue_flush(draw_queue_t *queue)
 		flags |= GL_DEPTH_BUFFER_BIT;
 	}
 
+	queue->flags = 0;
+
 	if (flags)
 		glClear(flags);
 
@@ -280,24 +282,34 @@ draw_queue_flush(draw_queue_t *queue)
 }
 
 /**
- * Set whether to clear the color buffer before drawing.
+ * Set what color to use when we clear the buffer.
  *
- * flag: 1 to clear before drawing, 0 to not clear.
  * r,g,b,a: The color to clear to.
  **/
 void
-draw_queue_set_clear(draw_queue_t *queue, int flag, float r, float g, float b,
-		     float a)
+draw_queue_set_clear_color(draw_queue_t *queue,
+			   float r, float g, float b, float a)
 {
-	if (! flag)
-		queue->flags &= ~DRAW_QUEUE_CLEAR;
-	else
-		queue->flags |= DRAW_QUEUE_CLEAR;
-
 	queue->clear_color[0] = r;
 	queue->clear_color[1] = g;
 	queue->clear_color[2] = b;
 	queue->clear_color[3] = a;
+}
+
+/**
+ * Clear the target buffer before the next flush.
+ *
+ * color: Clear the color buffer.
+ * depth: Clear the depth buffer.
+ **/
+void
+draw_queue_clear(draw_queue_t *queue, int color, int depth)
+{
+	if (color)
+		queue->flags |= DRAW_QUEUE_CLEAR;
+
+	if (depth)
+		queue->flags |= DRAW_QUEUE_CLEAR_DEPTH;
 }
 
 /**

@@ -206,19 +206,13 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-
+	draw_queue_clear(draw_queue, 1, 1);
 	draw_queue_draw(draw_queue, cube_center, camera);
 
-	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
-	draw_queue_set_clear_depth(draw_queue, 1);
 	state_enter(cube_state);
-
 	draw_queue_flush(draw_queue);
 
-	draw_queue_set_clear(draw_queue, 0, 0.0, 0.0, 0.0, 0.0);
-	draw_queue_set_clear_depth(draw_queue, 0);
 	state_enter(plane_state);
-
 	draw_queue_flush(draw_queue);
 
 	state_enter(canopy_state);
@@ -378,6 +372,7 @@ main(int argc, char **argv)
 						SHADER_UNIFORM_SAMP2D, uvtmp));
 
 	draw_queue = draw_queue_create();
+	draw_queue_set_clear_color(draw_queue, 0.5, 0.0, 0.5, 1.0);
 
 	cube_center = object_create(NULL);
 
