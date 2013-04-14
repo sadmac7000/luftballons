@@ -95,7 +95,7 @@ update_camera(float time)
 {
 	float delta_t = time - frame_time;
 	float speed = delta_t * .003;
-	float rot_speed = .003;
+	float rot_speed = .006;
 	float yaw_amt = 0;
 	float pitch_amt = 0;
 	float dir_vec[3];
