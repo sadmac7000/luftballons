@@ -275,19 +275,9 @@ shader_activate(shader_t *shader)
 }
 
 /**
- * Set a uniform value to a 4x4 matrix.
- **/
-void
-shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16])
-{
-	GLint loc = glGetUniformLocation(shader->gl_handle, name);
-	glUniformMatrix4fv(loc, 1, GL_FALSE, mat);
-}
-
-/**
  * Set a uniform value to a 2D texture.
  **/
-void
+static void
 shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 {
 	GLint loc = glGetUniformLocation(shader->gl_handle, name);
@@ -301,25 +291,36 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 }
 
 /**
- * Set a uniform value to an unsigned integer.
+ * Apply a uniform to a shader, in OpenGL terms.
  **/
-void
-shader_set_uniform_uint(shader_t *shader, const char *name, GLuint val)
+static void
+shader_uniform_apply(shader_t *shader, shader_uniform_t *uniform)
 {
-	GLint loc = glGetUniformLocation(shader->gl_handle, name);
+	GLint loc = glGetUniformLocation(shader->gl_handle, uniform->name);
 
-	/* FIXME: use 1ui when shader supports unsigned keyword */
-	glUniform1i(loc, (int)val);
-}
-
-/**
- * Set a uniform value to a 4 element vector.
- **/
-void
-shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4])
-{
-	GLint loc = glGetUniformLocation(shader->gl_handle, name);
-	glUniform4fv(loc, 1, vec);
+	switch (uniform->type) {
+		case SHADER_UNIFORM_MAT4:
+			glUniformMatrix4fv(loc, 1, GL_FALSE,
+					   uniform->value.data_ptr);
+			break;
+		case SHADER_UNIFORM_VEC4:
+			glUniform4fv(loc, 1, uniform->value.data_ptr);
+			break;
+		case SHADER_UNIFORM_SAMP2D:
+			shader_set_uniform_samp2D(shader, uniform->name,
+						  uniform->value.data_ptr);
+			break;
+		/* case SHADER_UNIFORM_SAMP1D:
+			shader_set_uniform_samp1D(shader, uniform->name,
+						  uniform->value.data_ptr);
+			break; */
+		case SHADER_UNIFORM_UINT:
+			/* FIXME: use 1ui when shader supports unsigned keyword */
+			glUniform1i(loc, (int)uniform->value.uint);
+			break;
+		default:
+			errx(1, "Unreachable statement");
+	}
 }
 
 /**
@@ -331,45 +332,26 @@ shader_set_uniform(shader_t *shader, shader_uniform_t *uniform)
 	size_t i;
 
 	shader_uniform_grab(uniform);
+	shader_uniform_apply(shader, uniform);
 
 	for (i = 0; i < shader->uniform_count; i++) {
 		if (strcmp(shader->uniforms[i]->name, uniform->name))
 			continue;
 
-		if (shader->uniforms[i] == uniform)
-			return;
-
 		shader_uniform_ungrab(shader->uniforms[i]);
 		shader->uniforms[i] = uniform;
+		return;
 	}
 
-	if (i == shader->uniform_count) {
-		shader->uniforms = vec_expand(shader->uniforms, shader->uniform_count);
-		shader->uniforms[shader->uniform_count++] = uniform;
-	}
+	shader->uniforms = vec_expand(shader->uniforms, shader->uniform_count);
+	shader->uniforms[shader->uniform_count++] = uniform;
+}
 
-	switch (uniform->type) {
-		case SHADER_UNIFORM_MAT4:
-			shader_set_uniform_mat(shader, uniform->name,
-					       uniform->value.data_ptr);
-			break;
-		case SHADER_UNIFORM_VEC4:
-			shader_set_uniform_vec(shader, uniform->name,
-					       uniform->value.data_ptr);
-			break;
-		case SHADER_UNIFORM_SAMP2D:
-			shader_set_uniform_samp2D(shader, uniform->name,
-						  uniform->value.data_ptr);
-			break;
-		/* case SHADER_UNIFORM_SAMP1D:
-			shader_set_uniform_samp1D(shader, uniform->name,
-						  uniform->value.data_ptr);
-			break; */
-		case SHADER_UNIFORM_UINT:
-			shader_set_uniform_uint(shader, uniform->name,
-						uniform->value.uint);
-			break;
-		default:
-			errx(1, "Unreachable statement");
-	}
+/**
+ * Set an unstored uniform for the current shader.
+ **/
+void
+shader_set_temp_uniform(shader_uniform_t *uniform)
+{
+	shader_uniform_apply(current_shader, uniform);
 }

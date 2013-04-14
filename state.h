@@ -39,6 +39,7 @@
  * num_colorbufs, colorbufs: Vector of color buffers to render to.
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
  * shader: Shader to load in this state.
+ * mat_id: The material we draw.
  **/
 typedef struct state {
 	uint64_t flags;
@@ -49,6 +50,7 @@ typedef struct state {
 	size_t num_uniforms;
 	shader_uniform_t **uniforms;
 	shader_t *shader;
+	int mat_id;
 } state_t;
 
 #ifdef __cplusplus
@@ -65,6 +67,7 @@ size_t state_append_colorbuf(state_t *state, texmap_t *texture);
 void state_clear_colorbufs(state_t *state);
 void state_set_uniform(state_t *state, shader_uniform_t *uniform);
 size_t state_max_colorbufs(void);
+int state_material_active(int mat_id);
 
 #ifdef __cplusplus
 }

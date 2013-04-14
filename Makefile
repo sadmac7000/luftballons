@@ -34,7 +34,6 @@ luftballons_OBJS =	\
 	vbuf_fmt.o	\
 	bufpool.o	\
 	draw_queue.o	\
-	material.o	\
 	texmap.o	\
 	texmap_png.o	\
 	texmap_tiff.o	\

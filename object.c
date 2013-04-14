@@ -157,6 +157,7 @@ object_create(object_t *parent)
 	ret->parent = NULL;
 	ret->type = OBJ_NODE;
 	ret->name = NULL;
+	ret->mat_id = 0;
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
@@ -201,16 +202,15 @@ object_make_light(object_t *object, float color[3])
 }
 
 /**
- * Set an object to mesh type and set its material.
+ * Set an object to mesh type.
  **/
 void
-object_set_mesh(object_t *object, mesh_t *mesh, material_t *material)
+object_set_mesh(object_t *object, mesh_t *mesh)
 {
 	object_make_nodetype(object);
 
 	object->type = OBJ_MESH;
 	object->mesh = mesh;
-	object->material = material;
 
 	mesh_grab(mesh);
 }

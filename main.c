@@ -45,6 +45,9 @@ object_t *cube;
 object_t *cube_center;
 camera_t *camera;
 draw_queue_t *draw_queue;
+state_t *cube_state;
+state_t *plane_state;
+state_t *canopy_state;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -203,7 +206,22 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-	draw_queue_draw(draw_queue, cube_center, 0, camera);
+
+	draw_queue_draw(draw_queue, cube_center, camera);
+
+	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
+	draw_queue_set_clear_depth(draw_queue, 1);
+	state_enter(cube_state);
+
+	draw_queue_flush(draw_queue);
+
+	draw_queue_set_clear(draw_queue, 0, 0.0, 0.0, 0.0, 0.0);
+	draw_queue_set_clear_depth(draw_queue, 0);
+	state_enter(plane_state);
+
+	draw_queue_flush(draw_queue);
+
+	state_enter(canopy_state);
 	draw_queue_flush(draw_queue);
 
 	glutSwapBuffers();
@@ -274,21 +292,22 @@ offkey(unsigned char key, int x, int y)
 }
 
 void
-assign_material(object_t *object, material_t *material, material_t *canopy)
+assign_material(object_t *object)
 {
-	size_t i;
+       size_t i;
 
-	if (object->type == OBJ_MESH) {
-		if (! strncmp(object->name, "canopy", 6))
-			object->material = canopy;
-		else
-			object->material = material;
-	}
+       if (object->type == OBJ_MESH) {
+               if (! strncmp(object->name, "canopy", 6))
+                       object->mat_id = 1;
+               else
+                       object->mat_id = 2;
+       }
 
-	for (i = 0; i < object->child_count; i++) {
-		assign_material(object->children[i], material, canopy);
-	}
+       for (i = 0; i < object->child_count; i++) {
+               assign_material(object->children[i]);
+       }
 }
+
 
 int
 main(int argc, char **argv)
@@ -298,14 +317,11 @@ main(int argc, char **argv)
 	size_t dae_mesh_count;
 	size_t i;
 	object_t **items;
-	material_t *cube_material;
-	material_t *plane_material;
-	material_t *canopy_material;
 	texmap_t *plane_map;
 	texmap_t *canopy_map;
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
-	state_t *state;
+	shader_uniform_value_t uvtmp;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -323,40 +339,45 @@ main(int argc, char **argv)
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");
 
-	state = state_create(vcolor_shader);
-	state_set_flags(state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
-			| STATE_BF_CULL | STATE_TEXTURE_2D);
-	state_enter(state);
+	cube_state = state_create(vcolor_shader);
+	state_set_flags(cube_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
+			| STATE_BF_CULL);
+	cube_state->mat_id = 0;
 
-	cube_material = material_create();
-	plane_material = material_create();
-	canopy_material = material_create();
-	material_set_pass_shader(cube_material, 0, vcolor_shader);
-	material_set_pass_shader(plane_material, 0, textured_shader);
-	material_set_pass_shader(canopy_material, 0, textured_shader);
+	canopy_state = state_create(textured_shader);
+	state_set_flags(canopy_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
+			| STATE_BF_CULL | STATE_TEXTURE_2D);
+	canopy_state->mat_id = 1;
+
+	plane_state = state_create(textured_shader);
+	state_set_flags(plane_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
+			| STATE_BF_CULL | STATE_TEXTURE_2D);
+	plane_state->mat_id = 2;
 
 	canopy_map = texmap_create(0, 0);
-	material_set_uniform(canopy_material, "diffusemap",
-			     SHADER_UNIFORM_SAMP2D, canopy_map);
-
 	plane_map = texmap_create(0, 0);
-	material_set_uniform(plane_material, "diffusemap",
-			     SHADER_UNIFORM_SAMP2D, plane_map);
 
 	texmap_load_image(canopy_map, "ref_model/P51_canopy.tif", 0);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
+	uvtmp.data_ptr = canopy_map;
+	state_set_uniform(canopy_state,
+			  shader_uniform_create("diffusemap",
+						SHADER_UNIFORM_SAMP2D, uvtmp));
+
 	texmap_load_image(plane_map, "ref_model/P51_Mustang.tif", 0);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-	draw_queue = draw_queue_create();
+	uvtmp.data_ptr = plane_map;
+	state_set_uniform(plane_state,
+			  shader_uniform_create("diffusemap",
+						SHADER_UNIFORM_SAMP2D, uvtmp));
 
-	draw_queue_set_clear(draw_queue, 1, 0.5, 0.0, 0.5, 1.0);
-	draw_queue_set_clear_depth(draw_queue, 1);
+	draw_queue = draw_queue_create();
 
 	cube_center = object_create(NULL);
 
@@ -367,14 +388,13 @@ main(int argc, char **argv)
 		     dae_mesh_count);
 
 	cube = items[0];
-	cube->material = cube_material;
 	free(items);
 	object_reparent(cube, cube_center);
 
 	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
 
 	for (i = 0; i < dae_mesh_count; i++) {
-		assign_material(items[i], plane_material, canopy_material);
+		assign_material(items[i]);
 		object_reparent(items[i], cube);
 	}
 

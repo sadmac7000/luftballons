@@ -19,7 +19,6 @@
 #define OBJECT_H
 
 #include "mesh.h"
-#include "material.h"
 #include "quat.h"
 #include "shader.h"
 #include "camera.h"
@@ -39,6 +38,8 @@ typedef enum {
  * that.
  *
  * parent: The parent of this object. Object inherits transforms from its parent
+ * mat_id: A material ID.
+ * name: A name for this object.
  * rot: Amount to rotate this object.
  * trans: Amount to translate this object.
  * scale: Amount to scale this object.
@@ -47,11 +48,11 @@ typedef enum {
  * child_count: Size of the children list.
  * type: What type of object this is.
  * mesh: The mesh to draw at this object's location.
- * material: The material to draw with.
  * camera: A camera to position at this location.
  **/
 typedef struct object {
 	struct object *parent;
+	int mat_id;
 	char *name;
 	quat_t rot;
 	float trans[3];
@@ -63,10 +64,7 @@ typedef struct object {
 
 	object_type_t type;
 	union {
-		struct {
-			mesh_t *mesh;
-			material_t *material;
-		};
+		mesh_t *mesh;
 		camera_t *camera;
 		float light_color[3];
 	};
@@ -86,7 +84,7 @@ extern "C" {
 #endif
 
 object_t *object_create(object_t *parent);
-void object_set_mesh(object_t *object, mesh_t *mesh, material_t *material);
+void object_set_mesh(object_t *object, mesh_t *mesh);
 void object_make_light(object_t *object, float color[3]);
 void object_set_name(object_t *object, const char *name);
 void object_destroy(object_t *object);

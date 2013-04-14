@@ -41,6 +41,7 @@ state_create(shader_t *shader)
 	state_t *state = xcalloc(1, sizeof(state_t));
 
 	state->shader = shader;
+	state->mat_id = -1;
 
 	return state;
 }
@@ -346,6 +347,7 @@ state_set_uniform(state_t *state, shader_uniform_t *uniform)
 
 		shader_uniform_ungrab(state->uniforms[i]);
 		state->uniforms[i] = uniform;
+		return;
 	}
 
 	state->uniforms = vec_expand(state->uniforms, state->num_uniforms);
@@ -355,3 +357,17 @@ state_set_uniform(state_t *state, shader_uniform_t *uniform)
 		shader_set_uniform(state->shader, uniform);
 }
 
+/**
+ * Determine if a given material is active in the current state.
+ **/
+int
+state_material_active(int mat_id)
+{
+	if (! current_state)
+		return 0;
+
+	if (current_state->mat_id < 0)
+		return 1;
+
+	return current_state->mat_id == mat_id;
+}

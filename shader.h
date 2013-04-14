@@ -74,10 +74,7 @@ shader_t *shader_create(const char *vertex, const char *frag);
 void shader_activate(shader_t *shader);
 void shader_notify_draw(void);
 void shader_set_uniform(shader_t *shader, shader_uniform_t *uniform);
-void shader_set_uniform_mat(shader_t *shader, const char *name, float mat[16]);
-void shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map);
-void shader_set_uniform_uint(shader_t *shader, const char *name, GLuint val);
-void shader_set_uniform_vec(shader_t *shader, const char *name, float vec[4]);
+void shader_set_temp_uniform(shader_uniform_t *uniform);
 
 shader_uniform_t *shader_uniform_create(const char *name,
 					shader_uniform_type_t type,

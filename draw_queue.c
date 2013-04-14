@@ -16,25 +16,17 @@
  **/
 
 #include "draw_queue.h"
-
-/**
- * Uniform data for a draw op.
- **/
-struct uniform {
-	const char *name;
-	shader_uniform_type_t type;
-	void *data;
-};
+#include "state.h"
+#include "shader.h"
 
 /**
  * A draw operation. More or less corresponds to a single draw call.
  **/
 struct draw_op {
-	material_t *material;
 	mesh_t *mesh;
-	size_t pass;
-	struct uniform *uniforms;
+	shader_uniform_t **uniforms;
 	size_t uniform_count;
+	int mat_id;
 };
 
 /**
@@ -84,16 +76,16 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  *
  * queue: The queue to add to.
  * object: The object contianing the mesh to draw.
- * pass: The pass we are drawing.
  * transform: The transform to apply to the mesh.
  * camera: The camera we are drawing with.
  **/
 static void
-draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
+draw_queue_add_op(draw_queue_t *queue, object_t *object,
 		  float transform[16], camera_t *camera)
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
 	float normal_trans[16];
+	shader_uniform_value_t tmp;
 
 	queue->draw_ops = vec_expand(queue->draw_ops, queue->draw_op_count);
 
@@ -101,26 +93,24 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object, size_t pass,
 	normal_trans[12] = normal_trans[13] = normal_trans[14] = 0;
 	matrix_inverse_trans(normal_trans, normal_trans);
 
-	op->material = object->material;
-	op->pass = pass;
 	op->mesh = object->mesh;
-	op->uniforms = xcalloc(3, sizeof(struct uniform));
+	op->mat_id = object->mat_id;
+	op->uniforms = xcalloc(3, sizeof(struct uniform *));
 
-	op->uniforms[0].name = "transform";
-	op->uniforms[0].type = SHADER_UNIFORM_MAT4;
-	op->uniforms[0].data = xcalloc(16, sizeof(float));
-	memcpy(op->uniforms[0].data, transform, 16 * sizeof(float));
+	tmp.data_ptr = xcalloc(16, sizeof(float));
+	memcpy(tmp.data_ptr, transform, 16 * sizeof(float));
+	op->uniforms[0] = shader_uniform_create("transform", SHADER_UNIFORM_MAT4, tmp);
+	shader_uniform_grab(op->uniforms[0]);
 
-	op->uniforms[1].name = "normal_transform";
-	op->uniforms[1].type = SHADER_UNIFORM_MAT4;
-	op->uniforms[1].data = xcalloc(16, sizeof(float));
-	memcpy(op->uniforms[1].data, normal_trans, 16 * sizeof(float));
+	tmp.data_ptr = xcalloc(16, sizeof(float));
+	memcpy(tmp.data_ptr, normal_trans, 16 * sizeof(float));
+	op->uniforms[1] = shader_uniform_create("normal_transform", SHADER_UNIFORM_MAT4, tmp);
+	shader_uniform_grab(op->uniforms[1]);
 
-	op->uniforms[2].name = "clip_transform";
-	op->uniforms[2].type = SHADER_UNIFORM_MAT4;
-	op->uniforms[2].data = xcalloc(16, sizeof(float));
-	memcpy(op->uniforms[2].data, camera->to_clip_xfrm,
-	       16 * sizeof(float));
+	tmp.data_ptr = xcalloc(16, sizeof(float));
+	memcpy(tmp.data_ptr, camera->to_clip_xfrm, 16 * sizeof(float));
+	op->uniforms[2] = shader_uniform_create("clip_transform", SHADER_UNIFORM_MAT4, tmp);
+	shader_uniform_grab(op->uniforms[2]);
 
 	op->uniform_count = 3;
 
@@ -143,11 +133,11 @@ draw_queue_add_light(draw_queue_t *queue, object_t *object,
 }
 
 /**
- * Queue a draw operation for the given object. Draw for the given pass and
+ * Queue a draw operation for the given object. Draw and
  * apply the given transform.
  **/
 static void
-draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
+draw_queue_draw_matrix(draw_queue_t *queue, object_t *object,
 		       float parent_trans[16], camera_t *camera)
 {
 	ssize_t i = 0;
@@ -163,8 +153,7 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 		matrix_multiply(parent_trans, transform, transform);
 
 		if (object->type == OBJ_MESH)
-			draw_queue_add_op(queue, object, pass, transform,
-					  camera);
+			draw_queue_add_op(queue, object, transform, camera);
 		else if (object->type == OBJ_LIGHT)
 			draw_queue_add_light(queue, object, transform);
 
@@ -192,15 +181,13 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object, size_t pass,
 }
 
 /**
- * Queue a draw operation for the given object. Draw for the given pass from
+ * Queue a draw operation for the given object. Draw from
  * the perspective of the given camera.
  **/
 void
-draw_queue_draw(draw_queue_t *queue, object_t *object, size_t pass,
-		camera_t *camera)
+draw_queue_draw(draw_queue_t *queue, object_t *object, camera_t *camera)
 {
-	draw_queue_draw_matrix(queue, object, pass, camera->to_cspace_xfrm,
-			       camera);
+	draw_queue_draw_matrix(queue, object, camera->to_cspace_xfrm, camera);
 }
 
 /**
@@ -211,13 +198,11 @@ draw_queue_exec_op(struct draw_op *op)
 {
 	size_t i;
 
-	material_activate(op->material, op->pass);
+	if (! state_material_active(op->mat_id))
+		return 0;
 
 	for (i = 0; i < op->uniform_count; i++)
-		if (op->uniforms[i].type == SHADER_UNIFORM_MAT4)
-			shader_set_uniform_mat(op->material->shaders[op->pass],
-					       op->uniforms[i].name,
-					       op->uniforms[i].data);
+		shader_set_temp_uniform(op->uniforms[i]);
 
 	return mesh_draw(op->mesh);
 }
@@ -230,6 +215,7 @@ draw_queue_try_flush(draw_queue_t *queue)
 {
 	size_t i;
 	size_t j;
+	size_t k;
 	struct draw_op *op;
 
 	for (i = 0; i < queue->pool_count; i++)
@@ -241,6 +227,8 @@ draw_queue_try_flush(draw_queue_t *queue)
 		op = queue->draw_ops[i];
 
 		if (draw_queue_exec_op(op)) {
+			for (k = 0; k < op->uniform_count; k++)
+				shader_uniform_ungrab(op->uniforms[k]);
 			free(op->uniforms);
 			free(op);
 		} else {
@@ -259,6 +247,7 @@ void
 draw_queue_flush(draw_queue_t *queue)
 {
 	int flags = 0;
+	int retry = 1;
 	size_t i;
 
 	if (queue->flags & DRAW_QUEUE_CLEAR) {
@@ -275,9 +264,19 @@ draw_queue_flush(draw_queue_t *queue)
 	if (flags)
 		glClear(flags);
 
-	while (draw_queue_try_flush(queue))
-		for (i = 0; i < queue->draw_op_count; i++)
+	while (retry && draw_queue_try_flush(queue)) {
+		retry = 0;
+
+		for (i = 0; i < queue->draw_op_count; i++) {
+			if (queue->draw_ops[i]->mesh->ebuf &&
+			    queue->draw_ops[i]->mesh->vbuf)
+				continue;
+
+			retry = 1;
+
 			draw_queue_add_mesh(queue, queue->draw_ops[i]->mesh);
+		}
+	}
 }
 
 /**
@@ -292,8 +291,9 @@ draw_queue_set_clear(draw_queue_t *queue, int flag, float r, float g, float b,
 {
 	if (! flag)
 		queue->flags &= ~DRAW_QUEUE_CLEAR;
-	
-	queue->flags |= DRAW_QUEUE_CLEAR;
+	else
+		queue->flags |= DRAW_QUEUE_CLEAR;
+
 	queue->clear_color[0] = r;
 	queue->clear_color[1] = g;
 	queue->clear_color[2] = b;

@@ -436,7 +436,7 @@ dae_load_polylist(domMeshRef mesh)
 	free(ebuf);
 
 	ret = object_create(NULL);
-	object_set_mesh(ret, out_mesh, NULL);
+	object_set_mesh(ret, out_mesh);
 	return ret;
 }
 
