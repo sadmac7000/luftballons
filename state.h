@@ -70,7 +70,6 @@ void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
 size_t state_append_colorbuf(state_t *state, texmap_t *texture);
-void state_clear_colorbufs(state_t *state);
 void state_set_uniform(state_t *state, shader_uniform_t *uniform);
 size_t state_max_colorbufs(void);
 int state_material_active(int mat_id);

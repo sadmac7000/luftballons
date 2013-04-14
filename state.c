@@ -41,14 +41,16 @@ state_destructor(void *data)
 	size_t i;
 	state_t *state = data;
 
-	state_clear_colorbufs(state);
-
 	for (i = 0; i < state->num_uniforms; i++)
 		shader_uniform_ungrab(state->uniforms[i]);
 
 	for (i = 0; i < state->num_dependants; i++)
 		state_ungrab(state->dependants[i]);
 
+	for(i = 0; i < state->num_colorbufs; i++)
+		texmap_ungrab(state->colorbufs[i]);
+
+	free(state->colorbufs);
 	free(state->uniforms);
 	free(state->dependants);
 	free(state);
@@ -349,24 +351,6 @@ state_append_colorbuf(state_t *state, texmap_t *texture)
 	texmap_grab(texture);
 
 	return state->num_colorbufs++;
-}
-
-/**
- * Remove all color buffers from this state.
- **/
-void
-state_clear_colorbufs(state_t *state)
-{
-	size_t i;
-
-	state_assert_not_current(state);
-
-	for(i = 0; i < state->num_colorbufs; i++)
-		texmap_ungrab(state->colorbufs[i]);
-
-	free(state->colorbufs);
-	state->colorbufs = NULL;
-	state->num_colorbufs = 0;
 }
 
 /**
