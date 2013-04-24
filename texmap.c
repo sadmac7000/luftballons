@@ -69,6 +69,7 @@ texmap_destructor(void *texmap_)
 	glDeleteSamplers(1, &texmap->sampler);
 	glDeleteTextures(1, &texmap->map);
 	free(texmap);
+	CHECK_GL;
 }
 
 /**
@@ -92,6 +93,7 @@ texmap_create(size_t base_level, size_t max_level)
 	refcount_init(&map->refcount);
 	refcount_add_destructor(&map->refcount, texmap_destructor, map);
 
+	CHECK_GL;
 	return map;
 }
 
@@ -120,6 +122,7 @@ void
 texmap_set_int_param(texmap_t *map, GLenum param, GLint value)
 {
 	glSamplerParameteri(map->sampler, param, value);
+	CHECK_GL;
 }
 
 /**
@@ -131,4 +134,5 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	glBindTexture(GL_TEXTURE_2D, map->map);
 	glTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, NULL);
+	CHECK_GL;
 }

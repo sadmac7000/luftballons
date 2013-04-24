@@ -49,6 +49,7 @@ shader_string(GLenum type, const char *shader_name, const GLchar *data,
 
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
 
+	CHECK_GL;
 	if (status != GL_FALSE)
 		return shader;
 
@@ -104,6 +105,7 @@ shader_link(shader_t *shader)
 	glLinkProgram(shader->gl_handle);
 	glGetProgramiv(shader->gl_handle, GL_LINK_STATUS, &status);
 
+	CHECK_GL;
 	if (status != GL_FALSE)
 		return;
 
@@ -127,6 +129,7 @@ shader_instantiate(void)
 	ret->tex_unit = 0;
 	ret->uniforms = NULL;
 	ret->uniform_count = 0;
+	CHECK_GL;
 	return ret;
 }
 
@@ -142,6 +145,7 @@ shader_allocate_tex_unit(shader_t *shader)
 	if (shader->tex_unit >= (unsigned)max)
 		errx(1, "Shader out of texture units");
 
+	CHECK_GL;
 	return shader->tex_unit++;
 }
 
@@ -175,6 +179,7 @@ shader_create(const char *vertex, const char *frag)
 	glDeleteShader(vert_shader);
 	glDeleteShader(frag_shader);
 
+	CHECK_GL;
 	return ret;
 }
 
@@ -208,6 +213,7 @@ shader_set_vertex_attrs()
 		vbuf_setup_vertex_attribute(name, i);
 	}
 
+	CHECK_GL;
 	free(name);
 }
 
@@ -223,6 +229,7 @@ shader_activate(shader_t *shader)
 	current_shader = shader;
 	glUseProgram(shader->gl_handle);
 	shader_set_vertex_attrs();
+	CHECK_GL;
 }
 
 /**
@@ -234,11 +241,13 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 	GLint loc = glGetUniformLocation(shader->gl_handle, name);
 	size_t unit = shader_allocate_tex_unit(shader);
 
-	glUniform1i(loc, (int)unit);
+	glUniform1i(loc, unit);
+	CLEAR_GL; /* FIXME: Is this Mesa's fault? WTF?! */
 	glActiveTexture(GL_TEXTURE0 + unit);
 	glBindTexture(GL_TEXTURE_2D, map->map);
 
 	glBindSampler(unit, map->sampler);
+	CHECK_GL;
 }
 
 /**
@@ -266,12 +275,13 @@ shader_apply_uniform(shader_t *shader, uniform_t *uniform)
 						  uniform->value.data_ptr);
 			break; */
 		case UNIFORM_UINT:
-			/* FIXME: use 1ui when shader supports unsigned keyword */
 			glUniform1i(loc, (int)uniform->value.uint);
 			break;
 		default:
 			errx(1, "Unreachable statement");
 	}
+
+	CHECK_GL;
 }
 
 /**

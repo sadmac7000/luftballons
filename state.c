@@ -115,6 +115,8 @@ state_set_depth_test(state_t *state)
 		glEnable(GL_DEPTH_TEST);
 	else
 		glDisable(GL_DEPTH_TEST);
+
+	CHECK_GL;
 }
 
 /**
@@ -129,6 +131,8 @@ state_set_alpha_blend(state_t *state)
 	} else {
 		glDisable(GL_BLEND);
 	}
+
+	CHECK_GL;
 }
 
 /**
@@ -144,6 +148,8 @@ state_set_bf_cull(state_t *state)
 	} else {
 		glDisable(GL_CULL_FACE);
 	}
+
+	CHECK_GL;
 }
 
 /**
@@ -156,6 +162,8 @@ state_set_texture_2D(state_t *state)
 		glEnable(GL_TEXTURE_2D);
 	else
 		glDisable(GL_TEXTURE_2D);
+
+	CHECK_GL;
 }
 
 /**
@@ -169,6 +177,7 @@ state_prep_default_colorbufs(void)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDrawBuffer(GL_BACK);
+	CHECK_GL;
 }
 
 /**
@@ -238,6 +247,7 @@ state_prep_colorbufs(state_t *state)
 
 	glDrawBuffers(state->num_colorbufs, buffers);
 	free(buffers);
+	CHECK_GL;
 }
 
 /**
@@ -363,6 +373,7 @@ state_max_colorbufs(void)
 
 	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &result);
 
+	CHECK_GL;
 	return (size_t)result;
 }
 

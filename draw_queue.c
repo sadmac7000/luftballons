@@ -266,6 +266,7 @@ draw_queue_flush(draw_queue_t *queue)
 	if (flags)
 		glClear(flags);
 
+	CHECK_GL;
 	while (retry && draw_queue_try_flush(queue)) {
 		retry = 0;
 

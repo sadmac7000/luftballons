@@ -36,6 +36,7 @@ vbuf_do_activate(vbuf_t *buffer)
 	current_vbuf = buffer;
 	glBindBuffer(GL_ARRAY_BUFFER, buffer->gl_handle);
 	shader_set_vertex_attrs();
+	CHECK_GL;
 }
 
 /**
@@ -55,6 +56,7 @@ vbuf_destructor(void *buffer_)
 
 	intervals_release(&buffer->free);
 	free(buffer);
+	CHECK_GL;
 }
 
 /**
@@ -68,8 +70,8 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 {
 	vbuf_t *ret;
 	GLuint handle;
-	GLenum error;
 	GLsizeiptr byte_size = vbuf_fmt_vert_size(format);
+	int memfail;
 
 	if (! size)
 		return NULL;
@@ -77,17 +79,14 @@ vbuf_create(size_t size, vbuf_fmt_t format)
 	glGenBuffers(1, &handle);
 	glBindBuffer(GL_ARRAY_BUFFER, handle);
 	glBufferData(GL_ARRAY_BUFFER, byte_size * size, NULL, GL_STATIC_DRAW);
-	error = glGetError();
+	memfail = CHECK_GL_MEM;
+
 
 	if (current_vbuf)
 		vbuf_do_activate(current_vbuf);
 
-	if (error != GL_NO_ERROR) {
-		if (error == GL_OUT_OF_MEMORY)
-			return NULL;
-
-		errx(1, "Unexpected OpenGL error allocating buffer");
-	}
+	if (memfail)
+		return NULL;
 
 	ret = xmalloc(sizeof(vbuf_t));
 	ret->vert_size = byte_size;
@@ -134,12 +133,14 @@ vbuf_setup_vertex_attribute(const char *name, GLint handle)
 
 	if (! found) {
 		glDisableVertexAttribArray(handle);
+		CHECK_GL;
 		return;
 	}
 
 	glEnableVertexAttribArray(handle);
 	glVertexAttribPointer(handle, elems, type, GL_FALSE, 0,
 			      (void *)position);
+	CHECK_GL;
 }
 
 /**

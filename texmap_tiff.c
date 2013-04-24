@@ -45,6 +45,7 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 	glTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, data);
 
+	CHECK_GL;
 	TIFFClose(img);
 	free(data);
 	return 1;

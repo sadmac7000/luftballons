@@ -129,6 +129,7 @@ mesh_add_to_ebuf(mesh_t *mesh, ebuf_t *buffer)
 	mesh->ebuf_pos = offset;
 	ebuf_grab(buffer);
 
+	CHECK_GL;
 	return 0;
 }
 
@@ -177,6 +178,7 @@ mesh_add_to_vbuf(mesh_t *mesh, vbuf_t *buffer)
 
 	vbuf_grab(buffer);
 
+	CHECK_GL;
 	return 0;
 }
 

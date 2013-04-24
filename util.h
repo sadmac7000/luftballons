@@ -24,6 +24,8 @@
 #include <err.h>
 #include <errno.h>
 
+#include <GL/gl.h>
+
 #define OFFSET_OF(type, member) ((uintptr_t)&((type *)0)->member)
 #define CONTAINER_OF(ptr, type, member) ((type *)(((char *)ptr) - \
 						  OFFSET_OF(type, member)))
@@ -230,6 +232,60 @@ do_vec_contract(void *vec, size_t items, size_t item_sz)
 
 #define vec_expand(x, y) do_vec_expand((x), (y), sizeof(*(x)))
 #define vec_contract(x, y) do_vec_contract((x), (y), sizeof(*(x)))
+
+/**
+ * Check whether an OpenGL error has occurred and die if it has.
+ *
+ * mem_ok: If set, return -1 for GL_OUT_OF_MEMORY instead of dying.
+ * file, line: File name and line number for error reporting.
+ *
+ * Returns: 0 unless mem_ok is set.
+ **/
+static inline int
+check_gl_ok(int mem_ok, const char *file, size_t line)
+{
+	GLenum error = glGetError();
+
+	if (error == GL_NO_ERROR)
+		return 0;
+
+	if (error == GL_OUT_OF_MEMORY && mem_ok)
+		return -1;
+
+	if (error == GL_OUT_OF_MEMORY)
+		errx(1, "OpenGL ran out of memory at %s: %zd", file, line);
+
+	if (error == GL_INVALID_ENUM)
+		errx(1, "OpenGL encountered an invalid GLenum at %s: %zd",
+		     file, line);
+
+	if (error == GL_INVALID_VALUE)
+		errx(1, "OpenGL encountered an out of range value at %s:%zd",
+		     file, line);
+
+	if (error == GL_INVALID_OPERATION)
+		errx(1, "OpenGL's state did not allow the "
+		     "requested operation at %s:%zd", file, line);
+
+	if (error == GL_INVALID_FRAMEBUFFER_OPERATION)
+		errx(1, "OpenGL encountered an incomplete "
+		     "framebuffer at %s:%zd", file, line);
+
+	if (error == GL_STACK_UNDERFLOW)
+		errx(1, "OpenGL encountered an internal stack "
+		     "underflow at %s:%zd", file, line);
+
+	if (error == GL_STACK_OVERFLOW)
+		errx(1, "OpenGL encountered an internal stack "
+		     "underflow at %s:%zd", file, line);
+
+	errx(1, "OpenGL encountered an unrecognized error code %d at %s:%zd",
+	     error, file, line);
+}
+
+#define CHECK_GL_MEM check_gl_ok(1, __FILE__, __LINE__)
+#define CHECK_GL check_gl_ok(0, __FILE__, __LINE__)
+#define CLEAR_GL glGetError()
 
 #ifdef __cplusplus
 }

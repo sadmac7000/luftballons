@@ -32,6 +32,7 @@ ebuf_do_activate(ebuf_t *buffer)
 {
 	current_ebuf = buffer;
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer->gl_handle);
+	CHECK_GL;
 }
 
 /**
@@ -51,6 +52,7 @@ ebuf_destructor(void *buffer_)
 
 	intervals_release(&buffer->free);
 	free(buffer);
+	CHECK_GL;
 }
 
 /**
@@ -63,7 +65,7 @@ ebuf_create(size_t size)
 {
 	ebuf_t *ret = xmalloc(sizeof(ebuf_t));
 	GLuint handle;
-	GLenum error;
+	int memfail;
 
 	if (! size)
 		return NULL;
@@ -72,17 +74,13 @@ ebuf_create(size_t size)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(uint16_t), NULL,
 		     GL_STATIC_DRAW);
-	error = glGetError();
+	memfail = CHECK_GL_MEM;
 
 	if (current_ebuf)
 		ebuf_do_activate(current_ebuf);
 
-	if (error != GL_NO_ERROR) {
-		if (error == GL_OUT_OF_MEMORY)
-			return NULL;
-
-		errx(1, "Unexpected OpenGL error allocating buffer");
-	}
+	if (memfail)
+		return NULL;
 
 	ret->gl_handle = handle;
 	ret->size = size;
