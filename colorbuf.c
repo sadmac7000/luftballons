@@ -142,7 +142,10 @@ colorbuf_complete_dep(colorbuf_t *colorbuf)
 	if (colorbuf->deps_complete > colorbuf->deps_total)
 		errx(1, "Dependency count mismatch in colorbuf");
 
-	if (colorbuf->deps_complete == colorbuf->deps_total)
+	if (colorbuf->deps_complete != colorbuf->deps_total)
+		return;
+
+	if (colorbuf->ready_callback)
 		colorbuf->ready_callback(colorbuf->ready_callback_data);
 }
 
