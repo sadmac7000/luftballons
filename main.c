@@ -209,19 +209,22 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
-	draw_queue_clear(draw_queue, 1, 1);
 	draw_queue_draw(draw_queue, cube_center, camera);
 
 	state_enter(cube_state);
 	draw_queue_flush(draw_queue);
+	colorbuf_complete_dep(cbuf);
 
 	state_enter(plane_state);
 	draw_queue_flush(draw_queue);
+	colorbuf_complete_dep(cbuf);
 
 	state_enter(canopy_state);
 	draw_queue_flush(draw_queue);
+	colorbuf_complete_dep(cbuf);
 
 	colorbuf_copy(cbuf, NULL);
+	colorbuf_invalidate(cbuf);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -322,6 +325,7 @@ main(int argc, char **argv)
 	shader_t *vcolor_shader;
 	uniform_value_t uvtmp;
 	texmap_t *cbuf_texmap;
+	float clear_color[4] = { 0.5, 0, 0.5, 1 };
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -337,6 +341,7 @@ main(int argc, char **argv)
 	glutKeyboardUpFunc(offkey);
 
 	cbuf = colorbuf_create();
+	colorbuf_set_clear_4f(cbuf, COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH, clear_color);
 	cbuf_texmap = texmap_create(0, 0, 0);
 	texmap_init_blank(cbuf_texmap, 0, 800, 600);
 	colorbuf_append_buf(cbuf, cbuf_texmap);
@@ -387,7 +392,6 @@ main(int argc, char **argv)
 			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
 
 	draw_queue = draw_queue_create();
-	draw_queue_set_clear_color(draw_queue, 0.5, 0.0, 0.5, 1.0);
 
 	cube_center = object_create(NULL);
 

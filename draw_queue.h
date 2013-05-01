@@ -26,28 +26,18 @@
 #include "camera.h"
 
 /**
- * Flags for the draw queue.
- **/
-#define DRAW_QUEUE_CLEAR	0x1
-#define DRAW_QUEUE_CLEAR_DEPTH	0x2
-
-/**
  * A list of draw operations to be performed.
  *
  * pools: bufpools to back meshes we are drawing
  * pool_count: Number of pools
  * draw_ops: Draw operations pending
  * draw_op_count: Number of draw operations
- * flags: Flags to change drawing behavior
- * clear_color: Color to clear target to before drawing
  **/
 typedef struct draw_queue {
 	bufpool_t **pools;
 	size_t pool_count;
 	struct draw_op **draw_ops;
 	size_t draw_op_count;
-	unsigned int flags;
-	float clear_color[4];
 } draw_queue_t;
 
 #ifdef __cplusplus
@@ -57,9 +47,6 @@ extern "C" {
 draw_queue_t *draw_queue_create(void);
 void draw_queue_draw(draw_queue_t *queue, object_t *object, camera_t *camera);
 void draw_queue_flush(draw_queue_t *queue);
-void draw_queue_clear(draw_queue_t *queue, int color, int depth);
-void draw_queue_set_clear_color(draw_queue_t *queue,
-				float r, float g, float b, float a);
 
 #ifdef __cplusplus
 }

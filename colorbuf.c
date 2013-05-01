@@ -150,12 +150,38 @@ colorbuf_complete_dep(colorbuf_t *colorbuf)
 }
 
 /**
+ * Clear the contents of a colorbuf.
+ **/
+void
+colorbuf_do_clear(colorbuf_t *in)
+{
+	GLuint flags = 0;
+
+	if (in->flags & COLORBUF_CLEAR) {
+		glClearColor(in->clear_color[0], in->clear_color[1],
+			     in->clear_color[2], in->clear_color[3]);
+		flags |= GL_COLOR_BUFFER_BIT;
+	}
+
+	if (in->flags & COLORBUF_CLEAR_DEPTH) {
+		glClearDepth(1.0);
+		flags |= GL_DEPTH_BUFFER_BIT;
+	}
+
+	if (flags)
+	glClear(flags);
+}
+
+/**
  * Notify the colorbuf that its contents are no longer valid.
  **/
 void
 colorbuf_invalidate(colorbuf_t *colorbuf)
 {
 	colorbuf->deps_complete = 0;
+
+	if (colorbuf == current_colorbuf)
+		colorbuf_do_clear(colorbuf);
 }
 
 /**
@@ -292,6 +318,9 @@ colorbuf_prep(colorbuf_t *colorbuf)
 	free(buffers);
 	CHECK_GL;
 	colorbuf_check_status();
+
+	if (colorbuf->deps_complete == 0)
+		colorbuf_do_clear(colorbuf);
 }
 
 /**
@@ -346,4 +375,28 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 
 	glDeleteFramebuffers(2, framebufs);
 	CLEAR_GL;
+}
+
+/**
+ * Set whether we should clear the color buffer.
+ **/
+void
+colorbuf_set_clear(colorbuf_t *in, unsigned int flags)
+{
+	float arr[4] = { 0, 0, 0, 0 };
+
+	colorbuf_set_clear_4f(in, flags, arr);
+}
+
+/**
+ * Set whether we should clear the color buffer. Provide a clear color.
+ **/
+void
+colorbuf_set_clear_4f(colorbuf_t *in, unsigned int flags, float color[4])
+{
+	if (flags & ~(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH))
+		errx(1, "Unknown flags to colorbuf_set_clear");
+
+	in->flags |= flags;
+	memcpy(in->clear_color, color, 4 * sizeof(float));
 }

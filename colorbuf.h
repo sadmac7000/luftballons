@@ -22,6 +22,12 @@
 #include "refcount.h"
 
 /**
+ * Flag value to indicate if we should clear this buffer.
+ **/
+#define COLORBUF_CLEAR		0x1
+#define COLORBUF_CLEAR_DEPTH	0x2
+
+/**
  * A set of color buffer targets.
  *
  * num_colorbufs, colorbufs: The set of buffers.
@@ -29,6 +35,8 @@
  * deps_complete: Number of dependencies which have been satisfied right now.
  * ready_callback: Callback to run when all deps are complete.
  * ready_callback_data: Data to pass to the ready callback.
+ * clear_color: Color to clear to if we clear.
+ * flags: Various flags.
  * refcount: Reference counter.
  **/
 typedef struct colorbuf {
@@ -40,6 +48,9 @@ typedef struct colorbuf {
 
 	void (*ready_callback)(void *);
 	void *ready_callback_data;
+
+	float clear_color[4];
+	unsigned int flags;
 
 	refcounter_t refcount;
 } colorbuf_t;
@@ -59,6 +70,8 @@ void colorbuf_invalidate(colorbuf_t *colorbuf);
 void colorbuf_on_ready(colorbuf_t *colorbuf, void (*callback)(void *), void *data);
 void colorbuf_prep(colorbuf_t *colorbuf);
 void colorbuf_copy(colorbuf_t *in, colorbuf_t *out);
+void colorbuf_set_clear(colorbuf_t *in, unsigned int flags);
+void colorbuf_set_clear_4f(colorbuf_t *in, unsigned int flags, float color[4]);
 size_t colorbuf_max_bufs(void);
 
 #ifdef __cplusplus
