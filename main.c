@@ -337,7 +337,7 @@ main(int argc, char **argv)
 	glutKeyboardUpFunc(offkey);
 
 	cbuf = colorbuf_create();
-	cbuf_texmap = texmap_create(0, 0);
+	cbuf_texmap = texmap_create(0, 0, 0);
 	texmap_init_blank(cbuf_texmap, 0, 800, 600);
 	colorbuf_append_buf(cbuf, cbuf_texmap);
 
@@ -365,8 +365,8 @@ main(int argc, char **argv)
 	state_grab(plane_state);
 	state_set_colorbuf(plane_state, cbuf);
 
-	canopy_map = texmap_create(0, 0);
-	plane_map = texmap_create(0, 0);
+	canopy_map = texmap_create(0, 0, 1);
+	plane_map = texmap_create(0, 0, 1);
 
 	texmap_load_image(canopy_map, "ref_model/P51_canopy.tif", 0);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

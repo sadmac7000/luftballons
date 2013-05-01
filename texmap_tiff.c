@@ -29,6 +29,10 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 	img = TIFFFdOpen(fd, path, "r");
 	uint32_t width, height;
 	void *data;
+	GLint ifmt = GL_RGBA;
+
+	if (map->compressed)
+		ifmt = GL_COMPRESSED_RGBA;
 
 	if (! img)
 		return 0;
@@ -42,7 +46,7 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 		errx(1, "Could not read TIFF");
 
 	glBindTexture(GL_TEXTURE_2D, map->map);
-	glTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA, width, height, 0, GL_RGBA,
+	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, data);
 
 	CHECK_GL;
