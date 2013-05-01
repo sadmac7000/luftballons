@@ -27,7 +27,12 @@
 #define COLORBUF_CLEAR		0x1
 #define COLORBUF_CLEAR_DEPTH	0x2
 #define COLORBUF_CLEAR_STENCIL	0x4
-#define COLORBUF_VALID_FLAGS    0x7
+#define COLORBUF_AUTO_DEPTH	0x8
+#define COLORBUF_STENCIL	0x10
+#define COLORBUF_VALID_FLAGS    0x1f
+
+/* Internal flags */
+#define COLORBUF_RENDERBUF_HAS_STORAGE 0x100
 
 /**
  * A set of color buffer targets.
@@ -39,8 +44,9 @@
  * ready_callback_data: Data to pass to the ready callback.
  * clear_color: Color to clear to if we clear.
  * clear_depth: Depth to clear to if we clear depth.
- * clear_stencil: Stencil clear index if we clear that.
+ * clear_stencil: Stencil clear-index if we clear that.
  * flags: Various flags.
+ * autodepth: Our autodepth buffer.
  * refcount: Reference counter.
  **/
 typedef struct colorbuf {
@@ -58,6 +64,8 @@ typedef struct colorbuf {
 	int clear_stencil;
 
 	unsigned int flags;
+
+	GLuint autodepth;
 
 	refcounter_t refcount;
 } colorbuf_t;

@@ -32,7 +32,6 @@
 static colorbuf_t *current_colorbuf = NULL;
 
 static GLuint framebuf;
-static GLuint depth_attach;
 static texmap_t **framebuf_maps = NULL;
 static size_t framebuf_maps_size = 0;
 
@@ -47,6 +46,9 @@ colorbuf_destroy(void *buf_v)
 
 	for (i = 0; i < buf->num_colorbufs; i++)
 		texmap_ungrab(buf->colorbufs[i]);
+
+	if (buf->flags & COLORBUF_AUTO_DEPTH)
+		glDeleteRenderbuffers(1, &buf->autodepth);
 
 	free(buf->colorbufs);
 	free(buf);
@@ -64,6 +66,11 @@ colorbuf_create(unsigned int flags)
 
 	if (flags & ~(COLORBUF_VALID_FLAGS))
 		errx(1, "Colorbuf initialized with invalid flags");
+
+	if (flags & COLORBUF_AUTO_DEPTH) {
+		glGenRenderbuffers(1, &ret->autodepth);
+		CHECK_GL;
+	}
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, colorbuf_destroy, ret);
@@ -113,6 +120,7 @@ colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
 		errx(1, "Platform does not support more than "
 		     "%zu color buffers", colorbuf_max_bufs());
 
+	buf->flags &= ~COLORBUF_RENDERBUF_HAS_STORAGE;
 	buf->colorbufs = vec_expand(buf->colorbufs, buf->num_colorbufs);
 	buf->colorbufs[buf->num_colorbufs++] = texmap;
 	texmap_grab(texmap);
@@ -273,6 +281,58 @@ colorbuf_check_status(void)
 }
 
 /**
+ * Prepare the depth and stencil buffers.
+ **/
+static void
+colorbuf_prep_depth_stencil()
+{
+	size_t w = SIZE_T_MAX;
+	size_t h = SIZE_T_MAX;
+	size_t i;
+	GLint ifmt = GL_DEPTH_COMPONENT24;
+	GLenum attach_type = GL_DEPTH_ATTACHMENT;
+	
+	if (current_colorbuf->flags & COLORBUF_STENCIL) {
+		ifmt = GL_DEPTH24_STENCIL8;
+		attach_type = GL_DEPTH_STENCIL_ATTACHMENT;
+	} else {
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+					  GL_STENCIL_ATTACHMENT,
+					  GL_RENDERBUFFER, 0);
+	}
+
+	if (! (current_colorbuf->flags & COLORBUF_AUTO_DEPTH)) {
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+					  GL_DEPTH_STENCIL_ATTACHMENT,
+					  GL_RENDERBUFFER, 0);
+		CHECK_GL;
+		return;
+	}
+
+	if (! (current_colorbuf->flags & COLORBUF_RENDERBUF_HAS_STORAGE)) {
+		glBindRenderbuffer(GL_RENDERBUFFER,
+				   current_colorbuf->autodepth);
+
+		for (i = 0; i < current_colorbuf->num_colorbufs; i++) {
+			if (current_colorbuf->colorbufs[i]->w < w)
+				w = current_colorbuf->colorbufs[i]->w;
+			if (current_colorbuf->colorbufs[i]->h < h)
+				h = current_colorbuf->colorbufs[i]->h;
+		}
+
+		glRenderbufferStorage(GL_RENDERBUFFER, ifmt, w, h);
+
+		current_colorbuf->flags |= COLORBUF_RENDERBUF_HAS_STORAGE;
+	}
+
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER,
+				  attach_type,
+				  GL_RENDERBUFFER,
+				  current_colorbuf->autodepth);
+	CHECK_GL;
+}
+
+/**
  * Set up our colorbuf to be drawn to by OpenGL.
  **/
 void
@@ -302,24 +362,14 @@ colorbuf_prep(colorbuf_t *colorbuf)
 
 	buffers = xcalloc(colorbuf->num_colorbufs, sizeof(GLenum));
 
-	if (! framebuf_maps) {
+	if (! framebuf_maps)
 		glGenFramebuffers(1, &framebuf);
-		glGenRenderbuffers(1, &depth_attach);
-		glBindRenderbuffer(GL_RENDERBUFFER, depth_attach);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8,
-				      800, 600);
-	}
 
 	if (current_colorbuf == NULL)
 		glBindFramebuffer(GL_FRAMEBUFFER, framebuf);
 
-	if (! framebuf_maps) {
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER,
-					  GL_DEPTH_STENCIL_ATTACHMENT,
-					  GL_RENDERBUFFER, depth_attach);
-	}
-
 	current_colorbuf = colorbuf;
+	colorbuf_prep_depth_stencil();
 
 	for (i = 0; i < colorbuf->num_colorbufs;) {
 		if (! colorbuf_alloc_framebuffer(colorbuf->colorbufs[i],
