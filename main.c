@@ -340,8 +340,9 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	cbuf = colorbuf_create();
-	colorbuf_set_clear_4f(cbuf, COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH, clear_color);
+	cbuf = colorbuf_create(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH);
+	colorbuf_clear_color(cbuf, clear_color);
+	colorbuf_clear_depth(cbuf, 1.0);
 	cbuf_texmap = texmap_create(0, 0, 0);
 	texmap_init_blank(cbuf_texmap, 0, 800, 600);
 	colorbuf_append_buf(cbuf, cbuf_texmap);

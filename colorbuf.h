@@ -26,6 +26,8 @@
  **/
 #define COLORBUF_CLEAR		0x1
 #define COLORBUF_CLEAR_DEPTH	0x2
+#define COLORBUF_CLEAR_STENCIL	0x4
+#define COLORBUF_VALID_FLAGS    0x7
 
 /**
  * A set of color buffer targets.
@@ -36,6 +38,8 @@
  * ready_callback: Callback to run when all deps are complete.
  * ready_callback_data: Data to pass to the ready callback.
  * clear_color: Color to clear to if we clear.
+ * clear_depth: Depth to clear to if we clear depth.
+ * clear_stencil: Stencil clear index if we clear that.
  * flags: Various flags.
  * refcount: Reference counter.
  **/
@@ -50,6 +54,9 @@ typedef struct colorbuf {
 	void *ready_callback_data;
 
 	float clear_color[4];
+	float clear_depth;
+	int clear_stencil;
+
 	unsigned int flags;
 
 	refcounter_t refcount;
@@ -59,7 +66,7 @@ typedef struct colorbuf {
 extern "C" {
 #endif
 
-colorbuf_t *colorbuf_create(void);
+colorbuf_t *colorbuf_create(unsigned int flags);
 void colorbuf_grab(colorbuf_t *colorbuf);
 void colorbuf_ungrab(colorbuf_t *colorbuf);
 size_t colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap);
@@ -70,8 +77,9 @@ void colorbuf_invalidate(colorbuf_t *colorbuf);
 void colorbuf_on_ready(colorbuf_t *colorbuf, void (*callback)(void *), void *data);
 void colorbuf_prep(colorbuf_t *colorbuf);
 void colorbuf_copy(colorbuf_t *in, colorbuf_t *out);
-void colorbuf_set_clear(colorbuf_t *in, unsigned int flags);
-void colorbuf_set_clear_4f(colorbuf_t *in, unsigned int flags, float color[4]);
+void colorbuf_clear_color(colorbuf_t *in, float color[4]);
+void colorbuf_clear_depth(colorbuf_t *in, float depth);
+void colorbuf_clear_stencil(colorbuf_t *in, int index);
 size_t colorbuf_max_bufs(void);
 
 #ifdef __cplusplus

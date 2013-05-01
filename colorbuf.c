@@ -56,9 +56,14 @@ colorbuf_destroy(void *buf_v)
  * Create a new colorbuf.
  **/
 colorbuf_t *
-colorbuf_create(void)
+colorbuf_create(unsigned int flags)
 {
 	colorbuf_t *ret = xcalloc(1, sizeof(colorbuf_t));
+
+	ret->flags = flags;
+
+	if (flags & ~(COLORBUF_VALID_FLAGS))
+		errx(1, "Colorbuf initialized with invalid flags");
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, colorbuf_destroy, ret);
@@ -159,7 +164,7 @@ colorbuf_complete_dep(colorbuf_t *colorbuf)
 /**
  * Clear the contents of a colorbuf.
  **/
-void
+static void
 colorbuf_do_clear(colorbuf_t *in)
 {
 	GLuint flags = 0;
@@ -171,12 +176,17 @@ colorbuf_do_clear(colorbuf_t *in)
 	}
 
 	if (in->flags & COLORBUF_CLEAR_DEPTH) {
-		glClearDepth(1.0);
+		glClearDepth(in->clear_depth);
 		flags |= GL_DEPTH_BUFFER_BIT;
 	}
 
+	if (in->flags & COLORBUF_CLEAR_STENCIL) {
+		glClearStencil(in->clear_stencil);
+		flags |= GL_STENCIL_BUFFER_BIT;
+	}
+
 	if (flags)
-	glClear(flags);
+		glClear(flags);
 }
 
 /**
@@ -405,25 +415,28 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 }
 
 /**
- * Set whether we should clear the color buffer.
+ * Set the color to clear this buffer to.
  **/
 void
-colorbuf_set_clear(colorbuf_t *in, unsigned int flags)
+colorbuf_clear_color(colorbuf_t *in, float color[4])
 {
-	float arr[4] = { 0, 0, 0, 0 };
-
-	colorbuf_set_clear_4f(in, flags, arr);
+	memcpy(in->clear_color, color, 4 * sizeof(float));
 }
 
 /**
- * Set whether we should clear the color buffer. Provide a clear color.
+ * Set the depth to clear this buffer to.
  **/
 void
-colorbuf_set_clear_4f(colorbuf_t *in, unsigned int flags, float color[4])
+colorbuf_clear_depth(colorbuf_t *in, float depth)
 {
-	if (flags & ~(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH))
-		errx(1, "Unknown flags to colorbuf_set_clear");
+	in->clear_depth = depth;
+}
 
-	in->flags |= flags;
-	memcpy(in->clear_color, color, 4 * sizeof(float));
+/**
+ * Set the stencil index to clear this buffer to.
+ **/
+void
+colorbuf_clear_stencil(colorbuf_t *in, int index)
+{
+	in->clear_stencil = index;
 }
