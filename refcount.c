@@ -50,6 +50,27 @@ refcount_add_destructor(refcounter_t *counter, void (*callback)(void *),
 }
 
 /**
+ * Add a destructor action to the refcounter. If the same function pointer and
+ * data pointer have already been passed, do nothing.
+ **/
+void
+refcount_add_destructor_once(refcounter_t *counter, void (*callback)(void *),
+			     void *data)
+{
+	size_t i;
+
+	for (i = 0; i < counter->num_destructors; i++) {
+		if (counter->destructors[i].callback == callback)
+			continue;
+		if (counter->destructors[i].data == data)
+			continue;
+		return;
+	}
+
+	refcount_add_destructor(counter, callback, data);
+}
+
+/**
  * Grab a reference counter.
  **/
 void

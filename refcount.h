@@ -42,6 +42,8 @@ extern "C" {
 void refcount_init(refcounter_t *counter);
 void refcount_add_destructor(refcounter_t *counter, void (*callback)(void *),
 			     void *data);
+void refcount_add_destructor_once(refcounter_t *counter,
+				  void (*callback)(void *), void *data);
 void refcount_grab(refcounter_t *counter);
 void refcount_ungrab(refcounter_t *counter);
 
