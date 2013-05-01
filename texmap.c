@@ -135,6 +135,9 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 {
 	GLint ifmt = GL_RGBA;
 
+	map->w = width;
+	map->h = height;
+
 	if (map->compressed)
 		ifmt = GL_COMPRESSED_RGBA;
 

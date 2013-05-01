@@ -28,6 +28,7 @@
  * map: OpenGL texture ID
  * sampler: OpenGL sampler object
  * compressed: Is this texture compressed
+ * w, h: Width and height
  * refcount: Number of references to this texture
  **/
 typedef struct texmap {
@@ -37,6 +38,7 @@ typedef struct texmap {
 	GLuint sampler;
 	refcounter_t refcount;
 	int compressed;
+	size_t w, h;
 } texmap_t;
 
 #ifdef __cplusplus

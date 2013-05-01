@@ -52,5 +52,9 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 	CHECK_GL;
 	TIFFClose(img);
 	free(data);
+
+	map->w = width;
+	map->h = height;
+
 	return 1;
 }

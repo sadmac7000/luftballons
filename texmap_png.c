@@ -65,6 +65,9 @@ texmap_png_load_data(texmap_t *map, GLint level,
 	glTexImage2D(GL_TEXTURE_2D, level, gl_ifmt, width, height, 0, gl_fmt,
 		     gl_type, data);
 	CHECK_GL;
+
+	map->w = width;
+	map->h = height;
 }
 
 /**
