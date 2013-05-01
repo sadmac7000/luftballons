@@ -21,6 +21,7 @@
 #include "texmap.h"
 #include "shader.h"
 #include "refcount.h"
+#include "colorbuf.h"
 
 /* Enable depth testing in this state */
 #define STATE_DEPTH_TEST	0x1
@@ -36,9 +37,8 @@
  *
  * flags: Flags indicating properties of this draw state.
  * care_about: Which flags we actually care about the state of.
- * num_colorbufs, colorbufs: Vector of color buffers to render to.
+ * colorbuf: Color buffer to render to.
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
- * num_dependants, dependants: Number of states depending on this state.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
  * refcount: Reference counter.
@@ -46,13 +46,9 @@
 typedef struct state {
 	uint64_t flags;
 	uint64_t care_about;
-	size_t num_colorbufs;
-	texmap_t **colorbufs;
+	colorbuf_t *colorbuf;
 	size_t num_uniforms;
 	uniform_t **uniforms;
-	size_t num_dependants;
-	struct state **dependants;
-	size_t dependencies;
 	shader_t *shader;
 	int mat_id;
 	refcounter_t refcount;
@@ -69,11 +65,10 @@ void state_ungrab(state_t *state);
 void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
-size_t state_append_colorbuf(state_t *state, texmap_t *texture);
+void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
 void state_set_uniform(state_t *state, uniform_t *uniform);
 size_t state_max_colorbufs(void);
 int state_material_active(int mat_id);
-void state_depends_on(state_t *state, state_t *other);
 
 #ifdef __cplusplus
 }

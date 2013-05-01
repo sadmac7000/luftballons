@@ -40,6 +40,7 @@ luftballons_OBJS =	\
 	texmap_tiff.o	\
 	quat.o		\
 	refcount.o	\
+	colorbuf.o	\
 	state.o
 
 luftballons_LINK=-lglut -lGL -lm -lstdc++ \

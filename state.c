@@ -28,10 +28,6 @@
  **/
 state_t *current_state = NULL;
 
-GLuint framebuf;
-texmap_t **framebuf_maps = NULL;
-size_t framebuf_maps_size = 0;
-
 /**
  * Destroy a state object. Don't defer until the state is no longer active.
  **/
@@ -44,15 +40,11 @@ state_destructor(void *data)
 	for (i = 0; i < state->num_uniforms; i++)
 		uniform_ungrab(state->uniforms[i]);
 
-	for (i = 0; i < state->num_dependants; i++)
-		state_ungrab(state->dependants[i]);
+	if (state->colorbuf)
+		colorbuf_dep_ungrab(state->colorbuf);
 
-	for(i = 0; i < state->num_colorbufs; i++)
-		texmap_ungrab(state->colorbufs[i]);
 
-	free(state->colorbufs);
 	free(state->uniforms);
-	free(state->dependants);
 	free(state);
 }
 
@@ -89,20 +81,6 @@ void
 state_ungrab(state_t *state)
 {
 	refcount_ungrab(&state->refcount);
-}
-
-/**
- * Mark that a state depends on another state.
- **/
-void
-state_depends_on(state_t *state, state_t *other)
-{
-	other->dependants = vec_expand(other->dependants,
-				       other->num_dependants);
-
-	other->dependants[other->num_dependants++] = state;
-
-	state_grab(state);
 }
 
 /**
@@ -167,90 +145,6 @@ state_set_texture_2D(state_t *state)
 }
 
 /**
- * Prepare to run on the default buffer.
- **/
-static void
-state_prep_default_colorbufs(void)
-{
-	if (current_state && current_state->num_colorbufs == 0)
-		return;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDrawBuffer(GL_BACK);
-	CHECK_GL;
-}
-
-/**
- * Allocate a color attachment in the framebuffer.
- **/
-static int
-state_alloc_framebuffer(texmap_t *map, GLenum *attach)
-{
-	size_t i;
-
-	/* FIXME: If malloc reuses a memory segment we could destroy a texmap
-	 * and then have a new one with the same address, which would appear to
-	 * be in the framebuffer when it isn't.
-	 *
-	 * We can get away with freed textures that aren't reallocated because
-	 * we only compare pointers, we don't dereference.
-	 */
-	for (i = 0; i < framebuf_maps_size; i++) {
-		if (framebuf_maps[i] == map)
-			break;
-	}
-
-	if (i == framebuf_maps_size) {
-		if (framebuf_maps_size == state_max_colorbufs())
-			return -1;
-
-		framebuf_maps = vec_expand(framebuf_maps, framebuf_maps_size);
-		framebuf_maps[framebuf_maps_size++] = map;
-	}
-
-	*attach = GL_COLOR_ATTACHMENT0 + i;
-	return 0;
-}
-
-/**
- * Prepare the color buffers attached to this state.
- **/
-static void
-state_prep_colorbufs(state_t *state)
-{
-	GLenum *buffers;
-	size_t i;
-
-	if (! state->num_colorbufs) {
-		state_prep_default_colorbufs();
-		return;
-	}
-
-	buffers = xcalloc(state->num_colorbufs, sizeof(GLenum));
-
-	if (! framebuf_maps)
-		glGenFramebuffers(1, &framebuf);
-
-	if (current_state == NULL || current_state->num_colorbufs == 0)
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuf);
-
-	i = 0;
-	while (i < state->num_colorbufs) {
-		if (! state_alloc_framebuffer(state->colorbufs[i],
-					      &buffers[i])) {
-			i++;
-		} else {
-			framebuf_maps_size = 0;
-			i = 0;
-		}
-	}
-
-	glDrawBuffers(state->num_colorbufs, buffers);
-	free(buffers);
-	CHECK_GL;
-}
-
-/**
  * Enter the given state.
  **/
 void
@@ -288,7 +182,7 @@ state_enter(state_t *state)
 	if (change_flags & STATE_TEXTURE_2D)
 		state_set_texture_2D(state);
 
-	state_prep_colorbufs(state);
+	colorbuf_prep(state->colorbuf);
 
 	if (current_state)
 		tmp = current_state;
@@ -345,36 +239,18 @@ state_ignore_flags(state_t *state, uint64_t flags)
 }
 
 /**
- * Append a color buffer to the list of output color buffers.
+ * Set the output color buffer. Set NULL to use the default framebuffer.
  **/
-size_t
-state_append_colorbuf(state_t *state, texmap_t *texture)
+void
+state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 {
 	state_assert_not_current(state);
 
-	if (state->num_colorbufs == state_max_colorbufs())
-		errx(1, "Platform does not support more than "
-		     "%zu color buffers", state_max_colorbufs());
+	if (state->colorbuf)
+		colorbuf_dep_ungrab(state->colorbuf);
 
-	vec_expand(state->colorbufs, state->num_colorbufs);
-	state->colorbufs[state->num_colorbufs] = texture;
-	texmap_grab(texture);
-
-	return state->num_colorbufs++;
-}
-
-/**
- * Get the maximum number of color buffers a state can have.
- **/
-size_t
-state_max_colorbufs(void)
-{
-	GLint result;
-
-	glGetIntegerv(GL_MAX_COLOR_ATTACHMENTS, &result);
-
-	CHECK_GL;
-	return (size_t)result;
+	colorbuf_dep_grab(colorbuf);
+	state->colorbuf = colorbuf;
 }
 
 /**

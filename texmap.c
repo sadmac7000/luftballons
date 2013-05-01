@@ -132,7 +132,7 @@ void
 texmap_init_blank(texmap_t *map, int level, int width, int height)
 {
 	glBindTexture(GL_TEXTURE_2D, map->map);
-	glTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA, width, height, 0, GL_RGBA,
+	glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, NULL);
 	CHECK_GL;
 }

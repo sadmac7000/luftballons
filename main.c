@@ -40,6 +40,7 @@
 #include "dae_load.h"
 #include "texmap.h"
 #include "state.h"
+#include "colorbuf.h"
 
 object_t *cube;
 object_t *cube_center;
@@ -48,6 +49,7 @@ draw_queue_t *draw_queue;
 state_t *cube_state;
 state_t *plane_state;
 state_t *canopy_state;
+colorbuf_t *cbuf;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -77,6 +79,7 @@ handle_reshape(void)
 
 	camera_update_aspect(camera, aspect);
 	glViewport(0, 0, win_sz[0], win_sz[1]);
+	CHECK_GL;
 }
 
 float
@@ -218,6 +221,8 @@ render(void)
 	state_enter(canopy_state);
 	draw_queue_flush(draw_queue);
 
+	colorbuf_copy(cbuf, NULL);
+
 	glutSwapBuffers();
 	glutPostRedisplay();
 
@@ -316,6 +321,7 @@ main(int argc, char **argv)
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
 	uniform_value_t uvtmp;
+	texmap_t *cbuf_texmap;
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -330,6 +336,11 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
+	cbuf = colorbuf_create();
+	cbuf_texmap = texmap_create(0, 0);
+	texmap_init_blank(cbuf_texmap, 0, 800, 600);
+	colorbuf_append_buf(cbuf, cbuf_texmap);
+
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");
 
@@ -338,18 +349,21 @@ main(int argc, char **argv)
 			| STATE_BF_CULL);
 	cube_state->mat_id = 0;
 	state_grab(cube_state);
+	state_set_colorbuf(cube_state, cbuf);
 
 	canopy_state = state_create(textured_shader);
 	state_set_flags(canopy_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	canopy_state->mat_id = 1;
 	state_grab(canopy_state);
+	state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = state_create(textured_shader);
 	state_set_flags(plane_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	plane_state->mat_id = 2;
 	state_grab(plane_state);
+	state_set_colorbuf(plane_state, cbuf);
 
 	canopy_map = texmap_create(0, 0);
 	plane_map = texmap_create(0, 0);
