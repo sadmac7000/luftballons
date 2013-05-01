@@ -16,11 +16,18 @@
  **/
 
 #include <err.h>
+#include <limits.h>
+#include <stdint.h>
 
 #include <GL/gl.h>
 
 #include "colorbuf.h"
 #include "util.h"
+
+/* Where the hell is this?! */
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX (~(size_t)0)
+#endif
 
 static colorbuf_t *current_colorbuf = NULL;
 
@@ -331,6 +338,10 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 {
 	GLuint framebufs[2];
 	size_t i;
+	size_t w_in = SIZE_T_MAX;
+	size_t h_in = SIZE_T_MAX;
+	size_t w_out = SIZE_T_MAX;
+	size_t h_out = SIZE_T_MAX;
 
 	if (in == out)
 		return;
@@ -340,29 +351,45 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 
 	if (! in) {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		w_in = 800;
+		h_in = 600;
 	} else {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufs[0]);
 
-		for (i = 0; i < in->num_colorbufs; i++)
+		for (i = 0; i < in->num_colorbufs; i++) {
 			glFramebufferTexture2D(GL_READ_FRAMEBUFFER,
 					       GL_COLOR_ATTACHMENT0 + i,
 					       GL_TEXTURE_2D,
 					       in->colorbufs[i]->map, 0);
+
+			if (in->colorbufs[i]->w < w_in)
+				w_in = in->colorbufs[i]->w;
+			if (in->colorbufs[i]->h < h_in)
+				h_in = in->colorbufs[i]->h;
+		}
 	}
 
 	if (! out) {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		w_out = 800;
+		h_out = 600;
 	} else {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebufs[1]);
 
-		for (i = 0; i < in->num_colorbufs; i++)
+		for (i = 0; i < in->num_colorbufs; i++) {
 			glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER,
 					       GL_COLOR_ATTACHMENT0 + i,
 					       GL_TEXTURE_2D,
 					       out->colorbufs[i]->map, 0);
+
+			if (out->colorbufs[i]->w < w_out)
+				w_out = out->colorbufs[i]->w;
+			if (out->colorbufs[i]->h < h_out)
+				h_out = out->colorbufs[i]->h;
+		}
 	}
 
-	glBlitFramebuffer(0,0,800,600,0,0,800,600, GL_COLOR_BUFFER_BIT,
+	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out, GL_COLOR_BUFFER_BIT,
 			  GL_NEAREST);
 	CHECK_GL;
 
