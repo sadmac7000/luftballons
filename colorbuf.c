@@ -116,6 +116,9 @@ colorbuf_max_bufs(void)
 size_t
 colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
 {
+	if (! buf)
+		errx(1, "Cannot append to output framebuffer");
+
 	if (buf->num_colorbufs == colorbuf_max_bufs())
 		errx(1, "Platform does not support more than "
 		     "%zu color buffers", colorbuf_max_bufs());
@@ -124,6 +127,10 @@ colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
 	buf->colorbufs = vec_expand(buf->colorbufs, buf->num_colorbufs);
 	buf->colorbufs[buf->num_colorbufs++] = texmap;
 	texmap_grab(texmap);
+
+	/* FIXME */
+	if (buf == current_colorbuf)
+		errx(1, "Haven't implemented append for active colorbuf");
 
 	return buf->num_colorbufs - 1;
 }
