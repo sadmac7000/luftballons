@@ -499,6 +499,8 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 	size_t h_in = SIZE_T_MAX;
 	size_t w_out = SIZE_T_MAX;
 	size_t h_out = SIZE_T_MAX;
+	unsigned int mutual_flags;
+	GLint buf_flags = GL_COLOR_BUFFER_BIT;
 
 	if (in == out)
 		return;
@@ -510,6 +512,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		w_in = def_buf_w;
 		h_in = def_buf_h;
+		in = &def_buf;
 	} else {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufs[0]);
 
@@ -530,6 +533,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		w_out = def_buf_w;
 		h_out = def_buf_h;
+		out = &def_buf;
 	} else {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebufs[1]);
 
@@ -549,7 +553,14 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 	if (!w_in || !w_out || !h_in || !h_out)
 		errx(1, "Tried to blit from/to zero-sized colorbuf");
 
-	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out, GL_COLOR_BUFFER_BIT,
+	mutual_flags = in->flags & out->flags;
+
+	if (mutual_flags & COLORBUF_AUTO_DEPTH)
+		buf_flags |= GL_DEPTH_BUFFER_BIT;
+	if (mutual_flags & COLORBUF_STENCIL)
+		buf_flags |= GL_STENCIL_BUFFER_BIT;
+
+	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out, buf_flags,
 			  GL_NEAREST);
 	CHECK_GL;
 
