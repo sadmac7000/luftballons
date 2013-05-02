@@ -50,6 +50,7 @@ state_t *cube_state;
 state_t *plane_state;
 state_t *canopy_state;
 colorbuf_t *cbuf;
+texmap_t *cbuf_texmap;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -78,8 +79,8 @@ handle_reshape(void)
 	need_reshape = 0;
 
 	camera_update_aspect(camera, aspect);
-	glViewport(0, 0, win_sz[0], win_sz[1]);
-	CHECK_GL;
+	colorbuf_set_output_geom(win_sz[0], win_sz[1]);
+	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
 }
 
 float
@@ -324,7 +325,6 @@ main(int argc, char **argv)
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
 	uniform_value_t uvtmp;
-	texmap_t *cbuf_texmap;
 	float clear_color[4] = { 0.5, 0, 0.5, 1 };
 
 	glutInit(&argc, argv);
@@ -340,12 +340,13 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
+	colorbuf_init_output(0);
+
 	cbuf = colorbuf_create(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH |
 			       COLORBUF_AUTO_DEPTH | COLORBUF_STENCIL);
 	colorbuf_clear_color(cbuf, clear_color);
 	colorbuf_clear_depth(cbuf, 1.0);
 	cbuf_texmap = texmap_create(0, 0, 0);
-	texmap_init_blank(cbuf_texmap, 0, 800, 600);
 	colorbuf_append_buf(cbuf, cbuf_texmap);
 
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");

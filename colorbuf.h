@@ -32,7 +32,8 @@
 #define COLORBUF_VALID_FLAGS    0x1f
 
 /* Internal flags */
-#define COLORBUF_RENDERBUF_HAS_STORAGE 0x100
+#define COLORBUF_RENDERBUF_HAS_STORAGE	0x100
+#define COLORBUF_INITIALIZED		0x200
 
 /**
  * A set of color buffer targets.
@@ -88,6 +89,8 @@ void colorbuf_copy(colorbuf_t *in, colorbuf_t *out);
 void colorbuf_clear_color(colorbuf_t *in, float color[4]);
 void colorbuf_clear_depth(colorbuf_t *in, float depth);
 void colorbuf_clear_stencil(colorbuf_t *in, int index);
+void colorbuf_init_output(unsigned int flags);
+void colorbuf_set_output_geom(size_t w, size_t h);
 size_t colorbuf_max_bufs(void);
 
 #ifdef __cplusplus

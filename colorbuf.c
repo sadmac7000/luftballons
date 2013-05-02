@@ -35,6 +35,39 @@ static GLuint framebuf;
 static texmap_t **framebuf_maps = NULL;
 static size_t framebuf_maps_size = 0;
 
+colorbuf_t def_buf = {0};
+size_t def_buf_w = 0;
+size_t def_buf_h = 0;
+
+/**
+ * Set the properties of the default buffer.
+ **/
+void
+colorbuf_init_output(unsigned int flags)
+{
+	if (flags & ~(COLORBUF_VALID_FLAGS))
+		errx(1, "Colorbuf initialized with invalid flags");
+
+	flags |= COLORBUF_INITIALIZED;
+
+	if (def_buf.flags)
+		errx(1, "Tried to initialize output twice");
+
+	def_buf.flags = flags;
+}
+
+/**
+ * Set the size of the default buffer.
+ **/
+void
+colorbuf_set_output_geom(size_t w, size_t h)
+{
+	def_buf_w = w;
+	def_buf_h = h;
+	glViewport(0, 0, w, h);
+	CHECK_GL;
+}
+
 /**
  * Destructor for colorbufs.
  **/
@@ -67,6 +100,8 @@ colorbuf_create(unsigned int flags)
 	if (flags & ~(COLORBUF_VALID_FLAGS))
 		errx(1, "Colorbuf initialized with invalid flags");
 
+	flags |= COLORBUF_INITIALIZED;
+
 	if (flags & COLORBUF_AUTO_DEPTH) {
 		glGenRenderbuffers(1, &ret->autodepth);
 		CHECK_GL;
@@ -84,7 +119,8 @@ colorbuf_create(unsigned int flags)
 void
 colorbuf_grab(colorbuf_t *colorbuf)
 {
-	refcount_grab(&colorbuf->refcount);
+	if (colorbuf)
+		refcount_grab(&colorbuf->refcount);
 }
 
 /**
@@ -93,7 +129,8 @@ colorbuf_grab(colorbuf_t *colorbuf)
 void
 colorbuf_ungrab(colorbuf_t *colorbuf)
 {
-	refcount_ungrab(&colorbuf->refcount);
+	if (colorbuf)
+		refcount_ungrab(&colorbuf->refcount);
 }
 
 /**
@@ -141,7 +178,11 @@ colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
 void
 colorbuf_dep_grab(colorbuf_t *colorbuf)
 {
+	if (! colorbuf)
+		colorbuf = &def_buf;
+
 	colorbuf_grab(colorbuf);
+
 	colorbuf->deps_total++;
 }
 
@@ -151,6 +192,9 @@ colorbuf_dep_grab(colorbuf_t *colorbuf)
 void
 colorbuf_dep_ungrab(colorbuf_t *colorbuf)
 {
+	if (! colorbuf)
+		colorbuf = &def_buf;
+
 	if (! colorbuf->deps_total)
 		errx(1, "Colorbuf dependency count went negative");
 
@@ -164,6 +208,9 @@ colorbuf_dep_ungrab(colorbuf_t *colorbuf)
 void
 colorbuf_complete_dep(colorbuf_t *colorbuf)
 {
+	if (! colorbuf)
+		colorbuf = &def_buf;
+
 	colorbuf->deps_complete++;
 
 	if (colorbuf->deps_complete > colorbuf->deps_total)
@@ -210,6 +257,9 @@ colorbuf_do_clear(colorbuf_t *in)
 void
 colorbuf_invalidate(colorbuf_t *colorbuf)
 {
+	if (! colorbuf)
+		colorbuf = &def_buf;
+
 	colorbuf->deps_complete = 0;
 
 	if (colorbuf == current_colorbuf)
@@ -377,6 +427,7 @@ colorbuf_prep(colorbuf_t *colorbuf)
 		glDrawBuffer(GL_BACK);
 
 		CHECK_GL;
+		colorbuf_do_clear(&def_buf);
 		return;
 	}
 
@@ -436,8 +487,8 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 
 	if (! in) {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-		w_in = 800;
-		h_in = 600;
+		w_in = def_buf_w;
+		h_in = def_buf_h;
 	} else {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, framebufs[0]);
 
@@ -456,8 +507,8 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 
 	if (! out) {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		w_out = 800;
-		h_out = 600;
+		w_out = def_buf_w;
+		h_out = def_buf_h;
 	} else {
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, framebufs[1]);
 
@@ -473,6 +524,9 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 				h_out = out->colorbufs[i]->h;
 		}
 	}
+
+	if (!w_in || !w_out || !h_in || !h_out)
+		errx(1, "Tried to blit from/to zero-sized colorbuf");
 
 	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out, GL_COLOR_BUFFER_BIT,
 			  GL_NEAREST);
@@ -495,6 +549,8 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 void
 colorbuf_clear_color(colorbuf_t *in, float color[4])
 {
+	if (! in)
+		in = &def_buf;
 	memcpy(in->clear_color, color, 4 * sizeof(float));
 }
 
@@ -504,6 +560,8 @@ colorbuf_clear_color(colorbuf_t *in, float color[4])
 void
 colorbuf_clear_depth(colorbuf_t *in, float depth)
 {
+	if (! in)
+		in = &def_buf;
 	in->clear_depth = depth;
 }
 
@@ -513,5 +571,7 @@ colorbuf_clear_depth(colorbuf_t *in, float depth)
 void
 colorbuf_clear_stencil(colorbuf_t *in, int index)
 {
+	if (! in)
+		in = &def_buf;
 	in->clear_stencil = index;
 }
