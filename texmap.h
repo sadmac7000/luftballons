@@ -23,6 +23,7 @@
 #include "refcount.h"
 
 #define TEXMAP_COMPRESSED	0x1
+#define TEXMAP_NOTIFY_COLORBUF	0x2
 
 /**
  * A 2D texture map, usually loaded from a file.

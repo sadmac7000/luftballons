@@ -40,6 +40,26 @@ size_t def_buf_w = 0;
 size_t def_buf_h = 0;
 
 /**
+ * Update one of the texmaps in framebuf_maps
+ **/
+void
+colorbuf_notify_texmap_change(texmap_t *texmap)
+{
+	size_t i;
+
+	for (i = 0; i < framebuf_maps_size; i++) {
+		if (framebuf_maps[i] != texmap)
+			continue;
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER,
+				       GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D,
+				       texmap->map, 0);
+	}
+
+	CHECK_GL;
+}
+
+/**
  * Set the properties of the default buffer.
  **/
 void
@@ -164,6 +184,7 @@ colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
 	buf->colorbufs = vec_expand(buf->colorbufs, buf->num_colorbufs);
 	buf->colorbufs[buf->num_colorbufs++] = texmap;
 	texmap_grab(texmap);
+	texmap->flags |= TEXMAP_NOTIFY_COLORBUF;
 
 	/* FIXME */
 	if (buf == current_colorbuf)
