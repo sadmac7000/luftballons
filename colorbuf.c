@@ -217,6 +217,22 @@ colorbuf_invalidate(colorbuf_t *colorbuf)
 }
 
 /**
+ * Any texmap that we put into framebuf_maps needs this destructor so
+ * framebuf_maps can be scrubbed. Otherwise if the texmap is freed and then the
+ * memory segment is reused as a texmap again we might not know it needs to be
+ * added to the framebuf.
+ **/
+static void
+colorbuf_texmap_destruct(void *map)
+{
+	size_t i;
+
+	for (i = 0; i < framebuf_maps_size; i++)
+		if (framebuf_maps[i] == map)
+			framebuf_maps[i] = NULL;
+}
+
+/**
  * Allocate a color attachment in the framebuffer.
  **/
 static int
@@ -224,27 +240,29 @@ colorbuf_alloc_framebuffer(texmap_t *map, GLenum *attach)
 {
 	size_t i;
 
-	/* FIXME: If malloc reuses a memory segment we could destroy a texmap
-	 * and then have a new one with the same address, which would appear to
-	 * be in the framebuffer when it isn't.
-	 *
-	 * We can get away with freed textures that aren't reallocated because
-	 * we only compare pointers, we don't dereference.
-	 */
-	for (i = 0; i < framebuf_maps_size && framebuf_maps[i] != map; i++);
+	for (i = 0; i < framebuf_maps_size && framebuf_maps[i] != map &&
+	     framebuf_maps[i]; i++);
 
 	*attach = GL_COLOR_ATTACHMENT0 + i;
+
+	if (i != framebuf_maps_size && framebuf_maps[i] == map)
+		return 0;
 
 	if (i == framebuf_maps_size) {
 		if (framebuf_maps_size == colorbuf_max_bufs())
 			return -1;
 
 		framebuf_maps = vec_expand(framebuf_maps, framebuf_maps_size);
-		framebuf_maps[framebuf_maps_size++] = map;
-		glFramebufferTexture2D(GL_FRAMEBUFFER, *attach, GL_TEXTURE_2D,
-				       map->map, 0);
-		CHECK_GL;
+		framebuf_maps_size++;
 	}
+
+	framebuf_maps[i] = map;
+	refcount_add_destructor_once(&map->refcount, colorbuf_texmap_destruct,
+				     map);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, *attach, GL_TEXTURE_2D,
+			       map->map, 0);
+	CHECK_GL;
 
 	return 0;
 }
