@@ -31,7 +31,7 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 	void *data;
 	GLint ifmt = GL_RGBA;
 
-	if (map->compressed)
+	if (map->flags & TEXMAP_COMPRESSED)
 		ifmt = GL_COMPRESSED_RGBA;
 
 	if (! img)

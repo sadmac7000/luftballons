@@ -58,7 +58,7 @@ texmap_png_load_data(texmap_t *map, GLint level,
 		errx(1, "Encountered unknown PNG format in %s", path);
 	};
 
-	if (! map->compressed)
+	if (! (map->flags & TEXMAP_COMPRESSED))
 		gl_ifmt = gl_fmt;
 
 	glBindTexture(GL_TEXTURE_2D, map->map);

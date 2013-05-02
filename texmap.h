@@ -22,12 +22,14 @@
 
 #include "refcount.h"
 
+#define TEXMAP_COMPRESSED	0x1
+
 /**
  * A 2D texture map, usually loaded from a file.
  *
  * map: OpenGL texture ID
  * sampler: OpenGL sampler object
- * compressed: Is this texture compressed
+ * flags: Misc flags.
  * w, h: Width and height
  * refcount: Number of references to this texture
  **/
@@ -37,7 +39,7 @@ typedef struct texmap {
 	 * using both while having them stuck together potentially isn't. */
 	GLuint sampler;
 	refcounter_t refcount;
-	int compressed;
+	unsigned int flags;
 	size_t w, h;
 } texmap_t;
 

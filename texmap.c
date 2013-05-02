@@ -93,7 +93,8 @@ texmap_create(size_t base_level, size_t max_level, int compress)
 
 	refcount_init(&map->refcount);
 	refcount_add_destructor(&map->refcount, texmap_destructor, map);
-	map->compressed = compress;
+	if (compress)
+		map->flags |= TEXMAP_COMPRESSED;
 
 	CHECK_GL;
 	return map;
@@ -138,7 +139,7 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	map->w = width;
 	map->h = height;
 
-	if (map->compressed)
+	if (map->flags & TEXMAP_COMPRESSED)
 		ifmt = GL_COMPRESSED_RGBA;
 
 	glBindTexture(GL_TEXTURE_2D, map->map);
