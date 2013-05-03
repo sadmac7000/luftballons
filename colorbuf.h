@@ -39,6 +39,8 @@
  * A set of color buffer targets.
  *
  * num_colorbufs, colorbufs: The set of buffers.
+ * colorbuf_attach_pos: Parallel to `colorbufs`. Attachment indicies.
+ * framebuf: OpenGL framebuffer handle.
  * deps_total: Number of dependencies this buffer has.
  * deps_complete: Number of dependencies which have been satisfied right now.
  * ready_callback: Callback to run when all deps are complete.
@@ -53,6 +55,9 @@
 typedef struct colorbuf {
 	size_t num_colorbufs;
 	texmap_t **colorbufs;
+	size_t *colorbuf_attach_pos;
+
+	GLuint framebuf;
 
 	size_t deps_total;
 	size_t deps_complete;
