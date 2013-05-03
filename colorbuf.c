@@ -80,7 +80,7 @@ colorbuf_destroy(void *buf_v)
 	for (i = 0; i < buf->num_colorbufs; i++)
 		texmap_ungrab(buf->colorbufs[i]);
 
-	if (buf->flags & COLORBUF_AUTO_DEPTH)
+	if (buf->flags & COLORBUF_DEPTH)
 		glDeleteRenderbuffers(1, &buf->autodepth);
 
 	free(buf->colorbufs);
@@ -102,9 +102,11 @@ colorbuf_create(unsigned int flags)
 
 	flags |= COLORBUF_INITIALIZED;
 
-	if (flags & COLORBUF_AUTO_DEPTH) {
+	if (flags & COLORBUF_DEPTH) {
 		glGenRenderbuffers(1, &ret->autodepth);
 		CHECK_GL;
+	} else if (flags & COLORBUF_STENCIL) {
+		errx(1, "COLORBUF_STENCIL requires COLORBUF_DEPTH");
 	}
 
 	refcount_init(&ret->refcount);
@@ -402,7 +404,7 @@ colorbuf_prep_depth_stencil()
 					  GL_RENDERBUFFER, 0);
 	}
 
-	if (! (current_colorbuf->flags & COLORBUF_AUTO_DEPTH)) {
+	if (! (current_colorbuf->flags & COLORBUF_DEPTH)) {
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER,
 					  GL_DEPTH_STENCIL_ATTACHMENT,
 					  GL_RENDERBUFFER, 0);
@@ -560,7 +562,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 
 	mutual_flags = in->flags & out->flags;
 
-	if (mutual_flags & COLORBUF_AUTO_DEPTH)
+	if (mutual_flags & COLORBUF_DEPTH)
 		buf_flags |= GL_DEPTH_BUFFER_BIT;
 	if (mutual_flags & COLORBUF_STENCIL)
 		buf_flags |= GL_STENCIL_BUFFER_BIT;

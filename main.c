@@ -342,7 +342,7 @@ main(int argc, char **argv)
 	colorbuf_init_output(0);
 
 	cbuf = colorbuf_create(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH |
-			       COLORBUF_AUTO_DEPTH | COLORBUF_STENCIL);
+			       COLORBUF_DEPTH | COLORBUF_STENCIL);
 	colorbuf_clear_color(cbuf, clear_color);
 	colorbuf_clear_depth(cbuf, 1.0);
 	cbuf_texmap = texmap_create(0, 0, 0);
