@@ -489,14 +489,19 @@ colorbuf_copy(colorbuf_t *in, size_t in_idx, colorbuf_t *out, size_t out_idx)
 		in = &def_buf;
 		glReadBuffer(GL_BACK);
 	} else {
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, in->framebuf);
-
 		for (i = 0; i < in->num_colorbufs; i++) {
+			if (in->colorbuf_attach_pos[i] == in_idx)
+				in_idx = i;
 			if (in->colorbufs[i]->w < w_in)
 				w_in = in->colorbufs[i]->w;
 			if (in->colorbufs[i]->h < h_in)
 				h_in = in->colorbufs[i]->h;
 		}
+
+		if (in_idx == in->num_colorbufs)
+			return;
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, in->framebuf);
 		glReadBuffer(GL_COLOR_ATTACHMENT0 + in_idx);
 	}
 
@@ -507,6 +512,18 @@ colorbuf_copy(colorbuf_t *in, size_t in_idx, colorbuf_t *out, size_t out_idx)
 		out = &def_buf;
 		glDrawBuffer(GL_BACK);
 	} else {
+		for (i = 0; i < out->num_colorbufs; i++) {
+			if (out->colorbuf_attach_pos[i] == out_idx)
+				out_idx = i;
+			if (out->colorbufs[i]->w < w_out)
+				w_out = out->colorbufs[i]->w;
+			if (out->colorbufs[i]->h < h_out)
+				h_out = out->colorbufs[i]->h;
+		}
+
+		if (out_idx == out->num_colorbufs)
+			goto reset;
+
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, out->framebuf);
 		glDrawBuffer(GL_COLOR_ATTACHMENT0 + out_idx);
 	}
@@ -514,11 +531,11 @@ colorbuf_copy(colorbuf_t *in, size_t in_idx, colorbuf_t *out, size_t out_idx)
 	if (!w_in || !w_out || !h_in || !h_out)
 		errx(1, "Tried to blit from/to zero-sized colorbuf");
 
-
 	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out,
 			  GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	CHECK_GL;
 
+reset:
 	if (current_colorbuf) {
 		glBindFramebuffer(GL_FRAMEBUFFER, current_colorbuf->framebuf);
 	} else {
