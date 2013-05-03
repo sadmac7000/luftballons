@@ -392,15 +392,42 @@ colorbuf_prep_depth_stencil()
 }
 
 /**
+ * Set the draw buffers for the current colorbuf.
+ **/
+static void
+colorbuf_set_draw(void)
+{
+	size_t bufcnt = 0;
+	GLenum *buffers;
+	size_t i;
+
+	if (! current_colorbuf) {
+		glDrawBuffer(GL_BACK);
+		return;
+	}
+
+	for (i = 0; i < current_colorbuf->num_colorbufs; i++)
+		if (current_colorbuf->colorbuf_attach_pos[i] > bufcnt)
+			bufcnt = current_colorbuf->colorbuf_attach_pos[i];
+
+	buffers = xcalloc(bufcnt + 1, sizeof(GLenum));
+
+	while (bufcnt--) buffers[bufcnt] = GL_NONE;
+
+	for (i = 0; i < current_colorbuf->num_colorbufs; i++)
+		buffers[i] = GL_COLOR_ATTACHMENT0 +
+			current_colorbuf->colorbuf_attach_pos[i];
+
+	glDrawBuffers(current_colorbuf->num_colorbufs, buffers);
+	free(buffers);
+	CHECK_GL;
+}
+/**
  * Set up our colorbuf to be drawn to by OpenGL.
  **/
 void
 colorbuf_prep(colorbuf_t *colorbuf)
 {
-	GLenum *buffers;
-	size_t i;
-	size_t bufcnt = 0;
-
 	if (colorbuf == current_colorbuf)
 		return;
 
@@ -411,8 +438,12 @@ colorbuf_prep(colorbuf_t *colorbuf)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDrawBuffer(GL_BACK);
 
+		colorbuf_set_draw();
+
+		if (! def_buf.deps_complete)
+			colorbuf_do_clear();
+
 		CHECK_GL;
-		colorbuf_do_clear();
 		return;
 	}
 
@@ -428,24 +459,9 @@ colorbuf_prep(colorbuf_t *colorbuf)
 
 	glBindFramebuffer(GL_FRAMEBUFFER, colorbuf->framebuf);
 
-	colorbuf_prep_depth_stencil();
-
-	for (i = 0; i < colorbuf->num_colorbufs; i++)
-		if (colorbuf->colorbuf_attach_pos[i] > bufcnt)
-			bufcnt = colorbuf->colorbuf_attach_pos[i];
-
-	buffers = xcalloc(bufcnt + 1, sizeof(GLenum));
-
-	while (bufcnt--) buffers[bufcnt] = GL_NONE;
-
-	for (i = 0; i < colorbuf->num_colorbufs; i++)
-		buffers[i] = GL_COLOR_ATTACHMENT0 +
-			colorbuf->colorbuf_attach_pos[i];
-
-	glDrawBuffers(colorbuf->num_colorbufs, buffers);
-	free(buffers);
-	CHECK_GL;
 	colorbuf_check_status();
+	colorbuf_prep_depth_stencil();
+	colorbuf_set_draw();
 
 	if (colorbuf->deps_complete == 0)
 		colorbuf_do_clear();
@@ -455,15 +471,13 @@ colorbuf_prep(colorbuf_t *colorbuf)
  * Copy contents of one buffer to another.
  **/
 void
-colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
+colorbuf_copy(colorbuf_t *in, size_t in_idx, colorbuf_t *out, size_t out_idx)
 {
 	size_t i;
 	size_t w_in = SIZE_T_MAX;
 	size_t h_in = SIZE_T_MAX;
 	size_t w_out = SIZE_T_MAX;
 	size_t h_out = SIZE_T_MAX;
-	unsigned int mutual_flags;
-	GLint buf_flags = GL_COLOR_BUFFER_BIT;
 
 	if (in == out)
 		return;
@@ -473,6 +487,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 		w_in = def_buf_w;
 		h_in = def_buf_h;
 		in = &def_buf;
+		glReadBuffer(GL_BACK);
 	} else {
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, in->framebuf);
 
@@ -482,6 +497,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 			if (in->colorbufs[i]->h < h_in)
 				h_in = in->colorbufs[i]->h;
 		}
+		glReadBuffer(GL_COLOR_ATTACHMENT0 + in_idx);
 	}
 
 	if (! out) {
@@ -489,22 +505,18 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 		w_out = def_buf_w;
 		h_out = def_buf_h;
 		out = &def_buf;
+		glDrawBuffer(GL_BACK);
 	} else {
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, in->framebuf);
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, out->framebuf);
+		glDrawBuffer(GL_COLOR_ATTACHMENT0 + out_idx);
 	}
 
 	if (!w_in || !w_out || !h_in || !h_out)
 		errx(1, "Tried to blit from/to zero-sized colorbuf");
 
-	mutual_flags = in->flags & out->flags;
 
-	if (mutual_flags & COLORBUF_DEPTH)
-		buf_flags |= GL_DEPTH_BUFFER_BIT;
-	if (mutual_flags & COLORBUF_STENCIL)
-		buf_flags |= GL_STENCIL_BUFFER_BIT;
-
-	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out, buf_flags,
-			  GL_NEAREST);
+	glBlitFramebuffer(0,0,w_in,h_in,0,0,w_out,h_out,
+			  GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	CHECK_GL;
 
 	if (current_colorbuf) {
@@ -513,6 +525,7 @@ colorbuf_copy(colorbuf_t *in, colorbuf_t *out)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	colorbuf_set_draw();
 	CHECK_GL;
 }
 

@@ -223,7 +223,7 @@ render(void)
 	draw_queue_flush(draw_queue);
 	colorbuf_complete_dep(cbuf);
 
-	colorbuf_copy(cbuf, NULL);
+	colorbuf_copy(cbuf, 0, NULL, 0);
 	colorbuf_invalidate(cbuf);
 
 	glutSwapBuffers();

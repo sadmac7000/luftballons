@@ -90,7 +90,8 @@ void colorbuf_complete_dep(colorbuf_t *colorbuf);
 void colorbuf_invalidate(colorbuf_t *colorbuf);
 void colorbuf_on_ready(colorbuf_t *colorbuf, void (*callback)(void *), void *data);
 void colorbuf_prep(colorbuf_t *colorbuf);
-void colorbuf_copy(colorbuf_t *in, colorbuf_t *out);
+void colorbuf_copy(colorbuf_t *in, size_t in_idx,
+		   colorbuf_t *out, size_t out_idx);
 void colorbuf_clear_color(colorbuf_t *in, float color[4]);
 void colorbuf_clear_depth(colorbuf_t *in, float depth);
 void colorbuf_clear_stencil(colorbuf_t *in, int index);
