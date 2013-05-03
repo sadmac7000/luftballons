@@ -148,32 +148,53 @@ colorbuf_max_bufs(void)
 }
 
 /**
- * Append a buf to a colorbuf.
+ * Set the buffer at the given index in a colorbuf.
  **/
-size_t
-colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap)
+void
+colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap)
 {
-	if (! buf)
-		errx(1, "Cannot append to output framebuffer");
-
-	if (buf->num_colorbufs == colorbuf_max_bufs())
-		errx(1, "Platform does not support more than "
-		     "%zu color buffers", colorbuf_max_bufs());
-
-	buf->flags &= ~COLORBUF_RENDERBUF_HAS_STORAGE;
-	buf->colorbufs = vec_expand(buf->colorbufs, buf->num_colorbufs);
-	buf->colorbufs[buf->num_colorbufs++] = texmap;
-	texmap_grab(texmap);
+	size_t i;
 
 	/* FIXME */
 	if (buf == current_colorbuf)
 		errx(1, "Haven't implemented append for active colorbuf");
 
-	return buf->num_colorbufs - 1;
+	if (! buf)
+		errx(1, "Cannot append to output framebuffer");
+
+	if (idx >= colorbuf_max_bufs())
+		errx(1, "Platform does not support more than "
+		     "%zu color buffers", colorbuf_max_bufs());
+
+	buf->flags &= ~COLORBUF_RENDERBUF_HAS_STORAGE;
+
+	if (buf->num_colorbufs <= idx) {
+		if (! texmap)
+			return;
+
+		buf->colorbufs = vec_expand(buf->colorbufs, idx);
+
+		for (i = buf->num_colorbufs; i <= idx; i++)
+			buf->colorbufs[i] = NULL;
+
+		buf->num_colorbufs = idx + 1;
+	}
+
+	if (buf->colorbufs[idx])
+		texmap_ungrab(buf->colorbufs[idx]);
+
+	buf->colorbufs[idx] = texmap;
+
+	if (texmap) {
+		texmap_grab(texmap);
+		return;
+	}
+
+	while (! buf->colorbufs[--buf->num_colorbufs]);
 }
 
 /**
- * Grab a a colorbuf, inform it that we are a dependency.
+ * Grab a colorbuf, inform it that we are a dependency.
  **/
 void
 colorbuf_dep_grab(colorbuf_t *colorbuf)
@@ -289,6 +310,11 @@ static int
 colorbuf_alloc_framebuffer(texmap_t *map, GLenum *attach)
 {
 	size_t i;
+
+	if (! map) {
+		*attach = GL_NONE;
+		return 0;
+	}
 
 	for (i = 0; i < framebuf_maps_size && framebuf_maps[i] != map &&
 	     framebuf_maps[i]; i++);

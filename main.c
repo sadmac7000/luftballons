@@ -347,7 +347,7 @@ main(int argc, char **argv)
 	colorbuf_clear_depth(cbuf, 1.0);
 	cbuf_texmap = texmap_create(0, 0, 0);
 	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
-	colorbuf_append_buf(cbuf, cbuf_texmap);
+	colorbuf_set_buf(cbuf, 0, cbuf_texmap);
 
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");

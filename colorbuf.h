@@ -78,7 +78,7 @@ extern "C" {
 colorbuf_t *colorbuf_create(unsigned int flags);
 void colorbuf_grab(colorbuf_t *colorbuf);
 void colorbuf_ungrab(colorbuf_t *colorbuf);
-size_t colorbuf_append_buf(colorbuf_t *buf, texmap_t *texmap);
+void colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap);
 void colorbuf_dep_grab(colorbuf_t *colorbuf);
 void colorbuf_dep_ungrab(colorbuf_t *colorbuf);
 void colorbuf_complete_dep(colorbuf_t *colorbuf);
