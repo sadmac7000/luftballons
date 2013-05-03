@@ -32,9 +32,6 @@ extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
 extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
 				  const char *path);
 
-/*  Prototype for colorbuf notifier */
-void colorbuf_notify_texmap_change(texmap_t *texmap);
-
 /**
  * Load image from a file into a texture map.
  *
@@ -47,22 +44,23 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 {
 	int fd = open(path, O_RDONLY | O_CLOEXEC);
 
+	if (map->flags & TEXMAP_INITIALIZED)
+		errx(1, "Tried to initialize texmap twice");
+
+	map->flags |= TEXMAP_INITIALIZED;
+
 	if (fd < 0)
 		err(1, "Could not open image file %s", path);
 
 	if (texmap_load_image_png(map, level, fd, path))
-		goto notify;
+		return;
 
 	lseek(fd, 0, SEEK_SET);
 
 	if (texmap_load_image_tiff(map, level, fd, path))
-		goto notify;
+		return;
 
 	errx(1, "Unrecognized image format for %s", path);
-
-notify:
-	if (map->flags & TEXMAP_NOTIFY_COLORBUF)
-		colorbuf_notify_texmap_change(map);
 }
 
 /**
@@ -146,6 +144,11 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 {
 	GLint ifmt = GL_RGBA;
 
+	if (map->flags & TEXMAP_INITIALIZED)
+		errx(1, "Tried to initialize texmap twice");
+
+	map->flags |= TEXMAP_INITIALIZED;
+
 	map->w = width;
 	map->h = height;
 
@@ -156,7 +159,4 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, NULL);
 	CHECK_GL;
-
-	if (map->flags & TEXMAP_NOTIFY_COLORBUF)
-		colorbuf_notify_texmap_change(map);
 }

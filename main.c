@@ -80,7 +80,6 @@ handle_reshape(void)
 
 	camera_update_aspect(camera, aspect);
 	colorbuf_set_output_geom(win_sz[0], win_sz[1]);
-	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
 }
 
 float
@@ -347,6 +346,7 @@ main(int argc, char **argv)
 	colorbuf_clear_color(cbuf, clear_color);
 	colorbuf_clear_depth(cbuf, 1.0);
 	cbuf_texmap = texmap_create(0, 0, 0);
+	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
 	colorbuf_append_buf(cbuf, cbuf_texmap);
 
 	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
