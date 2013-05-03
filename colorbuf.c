@@ -96,7 +96,7 @@ colorbuf_create(unsigned int flags)
 	if (flags & ~(COLORBUF_VALID_FLAGS))
 		errx(1, "Colorbuf initialized with invalid flags");
 
-	flags |= COLORBUF_INITIALIZED;
+	flags |= COLORBUF_INITIALIZED | COLORBUF_NEEDS_CLEAR;
 
 	if (flags & COLORBUF_DEPTH)
 		glGenRenderbuffers(1, &ret->autodepth);
@@ -206,57 +206,6 @@ colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap)
 }
 
 /**
- * Grab a colorbuf, inform it that we are a dependency.
- **/
-void
-colorbuf_dep_grab(colorbuf_t *colorbuf)
-{
-	if (! colorbuf)
-		colorbuf = &def_buf;
-
-	colorbuf_grab(colorbuf);
-
-	colorbuf->deps_total++;
-}
-
-/**
- * Ungrab a colorbuf, inform it that we no longer depend on it.
- **/
-void
-colorbuf_dep_ungrab(colorbuf_t *colorbuf)
-{
-	if (! colorbuf)
-		colorbuf = &def_buf;
-
-	if (! colorbuf->deps_total)
-		errx(1, "Colorbuf dependency count went negative");
-
-	colorbuf->deps_total--;
-	colorbuf_ungrab(colorbuf);
-}
-
-/**
- * Notify a colorbuf that one of its dependencies has been satisfied.
- **/
-void
-colorbuf_complete_dep(colorbuf_t *colorbuf)
-{
-	if (! colorbuf)
-		colorbuf = &def_buf;
-
-	colorbuf->deps_complete++;
-
-	if (colorbuf->deps_complete > colorbuf->deps_total)
-		errx(1, "Dependency count mismatch in colorbuf");
-
-	if (colorbuf->deps_complete != colorbuf->deps_total)
-		return;
-
-	if (colorbuf->ready_callback)
-		colorbuf->ready_callback(colorbuf->ready_callback_data);
-}
-
-/**
  * Clear the contents of the current colorbuf.
  **/
 static void
@@ -290,15 +239,15 @@ colorbuf_do_clear(void)
  * Notify the colorbuf that its contents are no longer valid.
  **/
 void
-colorbuf_invalidate(colorbuf_t *colorbuf)
+colorbuf_clear(colorbuf_t *colorbuf)
 {
 	if (! colorbuf)
 		colorbuf = &def_buf;
 
-	colorbuf->deps_complete = 0;
-
 	if (colorbuf == current_colorbuf)
 		colorbuf_do_clear();
+	else
+		colorbuf->flags |= COLORBUF_NEEDS_CLEAR;
 }
 
 /**
@@ -440,8 +389,9 @@ colorbuf_prep(colorbuf_t *colorbuf)
 
 		colorbuf_set_draw();
 
-		if (! def_buf.deps_complete)
+		if (def_buf.flags & COLORBUF_NEEDS_CLEAR)
 			colorbuf_do_clear();
+		def_buf.flags &= ~COLORBUF_NEEDS_CLEAR;
 
 		CHECK_GL;
 		return;
@@ -463,8 +413,10 @@ colorbuf_prep(colorbuf_t *colorbuf)
 	colorbuf_prep_depth_stencil();
 	colorbuf_set_draw();
 
-	if (colorbuf->deps_complete == 0)
+	if (colorbuf->flags & COLORBUF_NEEDS_CLEAR)
 		colorbuf_do_clear();
+
+	colorbuf->flags &= ~COLORBUF_NEEDS_CLEAR;
 }
 
 /**

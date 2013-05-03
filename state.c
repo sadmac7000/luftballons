@@ -41,7 +41,7 @@ state_destructor(void *data)
 		uniform_ungrab(state->uniforms[i]);
 
 	if (state->colorbuf)
-		colorbuf_dep_ungrab(state->colorbuf);
+		colorbuf_ungrab(state->colorbuf);
 
 
 	free(state->uniforms);
@@ -247,9 +247,9 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 	state_assert_not_current(state);
 
 	if (state->colorbuf)
-		colorbuf_dep_ungrab(state->colorbuf);
+		colorbuf_ungrab(state->colorbuf);
 
-	colorbuf_dep_grab(colorbuf);
+	colorbuf_grab(colorbuf);
 	state->colorbuf = colorbuf;
 }
 

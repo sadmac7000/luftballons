@@ -212,22 +212,19 @@ render(void)
 	object_set_rotation(cube_center, &center_rot);
 	object_set_translation(cube, offset);
 
+	colorbuf_clear(cbuf);
 	draw_queue_draw(draw_queue, cube_center, camera);
 
 	state_enter(cube_state);
 	draw_queue_flush(draw_queue);
-	colorbuf_complete_dep(cbuf);
 
 	state_enter(plane_state);
 	draw_queue_flush(draw_queue);
-	colorbuf_complete_dep(cbuf);
 
 	state_enter(canopy_state);
 	draw_queue_flush(draw_queue);
-	colorbuf_complete_dep(cbuf);
 
 	colorbuf_copy(cbuf, 0, NULL, 0);
-	colorbuf_invalidate(cbuf);
 
 	glutSwapBuffers();
 	glutPostRedisplay();

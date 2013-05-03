@@ -34,6 +34,7 @@
 /* Internal flags */
 #define COLORBUF_RENDERBUF_HAS_STORAGE	0x100
 #define COLORBUF_INITIALIZED		0x200
+#define COLORBUF_NEEDS_CLEAR		0x400
 
 /**
  * A set of color buffer targets.
@@ -41,10 +42,6 @@
  * num_colorbufs, colorbufs: The set of buffers.
  * colorbuf_attach_pos: Parallel to `colorbufs`. Attachment indicies.
  * framebuf: OpenGL framebuffer handle.
- * deps_total: Number of dependencies this buffer has.
- * deps_complete: Number of dependencies which have been satisfied right now.
- * ready_callback: Callback to run when all deps are complete.
- * ready_callback_data: Data to pass to the ready callback.
  * clear_color: Color to clear to if we clear.
  * clear_depth: Depth to clear to if we clear depth.
  * clear_stencil: Stencil clear-index if we clear that.
@@ -58,12 +55,6 @@ typedef struct colorbuf {
 	size_t *colorbuf_attach_pos;
 
 	GLuint framebuf;
-
-	size_t deps_total;
-	size_t deps_complete;
-
-	void (*ready_callback)(void *);
-	void *ready_callback_data;
 
 	float clear_color[4];
 	float clear_depth;
@@ -84,11 +75,7 @@ colorbuf_t *colorbuf_create(unsigned int flags);
 void colorbuf_grab(colorbuf_t *colorbuf);
 void colorbuf_ungrab(colorbuf_t *colorbuf);
 void colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap);
-void colorbuf_dep_grab(colorbuf_t *colorbuf);
-void colorbuf_dep_ungrab(colorbuf_t *colorbuf);
-void colorbuf_complete_dep(colorbuf_t *colorbuf);
-void colorbuf_invalidate(colorbuf_t *colorbuf);
-void colorbuf_on_ready(colorbuf_t *colorbuf, void (*callback)(void *), void *data);
+void colorbuf_clear(colorbuf_t *colorbuf);
 void colorbuf_prep(colorbuf_t *colorbuf);
 void colorbuf_copy(colorbuf_t *in, size_t in_idx,
 		   colorbuf_t *out, size_t out_idx);
