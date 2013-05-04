@@ -18,6 +18,8 @@
 #ifndef INTERVAL_H
 #define INTERVAL_H
 
+#include <stdlib.h>
+
 /**
  * An interval, which is to say a start and length.
  **/

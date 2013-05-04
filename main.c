@@ -31,26 +31,24 @@
 #include <GL/glut.h>
 
 #include "shader.h"
-#include "mesh.h"
 #include "object.h"
 #include "camera.h"
-#include "matrix.h"
 #include "quat.h"
-#include "draw_queue.h"
 #include "dae_load.h"
 #include "texmap.h"
 #include "state.h"
 #include "colorbuf.h"
+#include "target.h"
 
 object_t *cube;
 object_t *cube_center;
 camera_t *camera;
-draw_queue_t *draw_queue;
 state_t *cube_state;
 state_t *plane_state;
 state_t *canopy_state;
 colorbuf_t *cbuf;
 texmap_t *cbuf_texmap;
+target_t *target;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -213,16 +211,8 @@ render(void)
 	object_set_translation(cube, offset);
 
 	colorbuf_clear(cbuf);
-	draw_queue_draw(draw_queue, cube_center, camera);
 
-	state_enter(cube_state);
-	draw_queue_flush(draw_queue);
-
-	state_enter(plane_state);
-	draw_queue_flush(draw_queue);
-
-	state_enter(canopy_state);
-	draw_queue_flush(draw_queue);
+	target_hit(target);
 
 	colorbuf_copy(cbuf, 0, NULL, 0);
 
@@ -391,8 +381,6 @@ main(int argc, char **argv)
 	state_set_uniform(plane_state,
 			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
 
-	draw_queue = draw_queue_create();
-
 	cube_center = object_create(NULL);
 
 	items = dae_load("ref_model/vcolor_cube_small.dae", &dae_mesh_count);
@@ -415,6 +403,10 @@ main(int argc, char **argv)
 	free(items);
 
 	camera = camera_create(.01, 3000.0, aspect, 45);
+	target = target_create(cube_center, camera);
+	target_add_state(target, cube_state);
+	target_add_state(target, canopy_state);
+	target_add_state(target, plane_state);
 
 	glutMainLoop();
 	return 0;

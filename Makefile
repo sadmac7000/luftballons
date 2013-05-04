@@ -41,6 +41,7 @@ luftballons_OBJS =	\
 	quat.o		\
 	refcount.o	\
 	colorbuf.o	\
+	target.o	\
 	state.o
 
 luftballons_LINK=-lglut -lGL -lm -lstdc++ \
