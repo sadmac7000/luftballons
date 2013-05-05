@@ -21,7 +21,6 @@
 #include "mesh.h"
 #include "quat.h"
 #include "shader.h"
-#include "camera.h"
 #include "refcount.h"
 
 /**
@@ -69,7 +68,7 @@ typedef struct object {
 	object_type_t type;
 	union {
 		mesh_t *mesh;
-		camera_t *camera;
+		struct camera *camera;
 		float light_color[3];
 	};
 
@@ -92,6 +91,7 @@ extern "C" {
 object_t *object_create(object_t *parent);
 void object_set_mesh(object_t *object, mesh_t *mesh);
 void object_make_light(object_t *object, float color[3]);
+void object_make_camera(object_t *object, float fov, float near, float far);
 void object_set_name(object_t *object, const char *name);
 void object_grab(object_t *object);
 void object_ungrab(object_t *object);
@@ -106,6 +106,10 @@ void object_reparent(object_t *object, object_t *parent);
 void object_apply_pretransform(object_t *object, float matrix[16]);
 void object_get_total_transform(object_t *object, float mat[16]);
 object_t *object_lookup(object_t *object, const char *name);
+
+void camera_set_aspect(object_t *camera, float aspect);
+void camera_to_clip(object_t *camera, float mat[16]);
+void camera_from_world(object_t *camera, float mat[16]);
 
 void object_cursor_init(object_cursor_t *cursor, object_t *root);
 void object_cursor_down(object_cursor_t *cursor, size_t child);

@@ -17,11 +17,24 @@
 
 #include <err.h>
 #include <string.h>
+#include <math.h>
 
 #include "object.h"
 #include "util.h"
 #include "matrix.h"
 #include "quat.h"
+
+/**
+ * Metadata for a camera.
+ **/
+struct camera {
+	float *to_clip_xfrm;
+	float near;
+	float far;
+	float zoom;
+	float fov_scale;
+	float aspect;
+};
 
 /**
  * Set up a cursor to traverse objects rooted at the given object, and prep for
@@ -161,6 +174,25 @@ object_apply_pretransform(object_t *object, float matrix[16])
 }
 
 /**
+ * If an object is not of type OBJ_NODE, make it type OBJ_NODE, clearing out
+ * its resources in the process.
+ **/
+static void
+object_make_nodetype(object_t *object)
+{
+	if (object->type == OBJ_NODE)
+		return;
+
+	if (object->type == OBJ_MESH)
+		mesh_ungrab(object->mesh);
+
+	if (object->type == OBJ_CAMERA)
+		free(object->camera);
+
+	object->type = OBJ_NODE;
+}
+
+/**
  * Destructor for an object.
  **/
 void
@@ -180,10 +212,7 @@ object_destructor(void *object_)
 	free(object->name);
 	free(object->transform_cache);
 
-	if (object->type == OBJ_MESH)
-		mesh_ungrab(object->mesh);
-	/* if (object->type == OBJ_CAMERA)
-		do_something(); */
+	object_make_nodetype(object);
 
 	free(object);
 }
@@ -222,22 +251,6 @@ object_create(object_t *parent)
 }
 
 /**
- * If an object is not of type OBJ_NODE, make it type OBJ_NODE, clearing out
- * its resources in the process.
- **/
-static void
-object_make_nodetype(object_t *object)
-{
-	if (object->type == OBJ_NODE)
-		return;
-
-	if (object->type == OBJ_MESH)
-		mesh_ungrab(object->mesh);
-
-	object->type = OBJ_NODE;
-}
-
-/**
  * Make this object a light.
  **/
 void
@@ -246,6 +259,104 @@ object_make_light(object_t *object, float color[3])
 	object_make_nodetype(object);
 	object->type = OBJ_LIGHT;
 	memcpy(object->light_color, color, 3 * sizeof(float));
+}
+
+/**
+ * Make this object a camera.
+ **/
+void
+object_make_camera(object_t *object, float fov, float near, float far)
+{
+	fov *= 3.14159;
+	fov /= 360;
+
+	object_make_nodetype(object);
+	object->type = OBJ_CAMERA;
+	object->camera = xmalloc(sizeof(struct camera));
+	object->camera->near = near;
+	object->camera->far = far;
+	object->camera->fov_scale = cosf(fov) / sinf(fov);
+	object->camera->aspect = 1.0;
+	object->camera->zoom = 1.0;
+	object->camera->to_clip_xfrm = NULL;
+}
+
+/**
+ * Invalidate the clip transform matrix.
+ **/
+static void
+camera_invalidate_clip(object_t *camera)
+{
+	if (camera->camera->to_clip_xfrm)
+		free(camera->camera->to_clip_xfrm);
+
+	camera->camera->to_clip_xfrm = NULL;
+}
+
+/**
+ * Get the clip matrix for this camera.
+ **/
+void
+camera_to_clip(object_t *camera, float mat[16])
+{
+	float scale;
+	float aspect;
+	float near;
+	float far;
+
+	if (camera->type != OBJ_CAMERA)
+		errx(1, "camera_to_clip must be called on "
+		     "an object of type camera");
+
+	scale = camera->camera->zoom * camera->camera->fov_scale;
+	aspect = camera->camera->aspect;
+	near = camera->camera->near;
+	far = camera->camera->far;
+
+	if (! camera->camera->to_clip_xfrm) {
+		camera->camera->to_clip_xfrm = xcalloc(16, sizeof(float));
+		camera->camera->to_clip_xfrm[0] = scale / aspect;
+		camera->camera->to_clip_xfrm[5] = scale;
+		camera->camera->to_clip_xfrm[10] = (near + far)/(near - far);
+		camera->camera->to_clip_xfrm[11] = -1;
+		camera->camera->to_clip_xfrm[14] = 2*near*far/(near - far);
+	}
+
+	memcpy(mat, camera->camera->to_clip_xfrm, 16 * sizeof(float));
+}
+
+/**
+ * Get the cameraspace matrix for this camera.
+ **/
+void
+camera_from_world(object_t *camera, float mat[16])
+{
+	if (camera->type != OBJ_CAMERA)
+		errx(1, "camera_from_world must be called on "
+		     "an object of type camera");
+
+	/**
+	 * We don't yet cache this. Necessary? Also there's the question of
+	 * whether scaling is a problem here.
+	 **/
+	object_get_total_transform(camera, mat);
+	matrix_transpose(mat, mat);
+	matrix_inverse_trans(mat, mat);
+}
+
+/**
+ * Set the aspect ratio of a camera.
+ **/
+void
+camera_set_aspect(object_t *camera, float aspect)
+{
+	camera_invalidate_clip(camera);
+
+	if (camera->type != OBJ_CAMERA)
+		errx(1, "Setting view aspect ratio of an object "
+		     "that isn't a camera.");
+
+	camera->camera->aspect = aspect;
 }
 
 /**
