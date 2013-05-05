@@ -22,6 +22,7 @@
 #include "quat.h"
 #include "shader.h"
 #include "camera.h"
+#include "refcount.h"
 
 /**
  * Types of objects we place in the scene.
@@ -44,11 +45,13 @@ typedef enum {
  * trans: Amount to translate this object.
  * scale: Amount to scale this object.
  * pretransform: A transform matrix to apply before our local transforms.
+ * transform_cache: Combined transform of this object and its parent.
  * children: List of child objects of this object.
  * child_count: Size of the children list.
  * type: What type of object this is.
  * mesh: The mesh to draw at this object's location.
  * camera: A camera to position at this location.
+ * refcount: Reference count.
  **/
 typedef struct object {
 	struct object *parent;
@@ -58,6 +61,7 @@ typedef struct object {
 	float trans[3];
 	float scale[3];
 	float pretransform[16];
+	float *transform_cache;
 
 	struct object **children;
 	size_t child_count;
@@ -68,6 +72,8 @@ typedef struct object {
 		camera_t *camera;
 		float light_color[3];
 	};
+
+	refcounter_t refcount;
 } object_t;
 
 /**
@@ -87,7 +93,8 @@ object_t *object_create(object_t *parent);
 void object_set_mesh(object_t *object, mesh_t *mesh);
 void object_make_light(object_t *object, float color[3]);
 void object_set_name(object_t *object, const char *name);
-void object_destroy(object_t *object);
+void object_grab(object_t *object);
+void object_ungrab(object_t *object);
 void object_rotate(object_t *object, quat_t *quat);
 void object_move(object_t *object, float vec[3]);
 void object_scale(object_t *object, float scale[3]);
@@ -96,8 +103,8 @@ void object_set_translation(object_t *object, float vec[3]);
 void object_set_scale(object_t *object, float scale[3]);
 void object_get_transform_mat(object_t *object, float matrix[16]);
 void object_reparent(object_t *object, object_t *parent);
-void object_unparent(object_t *object);
 void object_apply_pretransform(object_t *object, float matrix[16]);
+void object_get_total_transform(object_t *object, float mat[16]);
 object_t *object_lookup(object_t *object, const char *name);
 
 void object_cursor_init(object_cursor_t *cursor, object_t *root);

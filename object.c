@@ -137,12 +137,55 @@ object_lookup(object_t *object, const char *name)
 }
 
 /**
+ * Invalidate the transform cache.
+ **/
+static void
+object_invalidate_transform_cache(object_t *object)
+{
+	if (! object->transform_cache)
+		return;
+
+	free(object->transform_cache);
+	object->transform_cache = NULL;
+	return;
+}
+
+/**
  * Set the value of the pretransform matrix.
  **/
 void
 object_apply_pretransform(object_t *object, float matrix[16])
 {
+	object_invalidate_transform_cache(object);
 	memcpy(object->pretransform, matrix, 16 * sizeof(float));
+}
+
+/**
+ * Destructor for an object.
+ **/
+void
+object_destructor(void *object_)
+{
+	object_t *object = object_;
+
+	while (object->child_count)
+		object_reparent(object->children[object->child_count - 1], NULL);
+
+	free(object->children);
+
+	/* The parent should hold a reference to us if it exists. */
+	if (object->parent)
+		errx(1, "Object unreferenced but still has parent.");
+
+	free(object->name);
+	free(object->transform_cache);
+
+	if (object->type == OBJ_MESH)
+		mesh_ungrab(object->mesh);
+	/* if (object->type == OBJ_CAMERA)
+		do_something(); */
+
+	free(object);
 }
 
 /**
@@ -158,6 +201,7 @@ object_create(object_t *parent)
 	ret->type = OBJ_NODE;
 	ret->name = NULL;
 	ret->mat_id = 0;
+	ret->transform_cache = NULL;
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
@@ -166,10 +210,13 @@ object_create(object_t *parent)
 	ret->children = NULL;
 	ret->child_count = 0;
 
-	if (parent)
-		object_reparent(ret, parent);
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, object_destructor, ret);
 
 	object_apply_pretransform(ret, ident);
+
+	if (parent)
+		object_reparent(ret, parent);
 
 	return ret;
 }
@@ -226,35 +273,21 @@ object_set_name(object_t *object, const char *name)
 }
 
 /**
- * Destroy an object.
+ * Grab an object.
  **/
 void
-object_destroy(object_t *object)
+object_grab(object_t *object)
 {
-	ssize_t up;
-	object_cursor_t cursor;
+	refcount_grab(&object->refcount);
+}
 
-	object_cursor_init(&cursor, object);
-
-	for (;;) {
-		while (cursor.current->child_count)
-			object_cursor_down(&cursor, 0);
-
-		while (! cursor.current->child_count) {
-			object = cursor.current;
-			up = object_cursor_up(&cursor);
-			
-			object_unparent(object);
-
-			object_make_nodetype(object);
-
-			free(object->children);
-			free(object);
-
-			if (up < 0)
-			    return;
-		}
-	}
+/**
+ * Ungrab an object.
+ **/
+void
+object_ungrab(object_t *object)
+{
+	refcount_ungrab(&object->refcount);
 }
 
 /**
@@ -263,6 +296,7 @@ object_destroy(object_t *object)
 void
 object_scale(object_t *object, float scale[3])
 {
+	object_invalidate_transform_cache(object);
 	object->scale[0] *= scale[0];
 	object->scale[1] *= scale[1];
 	object->scale[2] *= scale[2];
@@ -274,6 +308,7 @@ object_scale(object_t *object, float scale[3])
 void
 object_set_scale(object_t *object, float scale[3])
 {
+	object_invalidate_transform_cache(object);
 	object->scale[0] = scale[0];
 	object->scale[1] = scale[1];
 	object->scale[2] = scale[2];
@@ -285,6 +320,7 @@ object_set_scale(object_t *object, float scale[3])
 void
 object_rotate(object_t *object, quat_t *quat)
 {
+	object_invalidate_transform_cache(object);
 	quat_mul(quat, &object->rot, &object->rot);
 }
 
@@ -294,6 +330,7 @@ object_rotate(object_t *object, quat_t *quat)
 void
 object_move(object_t *object, float vec[3])
 {
+	object_invalidate_transform_cache(object);
 	vec3_add(object->trans, vec, object->trans);
 }
 
@@ -303,6 +340,7 @@ object_move(object_t *object, float vec[3])
 void
 object_set_rotation(object_t *object, quat_t *quat)
 {
+	object_invalidate_transform_cache(object);
 	quat_dup(quat, &object->rot);
 }
 
@@ -312,6 +350,7 @@ object_set_rotation(object_t *object, quat_t *quat)
 void
 object_set_translation(object_t *object, float vec[3])
 {
+	object_invalidate_transform_cache(object);
 	vec3_dup(vec, object->trans);
 }
 
@@ -336,22 +375,44 @@ object_get_transform_mat(object_t *object, float matrix[16])
 }
 
 /**
- * Add a child to an object.
+ * Create the transform cache.
  **/
-void
-object_reparent(object_t *object, object_t *parent)
+static void
+object_fill_transform_cache(object_t *object)
 {
-	object_unparent(object);
+	float parent[16];
 
-	parent->children = vec_expand(parent->children, parent->child_count);
-	parent->children[parent->child_count++] = object;
-	object->parent = parent;
+	if (object->transform_cache)
+		return;
+
+	object->transform_cache = xcalloc(16, sizeof(float));
+	object_get_transform_mat(object, object->transform_cache);
+
+	if (! object->parent)
+		return;
+
+	object_get_total_transform(object->parent, parent);
+	matrix_multiply(object->transform_cache, parent,
+			object->transform_cache);
 }
 
 /**
- * Remove an object from its parent.
+ * Get a transform matrix for this object including the transform of its
+ * parents.
  **/
 void
+object_get_total_transform(object_t *object, float mat[16])
+{
+	object_fill_transform_cache(object);
+
+	memcpy(mat, object->transform_cache, 16 * sizeof(float));
+}
+
+/**
+ * Remove an object from its parent. This will ungrab the object and MAY FREE
+ * IT.
+ **/
+static void
 object_unparent(object_t *object)
 {
 	size_t i;
@@ -360,6 +421,7 @@ object_unparent(object_t *object)
 	if (! object->parent)
 		return;
 
+	object_invalidate_transform_cache(object);
 	parent = object->parent;
 	object->parent = NULL;
 
@@ -374,4 +436,25 @@ object_unparent(object_t *object)
 	       (parent->child_count - i) * sizeof(object_t *));
 
 	parent->children = vec_contract(parent->children, parent->child_count);
+	object_ungrab(object);
+}
+
+/**
+ * Add a child to an object. If the parent is NULL then we unparent the object,
+ * which MAY FREE THE OBJECT.
+ **/
+void
+object_reparent(object_t *object, object_t *parent)
+{
+	object_grab(object);
+	object_unparent(object);
+
+	object->parent = parent;
+
+	if (parent) {
+		parent->children = vec_expand(parent->children, parent->child_count);
+		parent->children[parent->child_count++] = object;
+	} else {
+		object_ungrab(object);
+	}
 }
