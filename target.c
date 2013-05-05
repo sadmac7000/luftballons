@@ -37,7 +37,7 @@ target_destructor(void *target_)
 
 	free(target->states);
 	free(target->deps);
-	/*object_ungrab(target->root);*/
+	object_ungrab(target->root);
 	free(target);
 }
 
@@ -51,7 +51,7 @@ target_create(object_t *root, camera_t *camera)
 
 	ret->root = root;
 	ret->camera = camera;
-	/*object_grab(root);*/
+	object_grab(root);
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, target_destructor, ret);
