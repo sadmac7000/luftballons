@@ -38,6 +38,7 @@ target_destructor(void *target_)
 	free(target->states);
 	free(target->deps);
 	object_ungrab(target->root);
+	object_ungrab(target->camera);
 	free(target);
 }
 
@@ -45,13 +46,14 @@ target_destructor(void *target_)
  * Create a new target.
  **/
 target_t *
-target_create(object_t *root, camera_t *camera)
+target_create(object_t *root, object_t *camera)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
 
 	ret->root = root;
 	ret->camera = camera;
 	object_grab(root);
+	object_grab(camera);
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, target_destructor, ret);

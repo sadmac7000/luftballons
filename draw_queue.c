@@ -76,11 +76,11 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  * queue: The queue to add to.
  * object: The object contianing the mesh to draw.
  * transform: The transform to apply to the mesh.
- * camera: The camera we are drawing with.
+ * clip_xfrm: The clip transform matrix.
  **/
 static void
 draw_queue_add_op(draw_queue_t *queue, object_t *object,
-		  float transform[16], camera_t *camera)
+		  float transform[16], float clip_xfrm[16])
 {
 	struct draw_op *op = xmalloc(sizeof(struct draw_op));
 	float normal_trans[16];
@@ -107,7 +107,7 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object,
 	uniform_grab(op->uniforms[1]);
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
-	memcpy(tmp.data_ptr, camera->to_clip_xfrm, 16 * sizeof(float));
+	memcpy(tmp.data_ptr, clip_xfrm, 16 * sizeof(float));
 	op->uniforms[2] = uniform_create("clip_transform", UNIFORM_MAT4, tmp);
 	uniform_grab(op->uniforms[2]);
 
@@ -137,7 +137,7 @@ draw_queue_add_light(draw_queue_t *queue, object_t *object,
  **/
 static void
 draw_queue_draw_matrix(draw_queue_t *queue, object_t *object,
-		       float parent_trans[16], camera_t *camera)
+		       float parent_trans[16], float clip_trans[16])
 {
 	ssize_t i = 0;
 	float transform[16];
@@ -152,7 +152,8 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object,
 		matrix_multiply(parent_trans, transform, transform);
 
 		if (object->type == OBJ_MESH)
-			draw_queue_add_op(queue, object, transform, camera);
+			draw_queue_add_op(queue, object, transform,
+					  clip_trans);
 		else if (object->type == OBJ_LIGHT)
 			draw_queue_add_light(queue, object, transform);
 
@@ -184,9 +185,14 @@ draw_queue_draw_matrix(draw_queue_t *queue, object_t *object,
  * the perspective of the given camera.
  **/
 void
-draw_queue_draw(draw_queue_t *queue, object_t *object, camera_t *camera)
+draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 {
-	draw_queue_draw_matrix(queue, object, camera->to_cspace_xfrm, camera);
+	float cspace[16];
+	float clip[16];
+
+	camera_from_world(camera, cspace);
+	camera_to_clip(camera, clip);
+	draw_queue_draw_matrix(queue, object, cspace, clip);
 }
 
 /**

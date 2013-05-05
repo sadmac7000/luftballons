@@ -21,7 +21,6 @@
 #include "state.h"
 #include "object.h"
 #include "refcount.h"
-#include "camera.h"
 
 /**
  * A rendering goal.
@@ -40,7 +39,7 @@ typedef struct target {
 	size_t num_states;
 
 	object_t *root;
-	camera_t *camera;
+	object_t *camera;
 
 	refcounter_t refcount;
 } target_t;
@@ -49,7 +48,7 @@ typedef struct target {
 extern "C" {
 #endif
 
-target_t *target_create(object_t *root, camera_t *camera);
+target_t *target_create(object_t *root, object_t *camera);
 void target_grab(target_t *target);
 void target_ungrab(target_t *target);
 void target_add_dep(target_t *target, target_t *dep);

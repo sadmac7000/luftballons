@@ -32,7 +32,6 @@
 
 #include "shader.h"
 #include "object.h"
-#include "camera.h"
 #include "quat.h"
 #include "dae_load.h"
 #include "texmap.h"
@@ -42,7 +41,8 @@
 
 object_t *cube;
 object_t *cube_center;
-camera_t *camera;
+object_t *camera;
+quat_t cam_rot;
 state_t *cube_state;
 state_t *plane_state;
 state_t *canopy_state;
@@ -76,7 +76,7 @@ handle_reshape(void)
 		return;
 	need_reshape = 0;
 
-	camera_update_aspect(camera, aspect);
+	camera_set_aspect(camera, aspect);
 	colorbuf_set_output_geom(win_sz[0], win_sz[1]);
 	cbuf_texmap = texmap_create(0, 0, 0);
 	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
@@ -99,61 +99,37 @@ update_camera(float time)
 {
 	float delta_t = time - frame_time;
 	float speed = delta_t * .003;
-	float rot_speed = .006;
-	float yaw_amt = 0;
-	float pitch_amt = 0;
-	float dir_vec[3];
+	float rot_speed = delta_t * .001;
 	float offset_vec[3] = { 0, 0, 0 };
-	float tmp_vec[3];
-	float up_vec[3] = { 0, 1, 0 };
-	float right_vec[3];
-	float new_pos[3];
-	float dir_vec_new[3];
-	float xz_dist;
-	float arcos;
+	float pitch_amt = 0;
+	float yaw_amt = 0;
+	quat_t quat;
+	MATRIX_DECL_IDENT(translate);
+	float rotate[16];
 
-	vec3_subtract(camera->target, camera->pos, dir_vec);
-	vec3_normalize(dir_vec, dir_vec);
-	vec3_cross(up_vec, dir_vec, right_vec);
-	vec3_normalize(right_vec, right_vec);
+	if (movement.forward)
+		offset_vec[2] -= speed;
 
-	if (movement.forward) {
-		vec3_scale(dir_vec, tmp_vec, speed);
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
+	if (movement.backward)
+		offset_vec[2] += speed;
 
-	if (movement.backward) {
-		vec3_scale(dir_vec, tmp_vec, -speed);
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
+	if (movement.s_left)
+		offset_vec[0] -= speed;
 
-	if (movement.s_left) {
-		vec3_scale(right_vec, tmp_vec, speed);
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
+	if (movement.s_right)
+		offset_vec[0] += speed;
 
-	if (movement.s_right) {
-		vec3_scale(right_vec, tmp_vec, -speed);
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
+	if (movement.rise)
+		offset_vec[1] += speed;
 
-	if (movement.rise) {
-		tmp_vec[0] = tmp_vec[2] = 0;
-		tmp_vec[1] = speed;
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
-
-	if (movement.fall) {
-		tmp_vec[0] = tmp_vec[2] = 0;
-		tmp_vec[1] = -speed;
-		vec3_add(tmp_vec, offset_vec, offset_vec);
-	}
+	if (movement.fall)
+		offset_vec[1] -= speed;
 
 	if (movement.t_left)
-		yaw_amt -= rot_speed;
+		yaw_amt += rot_speed;
 
 	if (movement.t_right)
-		yaw_amt += rot_speed;
+		yaw_amt -= rot_speed;
 
 	if (movement.t_up)
 		pitch_amt += rot_speed;
@@ -162,32 +138,30 @@ update_camera(float time)
 		pitch_amt -= rot_speed;
 
 	if (yaw_amt) {
-		dir_vec_new[1] = dir_vec[1];
-		dir_vec_new[0] = dir_vec[0] * cosf(yaw_amt) -
-			dir_vec[2] * sinf(yaw_amt);
-		dir_vec_new[2] = dir_vec[0] * sinf(yaw_amt) +
-			dir_vec[2] * cosf(yaw_amt);
-
-		vec3_dup(dir_vec_new, dir_vec);
+		quat_init(&quat, 0,1,0, yaw_amt);
+		quat_mul(&quat, &cam_rot, &cam_rot);
 	}
 
 	if (pitch_amt) {
-		vec3_normalize(dir_vec, dir_vec);
-		xz_dist = sqrtf(dir_vec[0] * dir_vec[0] + dir_vec[2] * dir_vec[2]);
-		arcos = acosf(xz_dist);
-		if (dir_vec[1] < 0)
-			arcos = -arcos;
-		dir_vec[1] = tanf(arcos + pitch_amt) * xz_dist;
+		quat_init(&quat, 1,0,0, pitch_amt);
+		quat_mul(&cam_rot, &quat, &cam_rot);
 	}
 
+	object_set_rotation(camera, &cam_rot);
 
-	vec3_add(camera->pos, offset_vec, new_pos);
-	camera_move(camera, new_pos, 1);
+	translate[12] = offset_vec[0];
+	translate[13] = offset_vec[1];
+	translate[14] = offset_vec[2];
 
-	if (yaw_amt || pitch_amt) {
-		vec3_add(camera->pos, dir_vec, new_pos);
-		camera_point(camera, new_pos);
-	}
+	quat_to_matrix(&cam_rot, rotate);
+
+	matrix_multiply(rotate, translate, translate);
+
+	offset_vec[0] = translate[12];
+	offset_vec[1] = translate[13];
+	offset_vec[2] = translate[14];
+
+	object_move(camera, offset_vec);
 }
 
 void
@@ -402,7 +376,11 @@ main(int argc, char **argv)
 
 	free(items);
 
-	camera = camera_create(.01, 3000.0, aspect, 45);
+	camera = object_create(NULL);
+	object_make_camera(camera, 45, .01, 3000.0);
+	camera_set_aspect(camera, aspect);
+	quat_init(&cam_rot, 0,1,0,0);
+
 	target = target_create(cube_center, camera);
 	target_add_state(target, cube_state);
 	target_add_state(target, canopy_state);

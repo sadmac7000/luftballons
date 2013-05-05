@@ -27,7 +27,6 @@ luftballons_OBJS =	\
 	vbuf.o		\
 	ebuf.o		\
 	interval.o	\
-	camera.o	\
 	matrix.o	\
 	object.o	\
 	dae_load.o	\

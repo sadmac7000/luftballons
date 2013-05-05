@@ -23,7 +23,6 @@
 #include "util.h"
 #include "object.h"
 #include "shader.h"
-#include "camera.h"
 
 /**
  * A list of draw operations to be performed.
@@ -45,7 +44,7 @@ extern "C" {
 #endif
 
 draw_queue_t *draw_queue_create(void);
-void draw_queue_draw(draw_queue_t *queue, object_t *object, camera_t *camera);
+void draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera);
 void draw_queue_flush(draw_queue_t *queue);
 
 #ifdef __cplusplus
