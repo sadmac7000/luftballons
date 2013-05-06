@@ -251,7 +251,7 @@ texmap_get_texture_unit(texmap_t *texmap)
 		 * generation stops being a sorted list of integers starting
 		 * from 0 is the free unit.
 		 **/
-		for (i = 0; i < max_units; i++)
+		for (i = 0; i < generation_size; i++)
 			if (generation[i] != i)
 				break;
 	}
