@@ -228,6 +228,7 @@ shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 static void
 shader_apply_uniform(shader_t *shader, uniform_t *uniform)
 {
+	shader_activate(shader);
 	GLint loc = glGetUniformLocation(shader->gl_handle, uniform->name);
 
 	switch (uniform->type) {
