@@ -126,36 +126,10 @@ shader_instantiate(void)
 	shader_t *ret = xmalloc(sizeof(shader_t));
 
 	ret->gl_handle = glCreateProgram();
-	ret->tex_unit = 0;
 	ret->uniforms = NULL;
 	ret->uniform_count = 0;
 	CHECK_GL;
 	return ret;
-}
-
-/**
- * Allocate a texture unit from this shader.
- **/
-static size_t
-shader_allocate_tex_unit(shader_t *shader)
-{
-	GLint max;
-
-	glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max);
-	if (shader->tex_unit >= (unsigned)max)
-		errx(1, "Shader out of texture units");
-
-	CHECK_GL;
-	return shader->tex_unit++;
-}
-
-/**
- * Notify the active shader that a draw has occurred.
- **/
-void
-shader_notify_draw(void)
-{
-	current_shader->tex_unit = 0;
 }
 
 /**
@@ -223,6 +197,7 @@ shader_set_vertex_attrs()
 void
 shader_activate(shader_t *shader)
 {
+	texmap_end_unit_generation();
 	if (current_shader == shader)
 		return;
 
@@ -239,12 +214,9 @@ static void
 shader_set_uniform_samp2D(shader_t *shader, const char *name, texmap_t *map)
 {
 	GLint loc = glGetUniformLocation(shader->gl_handle, name);
-	size_t unit = shader_allocate_tex_unit(shader);
+	size_t unit = texmap_get_texture_unit(map);
 
 	glUniform1i(loc, unit);
-	CLEAR_GL; /* FIXME: Is this Mesa's fault? WTF?! */
-	glActiveTexture(GL_TEXTURE0 + unit);
-	glBindTexture(GL_TEXTURE_2D, map->map);
 
 	glBindSampler(unit, map->sampler);
 	CHECK_GL;

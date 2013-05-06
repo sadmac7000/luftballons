@@ -32,6 +32,12 @@ extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
 extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
 				  const char *path);
 
+/* Texture unit assignment */
+texmap_t **units = NULL;
+GLuint *generation = NULL;
+size_t generation_size = 0;
+size_t max_units = 0;
+
 /**
  * Load image from a file into a texture map.
  *
@@ -71,6 +77,9 @@ texmap_destructor(void *texmap_)
 {
 	texmap_t *texmap = texmap_;
 
+	if (units && units[texmap->texture_unit] == texmap)
+		units[texmap->texture_unit] = NULL;
+
 	glDeleteSamplers(1, &texmap->sampler);
 	glDeleteTextures(1, &texmap->map);
 	free(texmap);
@@ -92,7 +101,8 @@ texmap_create(size_t base_level, size_t max_level, int compress)
 	glGenTextures(1, &map->map);
 	glGenSamplers(1, &map->sampler);
 
-	glBindTexture(GL_TEXTURE_2D, map->map);
+	map->texture_unit = 0;
+	texmap_get_texture_unit(map);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_level);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_level);
 
@@ -155,8 +165,117 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	if (map->flags & TEXMAP_COMPRESSED)
 		ifmt = GL_COMPRESSED_RGBA;
 
-	glBindTexture(GL_TEXTURE_2D, map->map);
+	texmap_get_texture_unit(map);
 	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, NULL);
 	CHECK_GL;
+}
+
+/**
+ * Merge two sorted segments of the generation list.
+ **/
+static void
+texmap_generation_merge(size_t a, size_t b, size_t stop_b)
+{
+	size_t i;
+	GLuint tmp;
+
+	for(; b < stop_b; b++) {
+		for (i = b; i > a; i--) {
+			if (generation[i - 1] < generation[i])
+				break;
+
+			tmp = generation[i];
+			generation[i] = generation[i - 1];
+			generation[i - 1] = tmp;
+		}
+	}
+}
+
+/**
+ * Sort the generation list.
+ **/
+static void
+texmap_generation_sort(void)
+{
+	size_t i;
+	size_t gap = 1;
+
+	for (gap = 1; gap < generation_size; gap *= 2) {
+		for (i = 0; i < generation_size; i += gap * 2) {
+			if (i + gap * 2 <= generation_size)
+				texmap_generation_merge(i, i + gap,
+							i + 2 * gap);
+			else
+				texmap_generation_merge(i, i + gap,
+							generation_size);
+		}
+	}
+}
+
+/**
+ * Get the texture unit for this texmap.
+ **/
+size_t
+texmap_get_texture_unit(texmap_t *texmap)
+{
+	GLint max;
+	size_t i;
+
+	if (! max_units) {
+		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max);
+		max_units = (size_t)max;
+	}
+
+	if (units && units[texmap->texture_unit] == texmap) {
+		glActiveTexture(GL_TEXTURE0 + texmap->texture_unit);
+		glBindTexture(GL_TEXTURE_2D, texmap->map);
+		return texmap->texture_unit;
+	}
+
+	generation = vec_expand(generation, generation_size);
+
+	if (! units) {
+		glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &max);
+		units = xcalloc(max, sizeof(texmap_t *));
+	}
+
+	for (i = 0; i < max_units; i++)
+		if (units[i] == NULL)
+			break;
+
+	if (i == max_units) {
+		texmap_generation_sort();
+
+		/* This looks weird but it isn't. The first position where
+		 * generation stops being a sorted list of integers starting
+		 * from 0 is the free unit.
+		 **/
+		for (i = 0; i < max_units; i++)
+			if (generation[i] != i)
+				break;
+	}
+
+	if (i == max_units)
+		errx(1, "Out of texture units");
+
+	generation[generation_size++] = i;
+	units[i] = texmap;
+	texmap->texture_unit = i;
+
+	glActiveTexture(GL_TEXTURE0 + i);
+	glBindTexture(GL_TEXTURE_2D, texmap->map);
+	CHECK_GL;
+
+	return texmap->texture_unit;
+}
+
+/**
+ * Inform the texture unit allocator that it may now reallocate any previously
+ * assigned texture unit whenever it sees fit.
+ **/
+void
+texmap_end_unit_generation(void)
+{
+	generation_size = 0;
 }

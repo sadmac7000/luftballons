@@ -32,16 +32,16 @@
  * sampler: OpenGL sampler object
  * flags: Misc flags.
  * w, h: Width and height
+ * texture_unit: What texture unit this texture was assigned.
  * refcount: Number of references to this texture
  **/
 typedef struct texmap {
 	GLuint map;
-	/* FIXME: Separating samplers and textures is actually useful. Also
-	 * using both while having them stuck together potentially isn't. */
 	GLuint sampler;
-	refcounter_t refcount;
 	unsigned int flags;
 	size_t w, h;
+	GLuint texture_unit;
+	refcounter_t refcount;
 } texmap_t;
 
 #ifdef __cplusplus
@@ -54,6 +54,8 @@ void texmap_init_blank(texmap_t *map, int level, int width, int height);
 void texmap_set_int_param(texmap_t *map, GLenum param, GLint value);
 void texmap_grab(texmap_t *texmap);
 void texmap_ungrab(texmap_t *texmap);
+size_t texmap_get_texture_unit(texmap_t *texmap);
+void texmap_end_unit_generation(void);
 
 #ifdef __cplusplus
 }

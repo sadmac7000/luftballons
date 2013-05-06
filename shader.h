@@ -29,11 +29,10 @@
  * A shader.
  *
  * gl_handle: The OpenGL designation for the shader.
- * tex_unit: The next available texture unit.
+ * uniforms, uniform_count: Vector of uniforms applied to this shader.
  **/
 typedef struct shader {
 	GLuint gl_handle;
-	size_t tex_unit;
 	uniform_t **uniforms;
 	size_t uniform_count;
 } shader_t;
@@ -44,7 +43,6 @@ extern "C" {
 
 shader_t *shader_create(const char *vertex, const char *frag);
 void shader_activate(shader_t *shader);
-void shader_notify_draw(void);
 void shader_set_uniform(shader_t *shader, uniform_t *uniform);
 void shader_set_temp_uniform(uniform_t *uniform);
 

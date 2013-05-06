@@ -20,7 +20,7 @@
 
 #include "mesh.h"
 #include "util.h"
-#include "shader.h"
+#include "texmap.h"
 
 /* Special delivery from bufpool.c */
 void bufpool_notify_generation(struct generation *gen);
@@ -228,7 +228,7 @@ mesh_draw(mesh_t *mesh)
 	vbuf_activate(mesh->vbuf);
 	ebuf_activate(mesh->ebuf);
 
-	shader_notify_draw();
+	texmap_end_unit_generation();
 	glDrawElementsBaseVertex(mesh->type, mesh->elems, GL_UNSIGNED_SHORT,
 				 (void *)(mesh->ebuf_pos * sizeof(uint16_t)),
 				 mesh->vbuf_pos);

@@ -61,7 +61,7 @@ texmap_png_load_data(texmap_t *map, GLint level,
 	if (! (map->flags & TEXMAP_COMPRESSED))
 		gl_ifmt = gl_fmt;
 
-	glBindTexture(GL_TEXTURE_2D, map->map);
+	texmap_get_texture_unit(map);
 	glTexImage2D(GL_TEXTURE_2D, level, gl_ifmt, width, height, 0, gl_fmt,
 		     gl_type, data);
 	CHECK_GL;

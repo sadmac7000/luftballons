@@ -45,7 +45,7 @@ texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
 	if (! TIFFReadRGBAImage(img, width, height, data, 0))
 		errx(1, "Could not read TIFF");
 
-	glBindTexture(GL_TEXTURE_2D, map->map);
+	texmap_get_texture_unit(map);
 	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
 		     GL_UNSIGNED_BYTE, data);
 
