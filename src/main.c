@@ -337,7 +337,7 @@ main(int argc, char **argv)
 	canopy_map = texmap_create(0, 0, 1);
 	plane_map = texmap_create(0, 0, 1);
 
-	texmap_load_image(canopy_map, "ref_model/P51_canopy.tif", 0);
+	texmap_load_image(canopy_map, "../ref_models/P51_canopy.tif", 0);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -348,7 +348,7 @@ main(int argc, char **argv)
 	uniform_ungrab(uniform);
 	texmap_ungrab(canopy_map);
 
-	texmap_load_image(plane_map, "ref_model/P51_Mustang.tif", 0);
+	texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -361,7 +361,7 @@ main(int argc, char **argv)
 
 	cube_center = object_create(NULL);
 
-	items = dae_load("ref_model/vcolor_cube_small.dae", &dae_mesh_count);
+	items = dae_load("../ref_models/vcolor_cube_small.dae", &dae_mesh_count);
 
 	if (dae_mesh_count != 1)
 		errx(1, "Weird object count %zu loading reference cube",
@@ -371,7 +371,7 @@ main(int argc, char **argv)
 	free(items);
 	object_reparent(cube, cube_center);
 
-	items = dae_load("ref_model/P51_Mustang.dae", &dae_mesh_count);
+	items = dae_load("../ref_models/P51_Mustang.dae", &dae_mesh_count);
 
 	for (i = 0; i < dae_mesh_count; i++) {
 		assign_material(items[i]);
