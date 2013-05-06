@@ -128,6 +128,11 @@ bufpool_create_buffers(bufpool_t *pool)
 		if (ebuf && !mesh->ebuf)
 			mesh_add_to_ebuf(mesh, ebuf);
 	}
+
+	if (ebuf)
+		ebuf_ungrab(ebuf);
+	if (vbuf)
+		vbuf_ungrab(vbuf);
 }
 
 /**

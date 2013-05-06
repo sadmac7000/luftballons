@@ -22,13 +22,14 @@
 #include "util.h"
 
 /**
- * Initialize a refcounter. Counter starts set to 0. If it returns to 0 the
- * collection happens. Ungrabbing it while it is at 0 is undefined.
+ * Initialize a refcounter. Counter starts set to 1. If it becomes 0 the
+ * destructor functions (if any) are run.
  **/
 void
 refcount_init(refcounter_t *counter)
 {
 	memset(counter, 0, sizeof(refcounter_t));
+	counter->count = 1;
 }
 
 /**

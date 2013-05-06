@@ -288,6 +288,7 @@ main(int argc, char **argv)
 	shader_t *textured_shader;
 	shader_t *vcolor_shader;
 	uniform_value_t uvtmp;
+	uniform_t *uniform;
 	float clear_color[4] = { 0.5, 0, 0.5, 1 };
 
 	glutInit(&argc, argv);
@@ -317,22 +318,21 @@ main(int argc, char **argv)
 	state_set_flags(cube_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL);
 	cube_state->mat_id = 0;
-	state_grab(cube_state);
 	state_set_colorbuf(cube_state, cbuf);
 
 	canopy_state = state_create(textured_shader);
 	state_set_flags(canopy_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	canopy_state->mat_id = 1;
-	state_grab(canopy_state);
 	state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = state_create(textured_shader);
 	state_set_flags(plane_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
 			| STATE_BF_CULL | STATE_TEXTURE_2D);
 	plane_state->mat_id = 2;
-	state_grab(plane_state);
 	state_set_colorbuf(plane_state, cbuf);
+
+	colorbuf_ungrab(cbuf);
 
 	canopy_map = texmap_create(0, 0, 1);
 	plane_map = texmap_create(0, 0, 1);
@@ -343,8 +343,10 @@ main(int argc, char **argv)
 	texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = canopy_map;
-	state_set_uniform(canopy_state,
-			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
+	uniform = uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	state_set_uniform(canopy_state, uniform);
+	uniform_ungrab(uniform);
+	texmap_ungrab(canopy_map);
 
 	texmap_load_image(plane_map, "ref_model/P51_Mustang.tif", 0);
 	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -352,8 +354,10 @@ main(int argc, char **argv)
 	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = plane_map;
-	state_set_uniform(plane_state,
-			  uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp));
+	uniform = uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	state_set_uniform(plane_state, uniform);
+	uniform_ungrab(uniform);
+	texmap_ungrab(plane_map);
 
 	cube_center = object_create(NULL);
 
@@ -385,6 +389,9 @@ main(int argc, char **argv)
 	target_add_state(target, cube_state);
 	target_add_state(target, canopy_state);
 	target_add_state(target, plane_state);
+	state_ungrab(cube_state);
+	state_ungrab(canopy_state);
+	state_ungrab(plane_state);
 
 	glutMainLoop();
 	return 0;

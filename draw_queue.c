@@ -99,17 +99,14 @@ draw_queue_add_op(draw_queue_t *queue, object_t *object,
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, transform, 16 * sizeof(float));
 	op->uniforms[0] = uniform_create("transform", UNIFORM_MAT4, tmp);
-	uniform_grab(op->uniforms[0]);
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, normal_trans, 16 * sizeof(float));
 	op->uniforms[1] = uniform_create("normal_transform", UNIFORM_MAT4, tmp);
-	uniform_grab(op->uniforms[1]);
 
 	tmp.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(tmp.data_ptr, clip_xfrm, 16 * sizeof(float));
 	op->uniforms[2] = uniform_create("clip_transform", UNIFORM_MAT4, tmp);
-	uniform_grab(op->uniforms[2]);
 
 	op->uniform_count = 3;
 

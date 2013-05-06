@@ -26,8 +26,8 @@
 #include <sys/mman.h>
 
 #include "uniform.h"
-#include "vbuf.h"
 #include "util.h"
+#include "texmap.h"
 
 /**
  * Destructor for a shader uniform.
@@ -36,6 +36,9 @@ static void
 uniform_destructor(void *v)
 {
 	uniform_t *uniform = v;
+
+	if (uniform->type == UNIFORM_SAMP2D)
+		texmap_ungrab(uniform->value.data_ptr);
 
 	free(uniform->name);
 	free(uniform);
@@ -54,6 +57,9 @@ uniform_create(const char *name, uniform_type_t type, uniform_value_t value)
 	ret->type = type;
 	ret->value = value;
 	ret->name = xstrdup(name);
+
+	if (type == UNIFORM_SAMP2D)
+		texmap_grab(ret->value.data_ptr);
 
 	return ret;
 }

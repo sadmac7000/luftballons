@@ -437,6 +437,7 @@ dae_load_polylist(domMeshRef mesh)
 
 	ret = object_create(NULL);
 	object_set_mesh(ret, out_mesh);
+	mesh_ungrab(out_mesh);
 	return ret;
 }
 
@@ -532,6 +533,10 @@ dae_process_node(domNodeRef node, object_t *parent, domUpAxisType up)
 
 	if (arr.getCount() == 0) {
 		object = object_create(parent);
+
+		if (parent)
+			object_ungrab(object);
+
 		goto out;
 	}
 
@@ -540,8 +545,13 @@ dae_process_node(domNodeRef node, object_t *parent, domUpAxisType up)
 	if (! object)
 		return NULL;
 
-	if (parent)
+	if (parent) {
+		if (object->parent)
+			object_grab(object);
+
 		object_reparent(object, parent);
+		object_ungrab(object);
+	}
 
 	dae_apply_transform(node, object);
 
