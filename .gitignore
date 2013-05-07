@@ -3,3 +3,6 @@ luftballons
 *.gcda
 *.gcno
 *.gcov
+*.lo
+*.la
+.libs
