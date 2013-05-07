@@ -1,7 +1,10 @@
 .DEFAULT_GOAL := all
 
 CLANGFLAGS = --std=gnu99
-CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -isystem/usr/include/collada-dom -isystem/usr/include/collada-dom/1.4
+CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES \
+	 -isystem/usr/include/collada-dom \
+	 -isystem/usr/include/collada-dom/1.4 -fvisibility=hidden \
+	 -I../include -fvisibility=hidden
 CC = gcc
 CXX = g++
 LIBTOOL = libtool --silent
@@ -47,14 +50,16 @@ $(PROGS):
 
 .PHONY: $(LIBS)
 $(LIBS):
-	$(call QUIET,LTLINK) -rpath /usr/lib -version-info $($@_SONAME) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) O -o lib$@.la $^
+	$(call QUIET,LTLINK) -rpath /usr/lib -version-info $($@_SONAME) \
+		$(CFLAGS) $($@_LINK) $(GCOV_FLAGS) O -o lib$@.la $^
 
 .PHONY: check
 check: $(TEST_PROGS)
 	@echo
 	@echo "Running checks"
 	@echo
-	@$(foreach prog,$^,./$(prog) && echo &&) echo "All checks completed successfully"
+	@$(foreach prog,$^,./$(prog) && echo &&) \
+		echo "All checks completed successfully"
 
 %.o: %.c
 	$(call QUIET,CC) $(CLANGFLAGS) $(CFLAGS) $(GCOV_FLAGS) -c -o $@ $<

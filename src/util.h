@@ -30,6 +30,11 @@
 #define CONTAINER_OF(ptr, type, member) ((type *)(((char *)ptr) - \
 						  OFFSET_OF(type, member)))
 
+#define EXPORT(k_) typeof(k_) luft_ ## k_ \
+	__attribute__((visibility("default"), alias(#k_)))
+
+#define API_DECLARE(k_) typeof(luft_ ## k_) k_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
