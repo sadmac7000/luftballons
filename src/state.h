@@ -67,6 +67,7 @@ void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
 void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
 void state_set_uniform(state_t *state, uniform_t *uniform);
+void state_set_material(state_t *state, int mat_id);
 size_t state_max_colorbufs(void);
 int state_material_active(int mat_id);
 

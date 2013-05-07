@@ -280,6 +280,15 @@ state_set_uniform(state_t *state, uniform_t *uniform)
 }
 
 /**
+ * Set state material ID.
+ **/
+void
+state_set_material(state_t *state, int mat_id)
+{
+	state->mat_id = mat_id;
+}
+
+/**
  * Determine if a given material is active in the current state.
  **/
 int
