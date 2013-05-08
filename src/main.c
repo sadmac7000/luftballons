@@ -30,25 +30,27 @@
 
 #include <GL/glut.h>
 
-#include "shader.h"
-#include "object.h"
-#include "quat.h"
-#include "dae_load.h"
-#include "texmap.h"
-#include "state.h"
-#include "colorbuf.h"
-#include "target.h"
+#include <luftballons/shader.h>
+#include <luftballons/uniform.h>
+#include <luftballons/texmap.h>
+#include <luftballons/colorbuf.h>
+#include <luftballons/state.h>
+#include <luftballons/quat.h>
+#include <luftballons/matrix.h>
+#include <luftballons/object.h>
+#include <luftballons/target.h>
+#include <luftballons/dae_load.h>
 
-object_t *cube;
-object_t *cube_center;
-object_t *camera;
-quat_t cam_rot;
-state_t *cube_state;
-state_t *plane_state;
-state_t *canopy_state;
-colorbuf_t *cbuf;
-texmap_t *cbuf_texmap;
-target_t *target;
+luft_object_t *cube;
+luft_object_t *cube_center;
+luft_object_t *camera;
+luft_quat_t cam_rot;
+luft_state_t *cube_state;
+luft_state_t *plane_state;
+luft_state_t *canopy_state;
+luft_colorbuf_t *cbuf;
+luft_texmap_t *cbuf_texmap;
+luft_target_t *target;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -76,11 +78,11 @@ handle_reshape(void)
 		return;
 	need_reshape = 0;
 
-	camera_set_aspect(camera, aspect);
-	colorbuf_set_output_geom(win_sz[0], win_sz[1]);
-	cbuf_texmap = texmap_create(0, 0, 0);
-	texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
-	colorbuf_set_buf(cbuf, 0, cbuf_texmap);
+	luft_camera_set_aspect(camera, aspect);
+	luft_colorbuf_set_output_geom(win_sz[0], win_sz[1]);
+	cbuf_texmap = luft_texmap_create(0, 0, 0);
+	luft_texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
+	luft_colorbuf_set_buf(cbuf, 0, cbuf_texmap);
 }
 
 float
@@ -103,8 +105,8 @@ update_camera(float time)
 	float offset_vec[3] = { 0, 0, 0 };
 	float pitch_amt = 0;
 	float yaw_amt = 0;
-	quat_t quat;
-	MATRIX_DECL_IDENT(translate);
+	luft_quat_t quat;
+	LUFT_MATRIX_DECL_IDENT(translate);
 	float rotate[16];
 
 	if (movement.forward)
@@ -138,30 +140,30 @@ update_camera(float time)
 		pitch_amt -= rot_speed;
 
 	if (yaw_amt) {
-		quat_init(&quat, 0,1,0, yaw_amt);
-		quat_mul(&quat, &cam_rot, &cam_rot);
+		luft_quat_init(&quat, 0,1,0, yaw_amt);
+		luft_quat_mul(&quat, &cam_rot, &cam_rot);
 	}
 
 	if (pitch_amt) {
-		quat_init(&quat, 1,0,0, pitch_amt);
-		quat_mul(&cam_rot, &quat, &cam_rot);
+		luft_quat_init(&quat, 1,0,0, pitch_amt);
+		luft_quat_mul(&cam_rot, &quat, &cam_rot);
 	}
 
-	object_set_rotation(camera, &cam_rot);
+	luft_object_set_rotation(camera, &cam_rot);
 
 	translate[12] = offset_vec[0];
 	translate[13] = offset_vec[1];
 	translate[14] = offset_vec[2];
 
-	quat_to_matrix(&cam_rot, rotate);
+	luft_quat_to_matrix(&cam_rot, rotate);
 
-	matrix_multiply(rotate, translate, translate);
+	luft_matrix_multiply(rotate, translate, translate);
 
 	offset_vec[0] = translate[12];
 	offset_vec[1] = translate[13];
 	offset_vec[2] = translate[14];
 
-	object_move(camera, offset_vec);
+	luft_object_move(camera, offset_vec);
 }
 
 void
@@ -170,25 +172,25 @@ render(void)
 	float offset[3] = { -.5, 0, -1.25 };
 	float time = glutGet(GLUT_ELAPSED_TIME);
 	float angle;
-	quat_t cube_rot;
-	quat_t center_rot;
+	luft_quat_t cube_rot;
+	luft_quat_t center_rot;
 
 	handle_reshape();
 	update_camera(time);
 	angle = get_angle(time);
 
-	quat_init(&cube_rot, 0, 0, 1, angle);
-	quat_init(&center_rot, 0, 0, -1, angle);
+	luft_quat_init(&cube_rot, 0, 0, 1, angle);
+	luft_quat_init(&center_rot, 0, 0, -1, angle);
 
-	object_set_rotation(cube, &cube_rot);
-	object_set_rotation(cube_center, &center_rot);
-	object_set_translation(cube, offset);
+	luft_object_set_rotation(cube, &cube_rot);
+	luft_object_set_rotation(cube_center, &center_rot);
+	luft_object_set_translation(cube, offset);
 
-	colorbuf_clear(cbuf);
+	luft_colorbuf_clear(cbuf);
 
-	target_hit(target);
+	luft_target_hit(target);
 
-	colorbuf_copy(cbuf, 0, NULL, 0);
+	luft_colorbuf_copy(cbuf, 0, NULL, 0);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -258,20 +260,26 @@ offkey(unsigned char key, int x, int y)
 }
 
 void
-assign_material(object_t *object)
+assign_material(luft_object_t *object)
 {
-       size_t i;
+	luft_object_cursor_t cursor;
+	const char *name;
 
-       if (object->type == OBJ_MESH) {
-               if (! strncmp(object->name, "canopy", 6))
-                       object->mat_id = 1;
-               else
-                       object->mat_id = 2;
-       }
+	luft_object_foreach_pre(cursor, object) {
+		name = luft_object_get_name(object);
 
-       for (i = 0; i < object->child_count; i++) {
-               assign_material(object->children[i]);
-       }
+		if (! name)
+			continue;
+
+		if (luft_object_get_type(object) == OBJ_MESH) {
+			if (! strncmp(name, "canopy", 6))
+				luft_object_set_material(object, 1);
+			else
+				luft_object_set_material(object, 2);
+		}
+	}
+
+	luft_object_cursor_release(&cursor);
 }
 
 
@@ -282,13 +290,13 @@ main(int argc, char **argv)
 
 	size_t dae_mesh_count;
 	size_t i;
-	object_t **items;
-	texmap_t *plane_map;
-	texmap_t *canopy_map;
-	shader_t *textured_shader;
-	shader_t *vcolor_shader;
-	uniform_value_t uvtmp;
-	uniform_t *uniform;
+	luft_object_t **items;
+	luft_texmap_t *plane_map;
+	luft_texmap_t *canopy_map;
+	luft_shader_t *textured_shader;
+	luft_shader_t *vcolor_shader;
+	luft_uniform_value_t uvtmp;
+	luft_uniform_t *uniform;
 	float clear_color[4] = { 0.5, 0, 0.5, 1 };
 
 	glutInit(&argc, argv);
@@ -304,64 +312,69 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	colorbuf_init_output(0);
+	luft_colorbuf_init_output(0);
 
-	cbuf = colorbuf_create(COLORBUF_CLEAR | COLORBUF_CLEAR_DEPTH |
-			       COLORBUF_DEPTH | COLORBUF_STENCIL);
-	colorbuf_clear_color(cbuf, clear_color);
-	colorbuf_clear_depth(cbuf, 1.0);
+	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
+				    LUFT_COLORBUF_CLEAR_DEPTH |
+				    LUFT_COLORBUF_DEPTH |
+				    LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_color(cbuf, clear_color);
+	luft_colorbuf_clear_depth(cbuf, 1.0);
 
-	vcolor_shader = shader_create("vertex.glsl", "fragment_vcolor.glsl");
-	textured_shader = shader_create("vertex.glsl", "fragment_texmap.glsl");
+	vcolor_shader = luft_shader_create("vertex.glsl", "fragment_vcolor.glsl");
+	textured_shader = luft_shader_create("vertex.glsl", "fragment_texmap.glsl");
 
-	cube_state = state_create(vcolor_shader);
-	state_set_flags(cube_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
-			| STATE_BF_CULL);
-	cube_state->mat_id = 0;
-	state_set_colorbuf(cube_state, cbuf);
+	cube_state = luft_state_create(vcolor_shader);
+	luft_state_set_flags(cube_state, LUFT_STATE_DEPTH_TEST |
+			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
+	luft_state_set_material(cube_state, 0);
+	luft_state_set_colorbuf(cube_state, cbuf);
 
-	canopy_state = state_create(textured_shader);
-	state_set_flags(canopy_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
-			| STATE_BF_CULL | STATE_TEXTURE_2D);
-	canopy_state->mat_id = 1;
-	state_set_colorbuf(canopy_state, cbuf);
+	canopy_state = luft_state_create(textured_shader);
+	luft_state_set_flags(canopy_state, LUFT_STATE_DEPTH_TEST |
+			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL |
+			     LUFT_STATE_TEXTURE_2D);
+	luft_state_set_material(canopy_state, 1);
+	luft_state_set_colorbuf(canopy_state, cbuf);
 
-	plane_state = state_create(textured_shader);
-	state_set_flags(plane_state, STATE_DEPTH_TEST | STATE_ALPHA_BLEND
-			| STATE_BF_CULL | STATE_TEXTURE_2D);
-	plane_state->mat_id = 2;
-	state_set_colorbuf(plane_state, cbuf);
+	plane_state = luft_state_create(textured_shader);
+	luft_state_set_flags(plane_state, LUFT_STATE_DEPTH_TEST |
+			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL |
+			     LUFT_STATE_TEXTURE_2D);
+	luft_state_set_material(plane_state, 2);
+	luft_state_set_colorbuf(plane_state, cbuf);
 
-	colorbuf_ungrab(cbuf);
+	luft_colorbuf_ungrab(cbuf);
 
-	canopy_map = texmap_create(0, 0, 1);
-	plane_map = texmap_create(0, 0, 1);
+	canopy_map = luft_texmap_create(0, 0, 1);
+	plane_map = luft_texmap_create(0, 0, 1);
 
-	texmap_load_image(canopy_map, "../ref_models/P51_canopy.tif", 0);
-	texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	luft_texmap_load_image(canopy_map, "../ref_models/P51_canopy.tif", 0);
+	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = canopy_map;
-	uniform = uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
-	state_set_uniform(canopy_state, uniform);
-	uniform_ungrab(uniform);
-	texmap_ungrab(canopy_map);
+	uniform = luft_uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	luft_state_set_uniform(canopy_state, uniform);
+	luft_uniform_ungrab(uniform);
+	luft_texmap_ungrab(canopy_map);
 
-	texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
-	texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	luft_texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
+	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	luft_texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = plane_map;
-	uniform = uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
-	state_set_uniform(plane_state, uniform);
-	uniform_ungrab(uniform);
-	texmap_ungrab(plane_map);
+	uniform = luft_uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	luft_state_set_uniform(plane_state, uniform);
+	luft_uniform_ungrab(uniform);
+	luft_texmap_ungrab(plane_map);
 
-	cube_center = object_create(NULL);
+	cube_center = luft_object_create(NULL);
 
-	items = dae_load("../ref_models/vcolor_cube_small.dae", &dae_mesh_count);
+	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
+			      &dae_mesh_count);
 
 	if (dae_mesh_count != 1)
 		errx(1, "Weird object count %zu loading reference cube",
@@ -369,29 +382,30 @@ main(int argc, char **argv)
 
 	cube = items[0];
 	free(items);
-	object_reparent(cube, cube_center);
+	luft_object_reparent(cube, cube_center);
 
-	items = dae_load("../ref_models/P51_Mustang.dae", &dae_mesh_count);
+	items = luft_dae_load("../ref_models/P51_Mustang.dae",
+			      &dae_mesh_count);
 
 	for (i = 0; i < dae_mesh_count; i++) {
 		assign_material(items[i]);
-		object_reparent(items[i], cube);
+		luft_object_reparent(items[i], cube);
 	}
 
 	free(items);
 
-	camera = object_create(NULL);
-	object_make_camera(camera, 45, .01, 3000.0);
-	camera_set_aspect(camera, aspect);
-	quat_init(&cam_rot, 0,1,0,0);
+	camera = luft_object_create(NULL);
+	luft_object_make_camera(camera, 45, .01, 3000.0);
+	luft_camera_set_aspect(camera, aspect);
+	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	target = target_create(cube_center, camera);
-	target_add_state(target, cube_state);
-	target_add_state(target, canopy_state);
-	target_add_state(target, plane_state);
-	state_ungrab(cube_state);
-	state_ungrab(canopy_state);
-	state_ungrab(plane_state);
+	target = luft_target_create(cube_center, camera);
+	luft_target_add_state(target, cube_state);
+	luft_target_add_state(target, canopy_state);
+	luft_target_add_state(target, plane_state);
+	luft_state_ungrab(cube_state);
+	luft_state_ungrab(canopy_state);
+	luft_state_ungrab(plane_state);
 
 	glutMainLoop();
 	return 0;

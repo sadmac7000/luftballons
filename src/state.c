@@ -64,6 +64,7 @@ state_create(shader_t *shader)
 
 	return state;
 }
+EXPORT(state_create);
 
 /**
  * Grab a state object.
@@ -73,6 +74,7 @@ state_grab(state_t *state)
 {
 	refcount_grab(&state->refcount);
 }
+EXPORT(state_grab);
 
 /**
  * Ungrab a state object.
@@ -82,6 +84,7 @@ state_ungrab(state_t *state)
 {
 	refcount_ungrab(&state->refcount);
 }
+EXPORT(state_ungrab);
 
 /**
  * Set up depth testing as this state states it should be.
@@ -214,6 +217,7 @@ state_set_flags(state_t *state, uint64_t flags)
 	state->flags |= flags;
 	state->care_about |= flags;
 }
+EXPORT(state_set_flags);
 
 /**
  * Clear the given flags in the given state.
@@ -226,6 +230,7 @@ state_clear_flags(state_t *state, uint64_t flags)
 	state->flags &= ~flags;
 	state->care_about |= flags;
 }
+EXPORT(state_clear_flags);
 
 /**
  * Indicate that in the given state, the given flags may hold any value.
@@ -237,6 +242,7 @@ state_ignore_flags(state_t *state, uint64_t flags)
 
 	state->care_about &= ~flags;
 }
+EXPORT(state_ignore_flags);
 
 /**
  * Set the output color buffer. Set NULL to use the default framebuffer.
@@ -252,6 +258,7 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 	colorbuf_grab(colorbuf);
 	state->colorbuf = colorbuf;
 }
+EXPORT(state_set_colorbuf);
 
 /**
  * Set a uniform that is applied when this state is entered.
@@ -278,6 +285,7 @@ state_set_uniform(state_t *state, uniform_t *uniform)
 	if (state == current_state)
 		shader_set_uniform(state->shader, uniform);
 }
+EXPORT(state_set_uniform);
 
 /**
  * Set state material ID.
@@ -287,6 +295,7 @@ state_set_material(state_t *state, int mat_id)
 {
 	state->mat_id = mat_id;
 }
+EXPORT(state_set_material);
 
 /**
  * Determine if a given material is active in the current state.

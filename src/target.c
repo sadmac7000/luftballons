@@ -60,6 +60,7 @@ target_create(object_t *root, object_t *camera)
 
 	return ret;
 }
+EXPORT(target_create);
 
 /**
  * Grab a target.
@@ -69,6 +70,7 @@ target_grab(target_t *target)
 {
 	refcount_grab(&target->refcount);
 }
+EXPORT(target_grab);
 
 /**
  * Ungrab a target.
@@ -78,6 +80,7 @@ target_ungrab(target_t *target)
 {
 	refcount_ungrab(&target->refcount);
 }
+EXPORT(target_ungrab);
 
 /**
  * Add a dependency to a target.
@@ -89,6 +92,7 @@ target_add_dep(target_t *target, target_t *dep)
 	target->deps[target->num_deps++] = dep;
 	target_grab(dep);
 }
+EXPORT(target_add_dep);
 
 /**
  * Add a state that is passed through in order to hit a target.
@@ -100,6 +104,7 @@ target_add_state(target_t *target, state_t *state)
 	target->states[target->num_states++] = state;
 	state_grab(state);
 }
+EXPORT(target_add_state);
 
 /**
  * Return whether a target is in an array of targets.
@@ -208,3 +213,4 @@ target_hit(target_t *target)
 	target_drain_queue(queue, queue_len);
 	free(queue);
 }
+EXPORT(target_hit);

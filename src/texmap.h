@@ -17,10 +17,12 @@
 
 #ifndef TEXMAP_H
 #define TEXMAP_H
+#include <luftballons/texmap.h>
 
 #include <GL/gl.h>
 
 #include "refcount.h"
+#include "util.h"
 
 #define TEXMAP_COMPRESSED	0x1
 #define TEXMAP_INITIALIZED	0x2
@@ -48,12 +50,13 @@ typedef struct texmap {
 extern "C" {
 #endif
 
-texmap_t *texmap_create(size_t base_level, size_t max_level, int compress);
-void texmap_load_image(texmap_t *map, const char *path, int level);
-void texmap_init_blank(texmap_t *map, int level, int width, int height);
-void texmap_set_int_param(texmap_t *map, GLenum param, GLint value);
-void texmap_grab(texmap_t *texmap);
-void texmap_ungrab(texmap_t *texmap);
+API_DECLARE(texmap_create);
+API_DECLARE(texmap_load_image);
+API_DECLARE(texmap_init_blank);
+API_DECLARE(texmap_set_int_param);
+API_DECLARE(texmap_grab);
+API_DECLARE(texmap_ungrab);
+
 size_t texmap_get_texture_unit(texmap_t *texmap);
 void texmap_end_unit_generation(void);
 

@@ -15,41 +15,45 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef SHADER_H
-#define SHADER_H
-#include <luftballons/shader.h>
+#ifndef LUFTBALLONS_UNIFORM_H
+#define LUFTBALLONS_UNIFORM_H
 
 #include <GL/gl.h>
 
-#include "vbuf.h"
-#include "texmap.h"
-#include "refcount.h"
-#include "uniform.h"
-#include "util.h"
+typedef struct uniform luft_uniform_t;
 
 /**
- * A shader.
- *
- * gl_handle: The OpenGL designation for the shader.
- * uniforms, uniform_count: Vector of uniforms applied to this shader.
+ * Type of a shader uniform.
  **/
-typedef struct shader {
-	GLuint gl_handle;
-	uniform_t **uniforms;
-	size_t uniform_count;
-} shader_t;
+typedef enum {
+	UNIFORM_MAT4,
+	UNIFORM_VEC4,
+	UNIFORM_SAMP2D,
+	UNIFORM_SAMP1D,
+	UNIFORM_UINT,
+} luft_uniform_type_t;
+
+/**
+ * Uniform values.
+ **/
+typedef union uniform_value {
+	void *data_ptr;
+	GLuint uint;
+} luft_uniform_value_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-API_DECLARE(shader_create);
-API_DECLARE(shader_activate);
-API_DECLARE(shader_set_uniform);
-API_DECLARE(shader_set_temp_uniform);
+luft_uniform_t *luft_uniform_create(const char *name,
+				    luft_uniform_type_t type,
+				    luft_uniform_value_t value);
+void luft_uniform_grab(luft_uniform_t *uniform);
+void luft_uniform_ungrab(luft_uniform_t *uniform);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHADER_H */
+#endif /* LUFTBALLONS_UNIFORM_H */
+

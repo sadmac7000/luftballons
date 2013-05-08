@@ -17,6 +17,7 @@
 
 #ifndef STATE_H
 #define STATE_H
+#include <luftballons/state.h>
 
 #include "texmap.h"
 #include "shader.h"
@@ -24,13 +25,13 @@
 #include "colorbuf.h"
 
 /* Enable depth testing in this state */
-#define STATE_DEPTH_TEST	0x1
+#define STATE_DEPTH_TEST	LUFT_STATE_DEPTH_TEST
 /* Enable alpha blending in this state */
-#define STATE_ALPHA_BLEND	0x2
+#define STATE_ALPHA_BLEND	LUFT_STATE_ALPHA_BLEND
 /* Enable backface culling in this state */
-#define STATE_BF_CULL		0x4
+#define STATE_BF_CULL		LUFT_STATE_BF_CULL
 /* Enable the 2D texture buffer */
-#define STATE_TEXTURE_2D	0x8
+#define STATE_TEXTURE_2D	LUFT_STATE_TEXTURE_2D
 
 /**
  * A bin of current misc. OpenGL state.
@@ -58,18 +59,19 @@ typedef struct state {
 extern "C" {
 #endif
 
-state_t *state_create(shader_t *shader);
-void state_enter(state_t *state);
-void state_grab(state_t *state);
-void state_ungrab(state_t *state);
-void state_set_flags(state_t *state, uint64_t flags);
-void state_clear_flags(state_t *state, uint64_t flags);
-void state_ignore_flags(state_t *state, uint64_t flags);
-void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
-void state_set_uniform(state_t *state, uniform_t *uniform);
-void state_set_material(state_t *state, int mat_id);
-size_t state_max_colorbufs(void);
+API_DECLARE(state_create);
+API_DECLARE(state_grab);
+API_DECLARE(state_ungrab);
+API_DECLARE(state_set_flags);
+API_DECLARE(state_clear_flags);
+API_DECLARE(state_ignore_flags);
+API_DECLARE(state_set_colorbuf);
+API_DECLARE(state_set_uniform);
+API_DECLARE(state_set_material);
+API_DECLARE(state_max_colorbufs);
+
 int state_material_active(int mat_id);
+void state_enter(state_t *state);
 
 #ifdef __cplusplus
 }

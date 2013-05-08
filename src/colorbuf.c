@@ -51,6 +51,7 @@ colorbuf_init_output(unsigned int flags)
 
 	def_buf.flags = flags;
 }
+EXPORT(colorbuf_init_output);
 
 /**
  * Set the size of the default buffer.
@@ -63,6 +64,7 @@ colorbuf_set_output_geom(size_t w, size_t h)
 	glViewport(0, 0, w, h);
 	CHECK_GL;
 }
+EXPORT(colorbuf_set_output_geom);
 
 /**
  * Destructor for colorbufs.
@@ -111,6 +113,7 @@ colorbuf_create(unsigned int flags)
 
 	return ret;
 }
+EXPORT(colorbuf_create);
 
 /**
  * Grab a colorbuf.
@@ -121,6 +124,7 @@ colorbuf_grab(colorbuf_t *colorbuf)
 	if (colorbuf)
 		refcount_grab(&colorbuf->refcount);
 }
+EXPORT(colorbuf_grab);
 
 /**
  * Ungrab a colorbuf.
@@ -131,6 +135,7 @@ colorbuf_ungrab(colorbuf_t *colorbuf)
 	if (colorbuf)
 		refcount_ungrab(&colorbuf->refcount);
 }
+EXPORT(colorbuf_ungrab);
 
 /**
  * Get the maximum number of color buffers we can have.
@@ -145,6 +150,7 @@ colorbuf_max_bufs(void)
 	CHECK_GL;
 	return (size_t)result;
 }
+EXPORT(colorbuf_max_bufs);
 
 /**
  * Set the buffer at the given index in a colorbuf.
@@ -204,6 +210,7 @@ colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap)
 
 	/* FIXME: Set glDrawBuffers if we're the current colorbuf */
 }
+EXPORT(colorbuf_set_buf);
 
 /**
  * Clear the contents of the current colorbuf.
@@ -249,6 +256,7 @@ colorbuf_clear(colorbuf_t *colorbuf)
 	else
 		colorbuf->flags |= COLORBUF_NEEDS_CLEAR;
 }
+EXPORT(colorbuf_clear);
 
 /**
  * Check the status of the framebuffer.
@@ -497,6 +505,7 @@ reset:
 	colorbuf_set_draw();
 	CHECK_GL;
 }
+EXPORT(colorbuf_copy);
 
 /**
  * Set the color to clear this buffer to.
@@ -508,6 +517,7 @@ colorbuf_clear_color(colorbuf_t *in, float color[4])
 		in = &def_buf;
 	memcpy(in->clear_color, color, 4 * sizeof(float));
 }
+EXPORT(colorbuf_clear_color);
 
 /**
  * Set the depth to clear this buffer to.
@@ -519,6 +529,7 @@ colorbuf_clear_depth(colorbuf_t *in, float depth)
 		in = &def_buf;
 	in->clear_depth = depth;
 }
+EXPORT(colorbuf_clear_depth);
 
 /**
  * Set the stencil index to clear this buffer to.
@@ -530,3 +541,4 @@ colorbuf_clear_stencil(colorbuf_t *in, int index)
 		in = &def_buf;
 	in->clear_stencil = index;
 }
+EXPORT(colorbuf_clear_stencil);

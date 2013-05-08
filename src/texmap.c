@@ -68,6 +68,7 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 
 	errx(1, "Unrecognized image format for %s", path);
 }
+EXPORT(texmap_load_image);
 
 /**
  * Destroy a texmap
@@ -117,6 +118,7 @@ texmap_create(size_t base_level, size_t max_level, int compress)
 	CHECK_GL;
 	return map;
 }
+EXPORT(texmap_create);
 
 /**
  * Increase the refcount of a texmap.
@@ -126,6 +128,7 @@ texmap_grab(texmap_t *texmap)
 {
 	refcount_grab(&texmap->refcount);
 }
+EXPORT(texmap_grab);
 
 /**
  * Decrease the refcount of a texmap.
@@ -135,6 +138,7 @@ texmap_ungrab(texmap_t *texmap)
 {
 	refcount_ungrab(&texmap->refcount);
 }
+EXPORT(texmap_ungrab);
 
 /**
  * Set an OpenGL parameter for this texture map.
@@ -145,6 +149,7 @@ texmap_set_int_param(texmap_t *map, GLenum param, GLint value)
 	glSamplerParameteri(map->sampler, param, value);
 	CHECK_GL;
 }
+EXPORT(texmap_set_int_param);
 
 /**
  * Initialize a blank texmap.
@@ -170,6 +175,7 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 		     GL_UNSIGNED_BYTE, NULL);
 	CHECK_GL;
 }
+EXPORT(texmap_init_blank);
 
 /**
  * Merge two sorted segments of the generation list.

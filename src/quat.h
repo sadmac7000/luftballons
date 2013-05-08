@@ -15,24 +15,22 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "matrix.h"
-
 #ifndef QUAT_H
 #define QUAT_H
+#include <luftballons/quat.h>
 
-typedef struct quat {
-	float c[4];
-	size_t mul_count;
-} quat_t;
+#include "util.h"
+
+typedef luft_quat_t quat_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void quat_init(quat_t *quat, float x, float y, float z, float theta);
-void quat_mul(quat_t *a, quat_t *b, quat_t *out);
-void quat_dup(quat_t *in, quat_t *out);
-void quat_to_matrix(quat_t *quat, float m[16]);
+API_DECLARE(quat_init);
+API_DECLARE(quat_mul);
+API_DECLARE(quat_dup);
+API_DECLARE(quat_to_matrix);
 
 #ifdef __cplusplus
 }

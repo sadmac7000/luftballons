@@ -17,29 +17,15 @@
 
 #ifndef UNIFORM_H
 #define UNIFORM_H
+#include <luftballons/uniform.h>
 
 #include <GL/gl.h>
 
 #include "refcount.h"
+#include "util.h"
 
-/**
- * Type of a shader uniform.
- **/
-typedef enum {
-	UNIFORM_MAT4,
-	UNIFORM_VEC4,
-	UNIFORM_SAMP2D,
-	UNIFORM_SAMP1D,
-	UNIFORM_UINT,
-} uniform_type_t;
-
-/**
- * Uniform values.
- **/
-typedef union uniform_value {
-	void *data_ptr;
-	GLuint uint;
-} uniform_value_t;
+typedef luft_uniform_type_t uniform_type_t;
+typedef luft_uniform_value_t uniform_value_t;
 
 /**
  * A uniform.
@@ -55,11 +41,9 @@ typedef struct uniform {
 extern "C" {
 #endif
 
-uniform_t *uniform_create(const char *name,
-			  uniform_type_t type,
-			  uniform_value_t value);
-void uniform_grab(uniform_t *uniform);
-void uniform_ungrab(uniform_t *uniform);
+API_DECLARE(uniform_create);
+API_DECLARE(uniform_grab);
+API_DECLARE(uniform_ungrab);
 
 #ifdef __cplusplus
 }

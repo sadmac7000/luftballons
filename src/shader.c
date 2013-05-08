@@ -156,6 +156,7 @@ shader_create(const char *vertex, const char *frag)
 	CHECK_GL;
 	return ret;
 }
+EXPORT(shader_create);
 
 /**
  * Set vertex attributes.
@@ -206,6 +207,7 @@ shader_activate(shader_t *shader)
 	shader_set_vertex_attrs();
 	CHECK_GL;
 }
+EXPORT(shader_activate);
 
 /**
  * Set a uniform value to a 2D texture.
@@ -280,6 +282,7 @@ shader_set_uniform(shader_t *shader, uniform_t *uniform)
 	shader->uniforms = vec_expand(shader->uniforms, shader->uniform_count);
 	shader->uniforms[shader->uniform_count++] = uniform;
 }
+EXPORT(shader_set_uniform);
 
 /**
  * Set an unstored uniform for the current shader.
@@ -289,3 +292,4 @@ shader_set_temp_uniform(uniform_t *uniform)
 {
 	shader_apply_uniform(current_shader, uniform);
 }
+EXPORT(shader_set_temp_uniform);

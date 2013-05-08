@@ -37,6 +37,16 @@ struct camera {
 };
 
 /**
+ * Release an object cursor's internal data.
+ **/
+void
+object_cursor_release(object_cursor_t *cursor)
+{
+	free(cursor->stack);
+}
+EXPORT(object_cursor_release);
+
+/**
  * Set up a cursor to traverse objects rooted at the given object, and prep for
  * a pre-order iteration.
  *
@@ -52,6 +62,7 @@ object_cursor_start_pre(object_cursor_t *cursor, object_t *root)
 
 	return root;
 }
+EXPORT(object_cursor_start_pre);
 
 /**
  * Continue a cursor on a pre-order iteration of objects.
@@ -83,6 +94,7 @@ object_cursor_next_pre(object_cursor_t *cursor)
 
 	return ret;
 }
+EXPORT(object_cursor_next_pre);
 
 /**
  * Set up a cursor to traverse objects rooted at the given object.
@@ -94,6 +106,7 @@ object_cursor_init(object_cursor_t *cursor, object_t *root)
 	cursor->stack_size = 0;
 	cursor->current = root;
 }
+EXPORT(object_cursor_init);
 
 /**
  * Move the cursor to the given child of its current position.
@@ -109,6 +122,7 @@ object_cursor_down(object_cursor_t *cursor, size_t child)
 	cursor->stack[cursor->stack_size++] = child;
 	cursor->current = cursor->current->children[child];
 }
+EXPORT(object_cursor_down);
 
 /**
  * Move the cursor to the parent of its current position.
@@ -129,6 +143,7 @@ object_cursor_up(object_cursor_t *cursor)
 	cursor->current = cursor->current->parent;
 	return ret;
 }
+EXPORT(object_cursor_up);
 
 /**
  * Find the object under this object that matches the given name.
@@ -154,6 +169,7 @@ object_lookup(object_t *object, const char *name)
 
 	return NULL;
 }
+EXPORT(object_lookup);
 
 /**
  * Invalidate the transform cache.
@@ -178,6 +194,7 @@ object_apply_pretransform(object_t *object, float matrix[16])
 	object_invalidate_transform_cache(object);
 	memcpy(object->pretransform, matrix, 16 * sizeof(float));
 }
+EXPORT(object_apply_pretransform);
 
 /**
  * If an object is not of type OBJ_NODE, make it type OBJ_NODE, clearing out
@@ -255,6 +272,7 @@ object_create(object_t *parent)
 
 	return ret;
 }
+EXPORT(object_create);
 
 /**
  * Make this object a light.
@@ -266,6 +284,7 @@ object_make_light(object_t *object, float color[3])
 	object->type = OBJ_LIGHT;
 	memcpy(object->light_color, color, 3 * sizeof(float));
 }
+EXPORT(object_make_light);
 
 /**
  * Make this object a camera.
@@ -286,6 +305,7 @@ object_make_camera(object_t *object, float fov, float near, float far)
 	object->camera->zoom = 1.0;
 	object->camera->to_clip_xfrm = NULL;
 }
+EXPORT(object_make_camera);
 
 /**
  * Invalidate the clip transform matrix.
@@ -364,6 +384,7 @@ camera_set_aspect(object_t *camera, float aspect)
 
 	camera->camera->aspect = aspect;
 }
+EXPORT(camera_set_aspect);
 
 /**
  * Set an object to mesh type.
@@ -388,6 +409,7 @@ object_set_name(object_t *object, const char *name)
 	free(object->name);
 	object->name = xstrdup(name);
 }
+EXPORT(object_set_name);
 
 /**
  * Grab an object.
@@ -397,6 +419,7 @@ object_grab(object_t *object)
 {
 	refcount_grab(&object->refcount);
 }
+EXPORT(object_grab);
 
 /**
  * Ungrab an object.
@@ -406,6 +429,7 @@ object_ungrab(object_t *object)
 {
 	refcount_ungrab(&object->refcount);
 }
+EXPORT(object_ungrab);
 
 /**
  * Scale this object by the given XYZ scale factors.
@@ -418,6 +442,7 @@ object_scale(object_t *object, float scale[3])
 	object->scale[1] *= scale[1];
 	object->scale[2] *= scale[2];
 }
+EXPORT(object_scale);
 
 /**
  * Set scale for this object to the given XYZ scale factors.
@@ -430,6 +455,7 @@ object_set_scale(object_t *object, float scale[3])
 	object->scale[1] = scale[1];
 	object->scale[2] = scale[2];
 }
+EXPORT(object_set_scale);
 
 /**
  * Rotate this object by the given quaternion.
@@ -440,6 +466,7 @@ object_rotate(object_t *object, quat_t *quat)
 	object_invalidate_transform_cache(object);
 	quat_mul(quat, &object->rot, &object->rot);
 }
+EXPORT(object_rotate);
 
 /**
  * Translate this object by the given vector.
@@ -450,6 +477,7 @@ object_move(object_t *object, float vec[3])
 	object_invalidate_transform_cache(object);
 	vec3_add(object->trans, vec, object->trans);
 }
+EXPORT(object_move);
 
 /**
  * Set this object's rotation.
@@ -460,6 +488,7 @@ object_set_rotation(object_t *object, quat_t *quat)
 	object_invalidate_transform_cache(object);
 	quat_dup(quat, &object->rot);
 }
+EXPORT(object_set_rotation);
 
 /**
  * Set this object's translation.
@@ -470,6 +499,7 @@ object_set_translation(object_t *object, float vec[3])
 	object_invalidate_transform_cache(object);
 	vec3_dup(vec, object->trans);
 }
+EXPORT(object_set_translation);
 
 /**
  * Get a translation matrix for this object.
@@ -490,6 +520,7 @@ object_get_transform_mat(object_t *object, float matrix[16])
 	matrix_multiply(translate, rotate, translate_final);
 	matrix_multiply(translate_final, object->pretransform, matrix);
 }
+EXPORT(object_get_transform_mat);
 
 /**
  * Create the transform cache.
@@ -524,6 +555,7 @@ object_get_total_transform(object_t *object, float mat[16])
 
 	memcpy(mat, object->transform_cache, 16 * sizeof(float));
 }
+EXPORT(object_get_total_transform);
 
 /**
  * Remove an object from its parent. This will ungrab the object and MAY FREE
@@ -575,3 +607,34 @@ object_reparent(object_t *object, object_t *parent)
 		object_ungrab(object);
 	}
 }
+EXPORT(object_reparent);
+
+/**
+ * Set an object's material.
+ **/
+void
+object_set_material(object_t *object, int mat_id)
+{
+	object->mat_id = mat_id;
+}
+EXPORT(object_set_material);
+
+/**
+ * Get an object's name.
+ **/
+const char *
+object_get_name(luft_object_t *object)
+{
+	return object->name;
+}
+EXPORT(object_get_name);
+
+/**
+ * Get the type of an object.
+ **/
+object_type_t
+object_get_type(luft_object_t *object)
+{
+	return object->type;
+}
+EXPORT(object_get_type);

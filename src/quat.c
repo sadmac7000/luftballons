@@ -57,6 +57,7 @@ quat_init(quat_t *quat, float x, float y, float z, float theta)
 	quat->c[3] = cosf(theta / 2);
 	quat_normalize(quat);
 }
+EXPORT(quat_init);
 
 /**
  * Multiply two quaternions
@@ -95,6 +96,7 @@ quat_mul(quat_t *a, quat_t *b, quat_t *out)
 	if (a == out || b == out)
 		quat_dup(c, out);
 }
+EXPORT(quat_mul);
 
 /**
  * Copy one quaternion into another.
@@ -104,6 +106,7 @@ quat_dup(quat_t *in, quat_t *out)
 {
 	memcpy(out, in, sizeof(quat_t));
 }
+EXPORT(quat_dup);
 
 /**
  * Convert a quaternion to a matrix.
@@ -136,3 +139,4 @@ quat_to_matrix(quat_t *quat, float m[16])
 	m[3] = m[7] = m[11] = 0;
 	m[15] = 1;
 }
+EXPORT(quat_to_matrix);

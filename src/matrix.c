@@ -22,6 +22,16 @@
 #include "util.h"
 
 /**
+ * Free a matrix stack's data.
+ **/
+void
+matrix_stack_release(matrix_stack_t *stack)
+{
+	free(stack->data);
+}
+EXPORT(matrix_stack_release);
+
+/**
  * Push an item onto the matrix stack.
  **/
 void
@@ -35,6 +45,7 @@ matrix_stack_push(matrix_stack_t *stack, float item[16])
 	target = stack->data + 16 * stack->size++;
 	memcpy(target, item, 16 * sizeof(float));
 }
+EXPORT(matrix_stack_push);
 
 /**
  * Pop an item from the matrix stack.
@@ -62,6 +73,7 @@ matrix_stack_pop(matrix_stack_t *stack, float item[16])
 
 	return 0;
 }
+EXPORT(matrix_stack_pop);
 
 /**
  * Find a diagonalized product for a 3x3 submatrix of a matrix.
@@ -159,6 +171,7 @@ matrix_inverse_trans(float in[16], float out[16])
 
 	return 1;
 }
+EXPORT(matrix_inverse_trans);
 
 /**
  * Transpose a matrix.
@@ -179,6 +192,7 @@ matrix_transpose(float in[16], float out[16])
 		for (j = 0; j < 4; j++)
 			out[i*4 + j] = in[j * 4 + i];
 }
+EXPORT(matrix_transpose);
 
 /**
  * Multiply two matricies
@@ -202,6 +216,7 @@ matrix_multiply(float a[16], float b[16], float result[16])
 			for (k = 0; k < 4; k++)
 				result[i + j * 4] += a[i + k * 4] * b[k + j * 4];
 }
+EXPORT(matrix_multiply);
 
 /**
  * Dot product of two vectors.
@@ -211,6 +226,7 @@ vec3_dot(float a[3], float b[3])
 {
 	return a[0] * b[0] + a[1]*b[1] + a[2] * b[2];
 }
+EXPORT(vec3_dot);
 
 /**
  * Cross product of two vectors.
@@ -231,6 +247,7 @@ vec3_cross(float a[3], float b[3], float result[3])
 	if (a == result || b == result)
 		vec3_dup(tmp_res, result);
 }
+EXPORT(vec3_cross);
 
 /**
  * Magnitude of a vector.
@@ -240,6 +257,7 @@ vec3_magnitude(float in[3])
 {
 	return sqrtf(in[0] * in[0] + in[1] * in[1] + in[2] * in[2]);
 }
+EXPORT(vec3_magnitude);
 
 /**
  * Normalize a vector.
@@ -251,6 +269,7 @@ vec3_normalize(float in[3], float out[3])
 
 	vec3_scale(in, out, 1.0 / mag);
 }
+EXPORT(vec3_normalize);
 
 /**
  * Add a vector to a vector.
@@ -262,6 +281,7 @@ vec3_add(float a[3], float b[3], float result[3])
 	result[1] = a[1] + b[1];
 	result[2] = a[2] + b[2];
 }
+EXPORT(vec3_add);
 
 /**
  * Duplicate a vector.
@@ -271,6 +291,7 @@ vec3_dup(float in[3], float out[3])
 {
 	memcpy(out, in, 3 * sizeof(float));
 }
+EXPORT(vec3_dup);
 
 /**
  * Subtract a vector from a vector.
@@ -282,6 +303,7 @@ vec3_subtract(float a[3], float b[3], float result[3])
 	result[1] = a[1] - b[1];
 	result[2] = a[2] - b[2];
 }
+EXPORT(vec3_subtract);
 
 /**
  * Scale a vector by a factor.
@@ -293,3 +315,4 @@ vec3_scale(float in[3], float out[3], float factor)
 	out[1] = in[1] * factor;
 	out[2] = in[2] * factor;
 }
+EXPORT(vec3_scale);

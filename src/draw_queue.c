@@ -18,6 +18,7 @@
 #include "draw_queue.h"
 #include "state.h"
 #include "shader.h"
+#include "matrix.h"
 
 /**
  * A draw operation. More or less corresponds to a single draw call.

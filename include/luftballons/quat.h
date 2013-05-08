@@ -15,41 +15,25 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef SHADER_H
-#define SHADER_H
-#include <luftballons/shader.h>
+#ifndef LUFTBALLONS_QUAT_H
+#define LUFTBALLONS_QUAT_H
 
-#include <GL/gl.h>
-
-#include "vbuf.h"
-#include "texmap.h"
-#include "refcount.h"
-#include "uniform.h"
-#include "util.h"
-
-/**
- * A shader.
- *
- * gl_handle: The OpenGL designation for the shader.
- * uniforms, uniform_count: Vector of uniforms applied to this shader.
- **/
-typedef struct shader {
-	GLuint gl_handle;
-	uniform_t **uniforms;
-	size_t uniform_count;
-} shader_t;
+typedef struct quat {
+	float c[4];
+	size_t mul_count;
+} luft_quat_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-API_DECLARE(shader_create);
-API_DECLARE(shader_activate);
-API_DECLARE(shader_set_uniform);
-API_DECLARE(shader_set_temp_uniform);
+void luft_quat_init(luft_quat_t *quat, float x, float y, float z, float theta);
+void luft_quat_mul(luft_quat_t *a, luft_quat_t *b, luft_quat_t *out);
+void luft_quat_dup(luft_quat_t *in, luft_quat_t *out);
+void luft_quat_to_matrix(luft_quat_t *quat, float m[16]);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHADER_H */
+#endif /* LUFTBALLONS_QUAT_H */

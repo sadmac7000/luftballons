@@ -63,6 +63,7 @@ uniform_create(const char *name, uniform_type_t type, uniform_value_t value)
 
 	return ret;
 }
+EXPORT(uniform_create);
 
 /**
  * Grab a uniform.
@@ -72,6 +73,7 @@ uniform_grab(uniform_t *uniform)
 {
 	refcount_grab(&uniform->refcount);
 }
+EXPORT(uniform_grab);
 
 /**
  * Ungrab a uniform.
@@ -81,3 +83,4 @@ uniform_ungrab(uniform_t *uniform)
 {
 	refcount_ungrab(&uniform->refcount);
 }
+EXPORT(uniform_ungrab);

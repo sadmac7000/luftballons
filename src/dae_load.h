@@ -17,18 +17,16 @@
 
 #ifndef DAE_LOAD_H
 #define DAE_LOAD_H
-
-#include "object.h"
+#include <luftballons/dae_load.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-object_t **dae_load(const char *filename, size_t *count);
+API_DECLARE(dae_load);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* DAE_LOAD_H */
-

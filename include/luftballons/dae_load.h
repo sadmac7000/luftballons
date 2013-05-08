@@ -15,41 +15,18 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef SHADER_H
-#define SHADER_H
-#include <luftballons/shader.h>
-
-#include <GL/gl.h>
-
-#include "vbuf.h"
-#include "texmap.h"
-#include "refcount.h"
-#include "uniform.h"
-#include "util.h"
-
-/**
- * A shader.
- *
- * gl_handle: The OpenGL designation for the shader.
- * uniforms, uniform_count: Vector of uniforms applied to this shader.
- **/
-typedef struct shader {
-	GLuint gl_handle;
-	uniform_t **uniforms;
-	size_t uniform_count;
-} shader_t;
+#ifndef DAE_LOAD_H
+#define DAE_LOAD_H
+#include <luftballons/object.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-API_DECLARE(shader_create);
-API_DECLARE(shader_activate);
-API_DECLARE(shader_set_uniform);
-API_DECLARE(shader_set_temp_uniform);
+luft_object_t **luft_dae_load(const char *filename, size_t *count);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SHADER_H */
+#endif /* DAE_LOAD_H */

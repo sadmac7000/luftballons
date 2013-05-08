@@ -15,50 +15,27 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef TARGET_H
-#define TARGET_H
-#include <luftballons/target.h>
+#ifndef LUFTBALLONS_TARGET_H
+#define LUFTBALLONS_TARGET_H
 
-#include "state.h"
-#include "object.h"
-#include "refcount.h"
-#include "util.h"
+#include <luftballons/state.h>
+#include <luftballons/object.h>
 
-/**
- * A rendering goal.
- *
- * deps, num_deps: Dependency list for a target.
- * states, num_states: States we need to pass through to hit this target.
- * root: Object we are drawing to reach this target.
- * camera: Camera to draw from.
- * refcount: Reference counter.
- **/
-typedef struct target {
-	struct target **deps;
-	size_t num_deps;
-
-	state_t **states;
-	size_t num_states;
-
-	object_t *root;
-	object_t *camera;
-
-	refcounter_t refcount;
-} target_t;
+typedef struct target luft_target_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-API_DECLARE(target_create);
-API_DECLARE(target_grab);
-API_DECLARE(target_ungrab);
-API_DECLARE(target_add_dep);
-API_DECLARE(target_add_state);
-API_DECLARE(target_hit);
+luft_target_t *luft_target_create(luft_object_t *root, luft_object_t *camera);
+void luft_target_grab(luft_target_t *target);
+void luft_target_ungrab(luft_target_t *target);
+void luft_target_add_dep(luft_target_t *target, luft_target_t *dep);
+void luft_target_add_state(luft_target_t *target, luft_state_t *state);
+void luft_target_hit(luft_target_t *target);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* TARGET_H */
+#endif /* LUFTBALLONS_TARGET_H */

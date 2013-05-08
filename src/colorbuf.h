@@ -17,19 +17,17 @@
 
 #ifndef COLORBUF_H
 #define COLORBUF_H
+#include <luftballons/colorbuf.h>
 
 #include "texmap.h"
 #include "refcount.h"
 
-/**
- * Flag value to indicate if we should clear this buffer.
- **/
-#define COLORBUF_CLEAR		0x1
-#define COLORBUF_CLEAR_DEPTH	0x2
-#define COLORBUF_CLEAR_STENCIL	0x4
-#define COLORBUF_DEPTH		0x8
-#define COLORBUF_STENCIL	0x10
-#define COLORBUF_VALID_FLAGS    0x1f
+#define COLORBUF_CLEAR		LUFT_COLORBUF_CLEAR
+#define COLORBUF_CLEAR_DEPTH	LUFT_COLORBUF_CLEAR_DEPTH
+#define COLORBUF_CLEAR_STENCIL	LUFT_COLORBUF_CLEAR_STENCIL
+#define COLORBUF_DEPTH		LUFT_COLORBUF_DEPTH
+#define COLORBUF_STENCIL	LUFT_COLORBUF_STENCIL
+#define COLORBUF_VALID_FLAGS    LUFT_COLORBUF_VALID_FLAGS  
 
 /* Internal flags */
 #define COLORBUF_RENDERBUF_HAS_STORAGE	0x100
@@ -71,20 +69,20 @@ typedef struct colorbuf {
 extern "C" {
 #endif
 
-colorbuf_t *colorbuf_create(unsigned int flags);
-void colorbuf_grab(colorbuf_t *colorbuf);
-void colorbuf_ungrab(colorbuf_t *colorbuf);
-void colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap);
-void colorbuf_clear(colorbuf_t *colorbuf);
+API_DECLARE(colorbuf_create);
+API_DECLARE(colorbuf_grab);
+API_DECLARE(colorbuf_ungrab);
+API_DECLARE(colorbuf_set_buf);
+API_DECLARE(colorbuf_clear);
+API_DECLARE(colorbuf_copy);
+API_DECLARE(colorbuf_clear_color);
+API_DECLARE(colorbuf_clear_depth);
+API_DECLARE(colorbuf_clear_stencil);
+API_DECLARE(colorbuf_init_output);
+API_DECLARE(colorbuf_set_output_geom);
+API_DECLARE(colorbuf_max_bufs);
+
 void colorbuf_prep(colorbuf_t *colorbuf);
-void colorbuf_copy(colorbuf_t *in, size_t in_idx,
-		   colorbuf_t *out, size_t out_idx);
-void colorbuf_clear_color(colorbuf_t *in, float color[4]);
-void colorbuf_clear_depth(colorbuf_t *in, float depth);
-void colorbuf_clear_stencil(colorbuf_t *in, int index);
-void colorbuf_init_output(unsigned int flags);
-void colorbuf_set_output_geom(size_t w, size_t h);
-size_t colorbuf_max_bufs(void);
 
 #ifdef __cplusplus
 }

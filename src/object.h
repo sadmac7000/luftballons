@@ -17,21 +17,14 @@
 
 #ifndef OBJECT_H
 #define OBJECT_H
+#include <luftballons/object.h>
 
 #include "mesh.h"
 #include "quat.h"
-#include "shader.h"
+#include "util.h"
 #include "refcount.h"
 
-/**
- * Types of objects we place in the scene.
- **/
-typedef enum {
-	OBJ_NODE,
-	OBJ_MESH,
-	OBJ_CAMERA,
-	OBJ_LIGHT,
-} object_type_t;
+#define object_type_t luft_object_type_t
 
 /**
  * An object. That is a mesh with a position and render context and all of
@@ -75,69 +68,53 @@ typedef struct object {
 	refcounter_t refcount;
 } object_t;
 
-/**
- * A cursor to iterate through a tree of objects.
- **/
-typedef struct object_cursor {
-	struct object *current;
-	size_t *stack;
-	size_t stack_size;
-} object_cursor_t;
+#define object_cursor_t luft_object_cursor_t
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-object_t *object_create(object_t *parent);
-void object_set_mesh(object_t *object, mesh_t *mesh);
-void object_make_light(object_t *object, float color[3]);
-void object_make_camera(object_t *object, float fov, float near, float far);
-void object_set_name(object_t *object, const char *name);
-void object_grab(object_t *object);
-void object_ungrab(object_t *object);
-void object_rotate(object_t *object, quat_t *quat);
-void object_move(object_t *object, float vec[3]);
-void object_scale(object_t *object, float scale[3]);
-void object_set_rotation(object_t *object, quat_t *quat);
-void object_set_translation(object_t *object, float vec[3]);
-void object_set_scale(object_t *object, float scale[3]);
-void object_get_transform_mat(object_t *object, float matrix[16]);
-void object_reparent(object_t *object, object_t *parent);
-void object_apply_pretransform(object_t *object, float matrix[16]);
-void object_get_total_transform(object_t *object, float mat[16]);
-object_t *object_lookup(object_t *object, const char *name);
+API_DECLARE(object_create);
+API_DECLARE(object_make_light);
+API_DECLARE(object_make_camera);
+API_DECLARE(object_set_name);
+API_DECLARE(object_grab);
+API_DECLARE(object_ungrab);
+API_DECLARE(object_rotate);
+API_DECLARE(object_move);
+API_DECLARE(object_scale);
+API_DECLARE(object_set_rotation);
+API_DECLARE(object_set_translation);
+API_DECLARE(object_set_scale);
+API_DECLARE(object_get_transform_mat);
+API_DECLARE(object_reparent);
+API_DECLARE(object_apply_pretransform);
+API_DECLARE(object_get_total_transform);
+API_DECLARE(object_lookup);
+API_DECLARE(object_set_material);
 
-void camera_set_aspect(object_t *camera, float aspect);
+API_DECLARE(camera_set_aspect);
+
+API_DECLARE(object_cursor_init);
+API_DECLARE(object_cursor_down);
+API_DECLARE(object_cursor_up);
+API_DECLARE(object_cursor_start_pre);
+API_DECLARE(object_cursor_next_pre);
+API_DECLARE(object_cursor_release);
+API_DECLARE(object_get_name);
+
+void object_set_mesh(object_t *object, mesh_t *mesh);
+
 void camera_to_clip(object_t *camera, float mat[16]);
 void camera_from_world(object_t *camera, float mat[16]);
-
-void object_cursor_init(object_cursor_t *cursor, object_t *root);
-void object_cursor_down(object_cursor_t *cursor, size_t child);
-ssize_t object_cursor_up(object_cursor_t *cursor);
-object_t *object_cursor_start_pre(object_cursor_t *cursor, object_t *root);
-object_t *object_cursor_next_pre(object_cursor_t *cursor);
 
 /**
  * Iterate objects using a cursor, in a pre-position order.
  **/
-#define object_foreach_pre(cursor, obj) \
-	for ((obj) = object_cursor_start_pre(&(cursor), (obj)); (obj); \
-	     (obj) = object_cursor_next_pre(&(cursor)))
-
-/**
- * Release an object cursor's internal data.
- **/
-static inline void
-object_cursor_release(object_cursor_t *cursor)
-{
-	free(cursor->stack);
-}
+#define object_foreach_pre luft_object_foreach_pre
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif /* OBJECT_H */
-
-
-

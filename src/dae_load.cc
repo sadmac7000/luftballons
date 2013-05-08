@@ -32,9 +32,10 @@
 #include <dom/domGeometry.h>
 #include <dom/domInputLocal.h>
 
-#include "dae_load.h"
+#include "object.h"
 #include "util.h"
 #include "mesh.h"
+#include "matrix.h"
 #include "vbuf.h"
 #include "quat.h"
 
@@ -700,5 +701,6 @@ dae_load(const char *filename, size_t *count)
 
 	return dae_get_nodes(doc, count);
 }
+EXPORT(dae_load);
 
 } /* extern "C" */

@@ -17,19 +17,12 @@
 
 #ifndef MATRIX_H
 #define MATRIX_H
+#include <luftballons/matrix.h>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "util.h"
 
-#define MATRIX_DECL(matrix, a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
-	float matrix[16] = { a,e,i,m, b,f,j,n, c,g,k,o, d,h,l,p }
-
-#define MATRIX_DECL_IDENT(matrix) MATRIX_DECL(matrix,  \
-					      1,0,0,0, \
-					      0,1,0,0, \
-					      0,0,1,0, \
-					      0,0,0,1)
+#define MATRIX_DECL LUFT_MATRIX_DECL
+#define MATRIX_DECL_IDENT LUFT_MATRIX_DECL_IDENT
 
 /**
  * A stack of matrices.
@@ -42,65 +35,30 @@ typedef struct matrix_stack {
 	size_t size;
 } matrix_stack_t;
 
-#define MATRIX_STACK_DECL(x) matrix_stack_t x = { NULL, 0 }
+#define MATRIX_STACK_DECL LUFT_MATRIX_STACK_DECL
+
+#define matrix_print luft_matrix_print
+#define matrix_dup luft_matrix_dup
+#define matrix_ident luft_matrix_ident
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/**
- * Print out a matrix for debugging.
- **/
-static inline void
-matrix_print(float m[16])
-{
-	printf("%f %f %f %f\n", m[0], m[4], m[8], m[12]);
-	printf("%f %f %f %f\n", m[1], m[5], m[9], m[13]);
-	printf("%f %f %f %f\n", m[2], m[6], m[10], m[14]);
-	printf("%f %f %f %f\n", m[3], m[7], m[11], m[15]);
-}
-
-/**
- * Write an identity matrix.
- **/
-static inline void
-matrix_ident(float out[16])
-{
-	memset(out, 0, 16 * sizeof(float));
-	out[0] = out[5] = out[10] = out[15] = 1;
-}
-
-/**
- * Duplicate a matrix.
- **/
-static inline void
-matrix_dup(float in[16], float out[16])
-{
-	memcpy(out, in, 16 * sizeof(float));
-}
-
-/**
- * Free a matrix stack's data.
- **/
-static inline void
-matrix_stack_release(matrix_stack_t *stack)
-{
-	free(stack->data);
-}
-
-void matrix_transpose(float in[16], float out[16]);
-int matrix_inverse_trans(float in[16], float out[16]);
-void matrix_multiply(float a[16], float b[16], float result[16]);
-float vec3_dot(float a[3], float b[3]);
-void vec3_cross(float a[3], float b[3], float result[3]);
-void vec3_normalize(float in[3], float out[3]);
-float vec3_magnitude(float in[3]);
-void vec3_add(float a[3], float b[3], float result[3]);
-void vec3_subtract(float a[3], float b[3], float result[3]);
-void vec3_scale(float in[3], float out[3], float factor);
-void vec3_dup(float in[3], float out[3]);
-void matrix_stack_push(matrix_stack_t *stack, float item[16]);
-int matrix_stack_pop(matrix_stack_t *stack, float item[16]);
+API_DECLARE(matrix_stack_release);
+API_DECLARE(matrix_transpose);
+API_DECLARE(matrix_inverse_trans);
+API_DECLARE(matrix_multiply);
+API_DECLARE(vec3_dot);
+API_DECLARE(vec3_cross);
+API_DECLARE(vec3_normalize);
+API_DECLARE(vec3_magnitude);
+API_DECLARE(vec3_add);
+API_DECLARE(vec3_subtract);
+API_DECLARE(vec3_scale);
+API_DECLARE(vec3_dup);
+API_DECLARE(matrix_stack_push);
+API_DECLARE(matrix_stack_pop);
 
 #ifdef __cplusplus
 }
