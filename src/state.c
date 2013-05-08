@@ -134,20 +134,6 @@ state_set_bf_cull(state_t *state)
 }
 
 /**
- * Set up 2D texture support as this state states it should be.
- **/
-static void
-state_set_texture_2D(state_t *state)
-{
-	if (state->flags & STATE_TEXTURE_2D)
-		glEnable(GL_TEXTURE_2D);
-	else
-		glDisable(GL_TEXTURE_2D);
-
-	CHECK_GL;
-}
-
-/**
  * Enter the given state.
  **/
 void
@@ -182,9 +168,6 @@ state_enter(state_t *state)
 	if (change_flags & STATE_BF_CULL)
 		state_set_bf_cull(state);
 	
-	if (change_flags & STATE_TEXTURE_2D)
-		state_set_texture_2D(state);
-
 	colorbuf_prep(state->colorbuf);
 
 	if (current_state)

@@ -333,15 +333,13 @@ main(int argc, char **argv)
 
 	canopy_state = luft_state_create(textured_shader);
 	luft_state_set_flags(canopy_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL |
-			     LUFT_STATE_TEXTURE_2D);
+			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
 	luft_state_set_material(canopy_state, 1);
 	luft_state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = luft_state_create(textured_shader);
 	luft_state_set_flags(plane_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL |
-			     LUFT_STATE_TEXTURE_2D);
+			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
 	luft_state_set_material(plane_state, 2);
 	luft_state_set_colorbuf(plane_state, cbuf);
 

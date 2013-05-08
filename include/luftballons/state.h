@@ -28,8 +28,6 @@
 #define LUFT_STATE_ALPHA_BLEND	0x2
 /* Enable backface culling in this state */
 #define LUFT_STATE_BF_CULL	0x4
-/* Enable the 2D texture buffer */
-#define LUFT_STATE_TEXTURE_2D	0x8
 
 typedef struct state luft_state_t;
 

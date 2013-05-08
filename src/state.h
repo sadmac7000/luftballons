@@ -30,8 +30,6 @@
 #define STATE_ALPHA_BLEND	LUFT_STATE_ALPHA_BLEND
 /* Enable backface culling in this state */
 #define STATE_BF_CULL		LUFT_STATE_BF_CULL
-/* Enable the 2D texture buffer */
-#define STATE_TEXTURE_2D	LUFT_STATE_TEXTURE_2D
 
 /**
  * A bin of current misc. OpenGL state.
