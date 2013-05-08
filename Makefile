@@ -1,5 +1,5 @@
-TARGETS = clean all
-SUBDIRS = src
+TARGETS = clean all install
+SUBDIRS = src include
 
 .PHONY: $(TARGETS)
 

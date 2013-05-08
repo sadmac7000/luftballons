@@ -1,6 +1,6 @@
 TEST_PROGS= 
 
-LTPROGS=demo
+NOINST_LTPROGS=demo
 
 LIBS=luftdraw
 
