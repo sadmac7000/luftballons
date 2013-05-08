@@ -140,7 +140,6 @@ void
 state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
-	state_t *tmp = NULL;
 	size_t i;
 
 	if (current_state == state)
@@ -171,12 +170,9 @@ state_enter(state_t *state)
 	colorbuf_prep(state->colorbuf);
 
 	if (current_state)
-		tmp = current_state;
+		state_ungrab(current_state);
 
 	current_state = state;
-
-	if (tmp)
-		state_ungrab(tmp);
 }
 
 /**
