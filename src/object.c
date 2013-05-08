@@ -69,10 +69,16 @@ object_cursor_next_pre(object_cursor_t *cursor)
 
 	ret = cursor->current;
 
-	while (next >= 0 && cursor->current->child_count < (size_t)next)
-		next = object_cursor_up(cursor);
+	if (cursor->current->child_count > 0) {
+		object_cursor_down(cursor, 0);
+		return ret;
+	}
 
-	if (next >= 0)
+	do {
+		next = object_cursor_up(cursor) + 1;
+	} while (next > 0 && cursor->current->child_count <= (size_t)next);
+
+	if (next > 0)
 		object_cursor_down(cursor, next);
 
 	return ret;
@@ -95,7 +101,7 @@ object_cursor_init(object_cursor_t *cursor, object_t *root)
 void
 object_cursor_down(object_cursor_t *cursor, size_t child)
 {
-	if (child > cursor->current->child_count)
+	if (child >= cursor->current->child_count)
 		errx(1, "Tried to get child %zu of object with %zu children",
 		     child, cursor->current->child_count);
 
