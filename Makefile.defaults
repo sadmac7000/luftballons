@@ -34,6 +34,7 @@ endef
 
 $(foreach prog,$(TEST_PROGS),$(eval $(call SET_DEPS,$(prog))))
 $(foreach prog,$(PROGS),$(eval $(call SET_DEPS,$(prog))))
+$(foreach prog,$(LTPROGS),$(eval $(call SET_DEPS,$(prog))))
 $(foreach lib,$(LIBS),$(eval $(call SET_DEPS,$(lib))))
 
 $(foreach file,$(wildcard *.c),$(eval $(shell $(CC) -MM $(file) | sed 's/\\//')))
@@ -47,6 +48,9 @@ $(TEST_PROGS):
 
 $(PROGS):
 	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
+
+$(LTPROGS):
+	$(call QUIET,LTLINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
 
 .PHONY: $(LIBS)
 $(LIBS):
@@ -85,4 +89,4 @@ clean:
 	$(call QUIET,RM,$(PROGS)) -f $(PROGS)
 
 .PHONY: all
-all: $(PROGS)
+all: $(PROGS) $(LTPROGS)
