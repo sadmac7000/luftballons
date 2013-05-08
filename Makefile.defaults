@@ -24,7 +24,7 @@ GCOV_FLAGS = -fprofile-arcs -ftest-coverage
 endif
 
 define SET_DEPS =
-$(1): $$($(1)_OBJS)
+$(1): $$($(1)_OBJS) $$($(1)_DEPS)
 endef
 
 define LIB_FILE =
@@ -44,13 +44,13 @@ $(foreach file,$(wildcard *.cc),$(eval $(shell $(CXX) -MM $(file) | sed 's/\\//'
 $(foreach lib,$(LIBS),$(eval $(call LIB_FILE,$(lib))))
 
 $(TEST_PROGS):
-	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
+	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $($@_OBJS)
 
 $(PROGS):
-	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
+	$(call QUIET,LINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $($@_OBJS)
 
 $(LTPROGS):
-	$(call QUIET,LTLINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $^
+	$(call QUIET,LTLINK) $(CFLAGS) $($@_LINK) $(GCOV_FLAGS) -o $@ $($@_OBJS)
 
 .PHONY: $(LIBS)
 $(LIBS):

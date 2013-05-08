@@ -4,9 +4,9 @@ LTPROGS=demo
 
 LIBS=luftdraw
 
-demo_OBJS =	\
-	demo.o		\
-	libluftdraw.la
+demo_OBJS = demo.o
+
+demo_DEPS = luftdraw
 
 demo_LINK=-lglut -lGL -lm -lstdc++ \
 	  -lcollada14dom -lboost_system -lpng -ltiff \
