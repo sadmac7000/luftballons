@@ -105,6 +105,7 @@ update_camera(float time)
 	float offset_vec[3] = { 0, 0, 0 };
 	float pitch_amt = 0;
 	float yaw_amt = 0;
+	float rise = 0;
 	luft_quat_t quat;
 	LUFT_MATRIX_DECL_IDENT(translate);
 	float rotate[16];
@@ -122,10 +123,10 @@ update_camera(float time)
 		offset_vec[0] += speed;
 
 	if (movement.rise)
-		offset_vec[1] += speed;
+		rise += speed;
 
 	if (movement.fall)
-		offset_vec[1] -= speed;
+		rise -= speed;
 
 	if (movement.t_left)
 		yaw_amt += rot_speed;
@@ -160,7 +161,7 @@ update_camera(float time)
 	luft_matrix_multiply(rotate, translate, translate);
 
 	offset_vec[0] = translate[12];
-	offset_vec[1] = translate[13];
+	offset_vec[1] = translate[13] + rise;
 	offset_vec[2] = translate[14];
 
 	luft_object_move(camera, offset_vec);
