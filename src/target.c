@@ -123,18 +123,16 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 {
 	size_t i;
 	size_t j;
-	object_t *cache = NULL;
 
 	for (i = 0; i < num_targets; i++) {
 		for (j = 0; j < targets[i]->num_states; j++) {
-			if (cache != targets[i]->states[j]->root) {
-				draw_queue->draw_op_count = 0;
-				draw_queue_draw(draw_queue,
-						targets[i]->states[j]->root,
-						targets[i]->camera);
-			}
+			if (! targets[i]->states[j]->root)
+				return;
+
 			state_enter(targets[i]->states[j]);
-			draw_queue_flush(draw_queue);
+			draw_queue_draw(draw_queue,
+					targets[i]->states[j]->root,
+					targets[i]->camera);
 		}
 	}
 }
