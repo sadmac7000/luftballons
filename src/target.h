@@ -29,7 +29,6 @@
  *
  * deps, num_deps: Dependency list for a target.
  * states, num_states: States we need to pass through to hit this target.
- * root: Object we are drawing to reach this target.
  * camera: Camera to draw from.
  * refcount: Reference counter.
  **/
@@ -40,7 +39,6 @@ typedef struct target {
 	state_t **states;
 	size_t num_states;
 
-	object_t *root;
 	object_t *camera;
 
 	refcounter_t refcount;

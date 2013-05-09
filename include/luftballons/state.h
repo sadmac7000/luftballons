@@ -21,6 +21,7 @@
 #include <luftballons/texmap.h>
 #include <luftballons/shader.h>
 #include <luftballons/colorbuf.h>
+#include <luftballons/object.h>
 
 /* Enable depth testing in this state */
 #define LUFT_STATE_DEPTH_TEST	0x1
@@ -44,6 +45,7 @@ void luft_state_ignore_flags(luft_state_t *state, uint64_t flags);
 void luft_state_set_colorbuf(luft_state_t *state, luft_colorbuf_t *colorbuf);
 void luft_state_set_uniform(luft_state_t *state, luft_uniform_t *uniform);
 void luft_state_set_material(luft_state_t *state, int mat_id);
+void luft_state_set_object(luft_state_t *state, luft_object_t *object);
 size_t luft_state_max_colorbufs(void);
 
 #ifdef __cplusplus

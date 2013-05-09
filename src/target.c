@@ -37,7 +37,6 @@ target_destructor(void *target_)
 
 	free(target->states);
 	free(target->deps);
-	object_ungrab(target->root);
 	object_ungrab(target->camera);
 	free(target);
 }
@@ -46,13 +45,11 @@ target_destructor(void *target_)
  * Create a new target.
  **/
 target_t *
-target_create(object_t *root, object_t *camera)
+target_create(object_t *camera)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
 
-	ret->root = root;
 	ret->camera = camera;
-	object_grab(root);
 	object_grab(camera);
 
 	refcount_init(&ret->refcount);
@@ -126,11 +123,16 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 {
 	size_t i;
 	size_t j;
+	object_t *cache = NULL;
 
 	for (i = 0; i < num_targets; i++) {
-		draw_queue_draw(draw_queue, targets[i]->root, targets[i]->camera);
-
 		for (j = 0; j < targets[i]->num_states; j++) {
+			if (cache != targets[i]->states[j]->root) {
+				draw_queue->draw_op_count = 0;
+				draw_queue_draw(draw_queue,
+						targets[i]->states[j]->root,
+						targets[i]->camera);
+			}
 			state_enter(targets[i]->states[j]);
 			draw_queue_flush(draw_queue);
 		}

@@ -290,3 +290,19 @@ state_material_active(int mat_id)
 
 	return current_state->mat_id == mat_id;
 }
+
+/**
+ * Set the object to draw in this state.
+ **/
+void
+state_set_object(state_t *state, object_t *object)
+{
+	if (state->root)
+		object_ungrab(state->root);
+
+	if (object)
+		object_grab(object);
+
+	state->root = object;
+}
+EXPORT(state_set_object);

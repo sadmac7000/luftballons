@@ -23,6 +23,7 @@
 #include "shader.h"
 #include "refcount.h"
 #include "colorbuf.h"
+#include "object.h"
 
 /* Enable depth testing in this state */
 #define STATE_DEPTH_TEST	LUFT_STATE_DEPTH_TEST
@@ -40,6 +41,7 @@
  * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
+ * root: Root of objects we will draw in this state.
  * refcount: Reference counter.
  **/
 typedef struct state {
@@ -50,6 +52,7 @@ typedef struct state {
 	uniform_t **uniforms;
 	shader_t *shader;
 	int mat_id;
+	object_t *root;
 	refcounter_t refcount;
 } state_t;
 
@@ -67,6 +70,7 @@ API_DECLARE(state_set_colorbuf);
 API_DECLARE(state_set_uniform);
 API_DECLARE(state_set_material);
 API_DECLARE(state_max_colorbufs);
+API_DECLARE(state_set_object);
 
 int state_material_active(int mat_id);
 void state_enter(state_t *state);

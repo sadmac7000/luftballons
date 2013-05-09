@@ -372,6 +372,10 @@ main(int argc, char **argv)
 
 	cube_center = luft_object_create(NULL);
 
+	luft_state_set_object(cube_state, cube_center);
+	luft_state_set_object(canopy_state, cube_center);
+	luft_state_set_object(plane_state, cube_center);
+
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
 
@@ -398,7 +402,7 @@ main(int argc, char **argv)
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	target = luft_target_create(cube_center, camera);
+	target = luft_target_create(camera);
 	luft_target_add_state(target, cube_state);
 	luft_target_add_state(target, canopy_state);
 	luft_target_add_state(target, plane_state);

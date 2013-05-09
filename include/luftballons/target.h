@@ -27,7 +27,7 @@ typedef struct target luft_target_t;
 extern "C" {
 #endif
 
-luft_target_t *luft_target_create(luft_object_t *root, luft_object_t *camera);
+luft_target_t *luft_target_create(luft_object_t *camera);
 void luft_target_grab(luft_target_t *target);
 void luft_target_ungrab(luft_target_t *target);
 void luft_target_add_dep(luft_target_t *target, luft_target_t *dep);
