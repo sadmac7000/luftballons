@@ -540,7 +540,7 @@ object_fill_transform_cache(object_t *object)
 		return;
 
 	object_get_total_transform(object->parent, parent);
-	matrix_multiply(object->transform_cache, parent,
+	matrix_multiply(parent, object->transform_cache,
 			object->transform_cache);
 }
 
