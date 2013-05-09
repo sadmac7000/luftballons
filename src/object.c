@@ -177,12 +177,15 @@ EXPORT(object_lookup);
 static void
 object_invalidate_transform_cache(object_t *object)
 {
-	if (! object->transform_cache)
-		return;
+	object_cursor_t cursor;
 
-	free(object->transform_cache);
-	object->transform_cache = NULL;
-	return;
+	object_foreach_pre(cursor, object) {
+		if (! object->transform_cache)
+			continue;
+
+		free(object->transform_cache);
+		object->transform_cache = NULL;
+	}
 }
 
 /**
@@ -528,8 +531,6 @@ EXPORT(object_get_transform_mat);
 static void
 object_fill_transform_cache(object_t *object)
 {
-	float parent[16];
-
 	if (object->transform_cache)
 		return;
 
@@ -539,9 +540,9 @@ object_fill_transform_cache(object_t *object)
 	if (! object->parent)
 		return;
 
-	object_get_total_transform(object->parent, parent);
-	matrix_multiply(parent, object->transform_cache,
-			object->transform_cache);
+	object_fill_transform_cache(object->parent);
+	matrix_multiply(object->parent->transform_cache,
+			object->transform_cache, object->transform_cache);
 }
 
 /**
