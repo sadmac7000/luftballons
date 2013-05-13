@@ -392,6 +392,8 @@ colorbuf_prep(colorbuf_t *colorbuf)
 		colorbuf_ungrab(current_colorbuf);
 
 	if (! colorbuf) {
+		current_colorbuf = NULL;
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glDrawBuffer(GL_BACK);
 
