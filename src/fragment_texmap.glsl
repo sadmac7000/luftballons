@@ -20,13 +20,12 @@
 varying vec4 colorout;
 varying vec4 texcoordout;
 varying vec4 normalout;
+varying vec4 posout;
 uniform sampler2D diffusemap;
-
-vec4 camdir = vec4(0,0,1, 0);
 
 void main()
 {
-	float cos_angle = clamp(dot(normalize(normalout), normalize(camdir)), 0, 1);
-	vec4 color = texture2D(diffusemap, texcoordout.st);
-	gl_FragColor =  vec4(color.rgb * cos_angle, color.a);
+	gl_FragData[0] =  normalout;
+	gl_FragData[1] =  posout;
+	gl_FragData[2] =  texture2D(diffusemap, texcoordout.st);
 }

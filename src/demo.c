@@ -45,12 +45,13 @@ luft_object_t *cube;
 luft_object_t *cube_center;
 luft_object_t *camera;
 luft_quat_t cam_rot;
-luft_state_t *cube_state;
-luft_state_t *plane_state;
-luft_state_t *canopy_state;
 luft_colorbuf_t *cbuf;
-luft_texmap_t *cbuf_texmap;
-luft_target_t *target;
+luft_texmap_t *normal_texmap;
+luft_texmap_t *diffuse_texmap;
+luft_texmap_t *position_texmap;
+luft_target_t *draw_target;
+luft_target_t *gather_target;
+luft_state_t *gather_state;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -73,6 +74,8 @@ void
 handle_reshape(void)
 {
 	float aspect = (win_sz[0] / (float)win_sz[1]);
+	luft_uniform_value_t uvtmp;
+	luft_uniform_t *uniform;
 
 	if (! need_reshape)
 		return;
@@ -80,9 +83,32 @@ handle_reshape(void)
 
 	luft_camera_set_aspect(camera, aspect);
 	luft_colorbuf_set_output_geom(win_sz[0], win_sz[1]);
-	cbuf_texmap = luft_texmap_create(0, 0, 0);
-	luft_texmap_init_blank(cbuf_texmap, 0, win_sz[0], win_sz[1]);
-	luft_colorbuf_set_buf(cbuf, 0, cbuf_texmap);
+
+	normal_texmap = luft_texmap_create(0, 0, 0);
+	luft_texmap_init_blank(normal_texmap, 0, win_sz[0], win_sz[1]);
+	position_texmap = luft_texmap_create(0, 0, 0);
+	luft_texmap_init_blank(position_texmap, 0, win_sz[0], win_sz[1]);
+	diffuse_texmap = luft_texmap_create(0, 0, 0);
+	luft_texmap_init_blank(diffuse_texmap, 0, win_sz[0], win_sz[1]);
+
+	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
+	luft_colorbuf_set_buf(cbuf, 1, position_texmap);
+	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
+
+	uvtmp.data_ptr = normal_texmap;
+	uniform = luft_uniform_create("normal_buf", UNIFORM_SAMP2D, uvtmp);
+	luft_state_set_uniform(gather_state, uniform);
+	luft_uniform_ungrab(uniform);
+
+	uvtmp.data_ptr = position_texmap;
+	uniform = luft_uniform_create("position_buf", UNIFORM_SAMP2D, uvtmp);
+	luft_state_set_uniform(gather_state, uniform);
+	luft_uniform_ungrab(uniform);
+
+	uvtmp.data_ptr = diffuse_texmap;
+	uniform = luft_uniform_create("diffuse_buf", UNIFORM_SAMP2D, uvtmp);
+	luft_state_set_uniform(gather_state, uniform);
+	luft_uniform_ungrab(uniform);
 }
 
 float
@@ -188,10 +214,9 @@ render(void)
 	luft_object_set_translation(cube, offset);
 
 	luft_colorbuf_clear(cbuf);
+	luft_colorbuf_clear(NULL);
 
-	luft_target_hit(target);
-
-	luft_colorbuf_copy(cbuf, 0, NULL, 0);
+	luft_target_hit(gather_target);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -277,6 +302,8 @@ assign_material(luft_object_t *object)
 				luft_object_set_material(object, 1);
 			else
 				luft_object_set_material(object, 2);
+		} else if (luft_object_get_type(object) == OBJ_LIGHT) {
+			luft_object_set_material(object, 3);
 		}
 	}
 
@@ -296,6 +323,11 @@ main(int argc, char **argv)
 	luft_texmap_t *canopy_map;
 	luft_shader_t *textured_shader;
 	luft_shader_t *vcolor_shader;
+	luft_shader_t *gather_shader;
+	luft_object_t *fs_quad = luft_object_get_fs_quad();
+	luft_state_t *cube_state;
+	luft_state_t *plane_state;
+	luft_state_t *canopy_state;
 	luft_uniform_value_t uvtmp;
 	luft_uniform_t *uniform;
 	float clear_color[4] = { 0.5, 0, 0.5, 1 };
@@ -313,7 +345,10 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	luft_colorbuf_init_output(0);
+	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
+				  LUFT_COLORBUF_DEPTH |
+				  LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_depth(NULL, 1.0);
 
 	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
 				    LUFT_COLORBUF_CLEAR_DEPTH |
@@ -324,26 +359,35 @@ main(int argc, char **argv)
 
 	vcolor_shader = luft_shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = luft_shader_create("vertex.glsl", "fragment_texmap.glsl");
+	gather_shader = luft_shader_create("vertex_quad.glsl", "fragment_lighting.glsl");
 
 	cube_state = luft_state_create(vcolor_shader);
 	luft_state_set_flags(cube_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
+			     LUFT_STATE_BF_CULL);
+	luft_state_clear_flags(cube_state, LUFT_STATE_ALPHA_BLEND);
 	luft_state_set_material(cube_state, 0);
 	luft_state_set_colorbuf(cube_state, cbuf);
 
 	canopy_state = luft_state_create(textured_shader);
 	luft_state_set_flags(canopy_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
+			     LUFT_STATE_BF_CULL);
+	luft_state_clear_flags(canopy_state, LUFT_STATE_ALPHA_BLEND);
 	luft_state_set_material(canopy_state, 1);
 	luft_state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = luft_state_create(textured_shader);
 	luft_state_set_flags(plane_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_ALPHA_BLEND | LUFT_STATE_BF_CULL);
+			     LUFT_STATE_BF_CULL);
+	luft_state_clear_flags(plane_state, LUFT_STATE_ALPHA_BLEND);
 	luft_state_set_material(plane_state, 2);
 	luft_state_set_colorbuf(plane_state, cbuf);
 
 	luft_colorbuf_ungrab(cbuf);
+
+	gather_state = luft_state_create(gather_shader);
+	luft_state_set_flags(gather_state, LUFT_STATE_DEPTH_TEST |
+			     LUFT_STATE_BF_CULL | LUFT_STATE_ALPHA_BLEND);
+	luft_state_set_material(gather_state, 3);
 
 	canopy_map = luft_texmap_create(0, 0, 1);
 	plane_map = luft_texmap_create(0, 0, 1);
@@ -376,6 +420,10 @@ main(int argc, char **argv)
 	luft_state_set_object(canopy_state, cube_center);
 	luft_state_set_object(plane_state, cube_center);
 
+	luft_object_set_material(fs_quad, 3);
+	luft_state_set_object(gather_state, fs_quad);
+	luft_object_ungrab(fs_quad);
+
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
 
@@ -402,13 +450,18 @@ main(int argc, char **argv)
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	target = luft_target_create(camera);
-	luft_target_add_state(target, cube_state);
-	luft_target_add_state(target, canopy_state);
-	luft_target_add_state(target, plane_state);
+	draw_target = luft_target_create(camera);
+	luft_target_add_state(draw_target, cube_state);
+	luft_target_add_state(draw_target, canopy_state);
+	luft_target_add_state(draw_target, plane_state);
 	luft_state_ungrab(cube_state);
 	luft_state_ungrab(canopy_state);
 	luft_state_ungrab(plane_state);
+
+	gather_target = luft_target_create(camera);
+	luft_target_add_state(gather_target, gather_state);
+	luft_state_ungrab(gather_state);
+	luft_target_add_dep(gather_target, draw_target);
 
 	glutMainLoop();
 	return 0;

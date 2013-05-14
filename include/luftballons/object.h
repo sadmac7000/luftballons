@@ -79,6 +79,7 @@ luft_object_t *luft_object_cursor_start_pre(luft_object_cursor_t *cursor,
 					    luft_object_t *root);
 luft_object_t *luft_object_cursor_next_pre(luft_object_cursor_t *cursor);
 void luft_object_cursor_release(luft_object_cursor_t *cursor);
+luft_object_t *luft_object_get_fs_quad(void);
 
 /**
  * Iterate objects using a cursor, in a pre-position order.

@@ -18,10 +18,13 @@
  **/
 
 varying vec4 colorout;
+varying vec4 posout;
 varying vec4 texcoordout;
 varying vec4 normalout;
 
 void main()
 {
-	gl_FragColor = colorout;
+	gl_FragData[0] = normalout;
+	gl_FragData[1] = posout;
+	gl_FragData[2] = colorout;
 }

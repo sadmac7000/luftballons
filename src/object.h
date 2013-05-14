@@ -102,6 +102,7 @@ API_DECLARE(object_cursor_start_pre);
 API_DECLARE(object_cursor_next_pre);
 API_DECLARE(object_cursor_release);
 API_DECLARE(object_get_name);
+API_DECLARE(object_get_fs_quad);
 
 void object_set_mesh(object_t *object, mesh_t *mesh);
 

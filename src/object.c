@@ -36,6 +36,31 @@ struct camera {
 	float aspect;
 };
 
+object_t *
+object_get_fs_quad(void)
+{
+	vbuf_fmt_t format = 0;
+	mesh_t *mesh;
+	object_t *object;
+	float verts[] = {
+		-1.0, -1.0, 0.0, 1.0,
+		1.0, -1.0, 0.0, 1.0,
+		1.0, 1.0, 0.0, 1.0,
+		-1.0, 1.0, 0.0, 1.0,
+	};
+	uint16_t elems[] = { 0, 1, 2, 3 };
+
+	vbuf_fmt_add(&format, "position", 4, GL_FLOAT);
+
+	mesh = mesh_create(4, verts, 4, elems, format, GL_TRIANGLE_FAN);
+	object = object_create(NULL);
+	object_set_mesh(object, mesh);
+	mesh_ungrab(mesh);
+
+	return object;
+}
+EXPORT(object_get_fs_quad);
+
 /**
  * Release an object cursor's internal data.
  **/
