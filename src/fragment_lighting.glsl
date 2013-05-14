@@ -1,6 +1,6 @@
-#version 120
+#version 130
 
-varying vec4 posout;
+in vec4 posout;
 uniform sampler2D normal_buf;
 uniform sampler2D position_buf;
 uniform sampler2D diffuse_buf;

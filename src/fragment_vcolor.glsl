@@ -1,4 +1,4 @@
-#version 120
+#version 130
 
 /**
  * This file is part of Luftballons.
@@ -17,10 +17,10 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-varying vec4 colorout;
-varying vec4 posout;
-varying vec4 texcoordout;
-varying vec4 normalout;
+in vec4 colorout;
+in vec4 posout;
+in vec4 texcoordout;
+in vec4 normalout;
 
 void main()
 {

@@ -1,13 +1,13 @@
-#version 120
+#version 130
 
-attribute vec4 position;
-attribute vec4 color;
-attribute vec4 normal;
-attribute vec4 texcoord;
-varying vec4 colorout;
-varying vec4 normalout;
-varying vec4 texcoordout;
-varying vec4 posout;
+in vec4 position;
+in vec4 color;
+in vec4 normal;
+in vec4 texcoord;
+out vec4 colorout;
+out vec4 normalout;
+out vec4 texcoordout;
+out vec4 posout;
 uniform mat4 transform;
 uniform mat4 normal_transform;
 uniform mat4 clip_transform;

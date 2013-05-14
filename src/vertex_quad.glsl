@@ -1,7 +1,7 @@
-#version 120
+#version 130
 
-attribute vec4 position;
-varying vec4 posout;
+in vec4 position;
+out vec4 posout;
 
 void main()
 {
