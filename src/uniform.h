@@ -24,6 +24,12 @@
 #include "refcount.h"
 #include "util.h"
 
+#define UNIFORM_MAT4 LUFT_UNIFORM_MAT4
+#define UNIFORM_VEC4 LUFT_UNIFORM_VEC4
+#define UNIFORM_SAMP2D LUFT_UNIFORM_SAMP2D
+#define UNIFORM_SAMP1D LUFT_UNIFORM_SAMP1D
+#define UNIFORM_UINT LUFT_UNIFORM_UINT
+
 typedef luft_uniform_type_t uniform_type_t;
 typedef luft_uniform_value_t uniform_value_t;
 

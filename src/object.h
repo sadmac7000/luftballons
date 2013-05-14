@@ -26,6 +26,11 @@
 
 #define object_type_t luft_object_type_t
 
+#define OBJ_NODE LUFT_OBJ_NODE
+#define OBJ_MESH LUFT_OBJ_MESH
+#define OBJ_CAMERA LUFT_OBJ_CAMERA
+#define OBJ_LIGHT LUFT_OBJ_LIGHT
+
 /**
  * An object. That is a mesh with a position and render context and all of
  * that.

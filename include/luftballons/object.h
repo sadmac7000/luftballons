@@ -26,10 +26,10 @@
  * Types of objects we place in the scene.
  **/
 typedef enum {
-	OBJ_NODE,
-	OBJ_MESH,
-	OBJ_CAMERA,
-	OBJ_LIGHT,
+	LUFT_OBJ_NODE,
+	LUFT_OBJ_MESH,
+	LUFT_OBJ_CAMERA,
+	LUFT_OBJ_LIGHT,
 } luft_object_type_t;
 
 /**

@@ -96,17 +96,17 @@ handle_reshape(void)
 	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
 
 	uvtmp.data_ptr = normal_texmap;
-	uniform = luft_uniform_create("normal_buf", UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
 	uvtmp.data_ptr = position_texmap;
-	uniform = luft_uniform_create("position_buf", UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
 	uvtmp.data_ptr = diffuse_texmap;
-	uniform = luft_uniform_create("diffuse_buf", UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 }
@@ -297,12 +297,12 @@ assign_material(luft_object_t *object)
 		if (! name)
 			continue;
 
-		if (luft_object_get_type(object) == OBJ_MESH) {
+		if (luft_object_get_type(object) == LUFT_OBJ_MESH) {
 			if (! strncmp(name, "canopy", 6))
 				luft_object_set_material(object, 1);
 			else
 				luft_object_set_material(object, 2);
-		} else if (luft_object_get_type(object) == OBJ_LIGHT) {
+		} else if (luft_object_get_type(object) == LUFT_OBJ_LIGHT) {
 			luft_object_set_material(object, 3);
 		}
 	}
@@ -398,7 +398,7 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = canopy_map;
-	uniform = luft_uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, uvtmp);
 	luft_state_set_uniform(canopy_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(canopy_map);
@@ -409,7 +409,7 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
 	uvtmp.data_ptr = plane_map;
-	uniform = luft_uniform_create("diffusemap", UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, uvtmp);
 	luft_state_set_uniform(plane_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(plane_map);
