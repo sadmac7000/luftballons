@@ -1,0 +1,172 @@
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Param
+   ioctl(generic)
+   ...
+   fun:drmIoctl
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:drm_intel_bufmgr_gem_init
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:intelInitScreen2
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:intelInitContext
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:drm_intel_gem_bo_alloc_tiled
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:intel_batchbuffer_emit_mi_flush
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_intel_batchbuffer_flush
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z26gen6_blorp_emit_batch_headP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen7_allocate_push_constants
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen6_emit_3dstate_multisample
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen6_emit_3dstate_sample_mask
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z34gen6_blorp_emit_state_base_addressP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:intel_batchbuffer_emit_reloc
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z24gen6_blorp_emit_verticesP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z24gen6_blorp_emit_verticesP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen7_emit_urb_state
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z35gen6_blorp_emit_depth_stencil_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z35gen6_blorp_emit_depth_stencil_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_Z35gen6_blorp_emit_depth_stencil_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z15gen7_blorp_execP13intel_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z28gen6_blorp_emit_clip_disableP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:intel_emit_depth_stall_flushes
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z33gen6_blorp_emit_drawing_rectangleP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z27gen6_blorp_emit_blend_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_Z27gen6_blorp_emit_blend_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z24gen6_blorp_emit_cc_stateP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z28gen6_blorp_emit_wm_constantsP11brw_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_ZL29gen7_blorp_emit_surface_stateP11brw_contextPK16brw_blorp_paramsPK22brw_blorp_surface_infojjb.isra.25
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_ZL29gen7_blorp_emit_surface_stateP11brw_contextPK16brw_blorp_paramsPK22brw_blorp_surface_infojjb.isra.25
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:_Z29gen6_blorp_emit_binding_tableP11brw_contextPK16brw_blorp_paramsjj
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr8
+   fun:_Z15gen7_blorp_execP13intel_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr1
+   fun:_Z15gen7_blorp_execP13intel_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr2
+   fun:_Z15gen7_blorp_execP13intel_contextPK16brw_blorp_params
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Cond
+   fun:brw_search_cache
+}
