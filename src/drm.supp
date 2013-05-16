@@ -28,6 +28,46 @@
 {
    <insert_a_suppression_name_here>
    Memcheck:Addr4
+   fun:brw_*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr2
+   fun:gen6*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr2
+   fun:gen7*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:disable_stages
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen6*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:gen7*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:intel_*
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
+   fun:upload_drawing_rect
+}
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Addr4
    fun:intel_batchbuffer_emit_mi_flush
 }
 {
