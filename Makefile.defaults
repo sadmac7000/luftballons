@@ -99,11 +99,13 @@ clean:
 	$(call QUIET,RM,\*.gcda) -f *.gcda
 	$(call QUIET,RM,\*.gcno) -f *.gcno
 	$(call QUIET,RM,\*.gcov) -f *.gcov
-	$(call QUIET,RM,$(TEST_PROGS)) -f $(TEST_PROGS)
-	$(call QUIET,RM,$(PROGS)) -f $(PROGS)
-	$(call QUIET,RM,$(LTPROGS)) -f $(LTPROGS)
-	$(call QUIET,RM,$(NOINST_PROGS)) -f $(NOINST_PROGS)
-	$(call QUIET,RM,$(NOINST_LTPROGS)) -f $(NOINST_LTPROGS)
+	$(call QUIET,RM,.libs) -rf .libs
+	$(foreach prog, $(TEST_PROGS), $(call QUIET,RM,$(prog)) -f $(prog))
+	$(foreach prog, $(PROGS), $(call QUIET,RM,$(prog)) -f $(prog))
+	$(foreach prog, $(LTPROGS), $(call QUIET,RM,$(prog)) -f $(prog))
+	$(foreach prog, $(NOINST_PROGS), $(call QUIET,RM,$(prog)) -f $(prog))
+	$(foreach prog, $(NOINST_LTPROGS), $(call QUIET,RM,$(prog)) -f $(prog))
+	$(foreach lib, $(LIBS), $(call QUIET,RM,lib$(lib).la) -f $(lib))
 
 .PHONY: all
 all: $(PROGS) $(LTPROGS) $(NOINST_PROGS) $(NOINST_LTPROGS)
