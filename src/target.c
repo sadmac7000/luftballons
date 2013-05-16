@@ -183,11 +183,12 @@ target_drain_queue(target_t **queue, size_t queue_len)
 void
 target_hit(target_t *target)
 {
-	target_t **queue = xcalloc(1, sizeof(target_t *));
+	target_t **queue = NULL;
 	size_t queue_len = 1;
 	size_t i;
 	size_t j;
 
+	queue = vec_expand(queue, 0);
 	queue[0] = target;
 
 	if (! draw_queue)
