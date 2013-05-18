@@ -58,6 +58,7 @@ state_create(shader_t *shader)
 
 	state->shader = shader;
 	state->mat_id = -1;
+	state->blend_mode = STATE_BLEND_DONTCARE;
 
 	refcount_init(&state->refcount);
 	refcount_add_destructor(&state->refcount, state_destructor, state);
@@ -101,22 +102,6 @@ state_set_depth_test(state_t *state)
 }
 
 /**
- * Set up alpha blending as this state states it should be.
- **/
-static void
-state_set_alpha_blend(state_t *state)
-{
-	if (state->flags & STATE_ALPHA_BLEND) {
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	} else {
-		glDisable(GL_BLEND);
-	}
-
-	CHECK_GL;
-}
-
-/**
  * Set up backface culling as this state states it should be.
  **/
 static void
@@ -134,6 +119,33 @@ state_set_bf_cull(state_t *state)
 }
 
 /**
+ * Apply this state's blend mode to OpenGL.
+ **/
+static void
+state_apply_blend_mode(state_t *state, state_blend_mode_t old)
+{
+	if (state->blend_mode == STATE_BLEND_DONTCARE)
+		return;
+
+	if (state->blend_mode == old)
+		return;
+
+	if (state->blend_mode == STATE_BLEND_NONE) {
+		glDisable(GL_BLEND);
+		return;
+	}
+
+	if (old == STATE_BLEND_NONE || old == STATE_BLEND_DONTCARE)
+		glEnable(GL_BLEND);
+
+	if (state->blend_mode == STATE_BLEND_ALPHA)
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	else if (state->blend_mode == STATE_BLEND_ADDITIVE)
+		glBlendFunc(GL_ONE, GL_ONE);
+}
+
+
+/**
  * Enter the given state.
  **/
 void
@@ -141,6 +153,7 @@ state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
 	size_t i;
+	state_blend_mode_t old = STATE_BLEND_DONTCARE;
 
 	if (current_state == state)
 		return;
@@ -156,17 +169,16 @@ state_enter(state_t *state)
 		change_flags = current_state->flags ^ state->flags;
 		change_flags |= ~current_state->care_about;
 		change_flags &= state->care_about;
+		old = current_state->blend_mode;
 	}
 
 	if (change_flags & STATE_DEPTH_TEST)
 		state_set_depth_test(state);
 
-	if (change_flags & STATE_ALPHA_BLEND)
-		state_set_alpha_blend(state);
-
 	if (change_flags & STATE_BF_CULL)
 		state_set_bf_cull(state);
 	
+	state_apply_blend_mode(state, old);
 	colorbuf_prep(state->colorbuf);
 
 	if (current_state)
@@ -297,6 +309,8 @@ state_material_active(int mat_id)
 void
 state_set_object(state_t *state, object_t *object)
 {
+	state_assert_not_current(state);
+
 	if (state->root)
 		object_ungrab(state->root);
 
@@ -306,3 +320,15 @@ state_set_object(state_t *state, object_t *object)
 	state->root = object;
 }
 EXPORT(state_set_object);
+
+/**
+ * Set the blending mode for this state.
+ **/
+void
+state_set_blend(state_t *state, state_blend_mode_t mode)
+{
+	state_assert_not_current(state);
+
+	state->blend_mode = mode;
+}
+EXPORT(state_set_blend);

@@ -43,6 +43,7 @@
 
 luft_object_t *cube;
 luft_object_t *cube_center;
+luft_object_t *root;
 luft_object_t *camera;
 luft_quat_t cam_rot;
 luft_colorbuf_t *cbuf;
@@ -325,14 +326,17 @@ main(int argc, char **argv)
 	luft_shader_t *vcolor_shader;
 	luft_shader_t *gather_shader;
 	luft_object_t *light;
+	luft_object_t *light_2;
 	luft_state_t *cube_state;
 	luft_state_t *plane_state;
 	luft_state_t *canopy_state;
 	luft_uniform_value_t uvtmp;
 	luft_uniform_t *uniform;
-	float clear_color[4] = { 0, 0, 0, 1 };
-	float light_color[3] = { 1.0, 1.0, 1.0 };
+	float clear_color[4] = { 0, 0, 0, 0 };
+	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
+	float light_color_2[3] = { 1.0, 1.0, 0.0 };
+	float light_offset_2[4] = { 0.0, 2.0, 0.0, 1.0 };
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -348,8 +352,10 @@ main(int argc, char **argv)
 	glutKeyboardUpFunc(offkey);
 
 	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
+				  LUFT_COLORBUF_CLEAR |
 				  LUFT_COLORBUF_DEPTH |
 				  LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_color(cbuf, clear_color);
 	luft_colorbuf_clear_depth(NULL, 1.0);
 
 	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
@@ -366,29 +372,30 @@ main(int argc, char **argv)
 	cube_state = luft_state_create(vcolor_shader);
 	luft_state_set_flags(cube_state, LUFT_STATE_DEPTH_TEST |
 			     LUFT_STATE_BF_CULL);
-	luft_state_clear_flags(cube_state, LUFT_STATE_ALPHA_BLEND);
+	luft_state_set_blend(cube_state, LUFT_STATE_BLEND_NONE);
 	luft_state_set_material(cube_state, 0);
 	luft_state_set_colorbuf(cube_state, cbuf);
 
 	canopy_state = luft_state_create(textured_shader);
 	luft_state_set_flags(canopy_state, LUFT_STATE_DEPTH_TEST |
 			     LUFT_STATE_BF_CULL);
-	luft_state_clear_flags(canopy_state, LUFT_STATE_ALPHA_BLEND);
+	luft_state_set_blend(canopy_state, LUFT_STATE_BLEND_NONE);
 	luft_state_set_material(canopy_state, 1);
 	luft_state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = luft_state_create(textured_shader);
 	luft_state_set_flags(plane_state, LUFT_STATE_DEPTH_TEST |
 			     LUFT_STATE_BF_CULL);
-	luft_state_clear_flags(plane_state, LUFT_STATE_ALPHA_BLEND);
+	luft_state_set_blend(plane_state, LUFT_STATE_BLEND_NONE);
 	luft_state_set_material(plane_state, 2);
 	luft_state_set_colorbuf(plane_state, cbuf);
 
 	luft_colorbuf_ungrab(cbuf);
 
 	gather_state = luft_state_create(gather_shader);
-	luft_state_set_flags(gather_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_BF_CULL | LUFT_STATE_ALPHA_BLEND);
+	luft_state_set_flags(gather_state, LUFT_STATE_BF_CULL);
+	luft_state_clear_flags(gather_state, LUFT_STATE_DEPTH_TEST);
+	luft_state_set_blend(gather_state, LUFT_STATE_BLEND_ADDITIVE);
 	luft_state_set_material(gather_state, 3);
 
 	canopy_map = luft_texmap_create(0, 0, 1);
@@ -416,12 +423,13 @@ main(int argc, char **argv)
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(plane_map);
 
-	cube_center = luft_object_create(NULL);
+	root = luft_object_create(NULL);
+	cube_center = luft_object_create(root);
 
-	luft_state_set_object(cube_state, cube_center);
-	luft_state_set_object(canopy_state, cube_center);
-	luft_state_set_object(plane_state, cube_center);
-	luft_state_set_object(gather_state, cube_center);
+	luft_state_set_object(cube_state, root);
+	luft_state_set_object(canopy_state, root);
+	luft_state_set_object(plane_state, root);
+	luft_state_set_object(gather_state, root);
 
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
@@ -444,13 +452,17 @@ main(int argc, char **argv)
 
 	free(items);
 
-	light = luft_object_create(NULL);
+	light = luft_object_create(root);
 	luft_object_make_light(light, light_color);
 	luft_object_move(light, light_offset);
-	luft_object_reparent(light, cube_center);
 	luft_object_set_material(light, 3);
 
-	camera = luft_object_create(NULL);
+	light_2 = luft_object_create(root);
+	luft_object_make_light(light_2, light_color_2);
+	luft_object_move(light_2, light_offset_2);
+	luft_object_set_material(light_2, 3);
+
+	camera = luft_object_create(root);
 	luft_object_make_camera(camera, 45, .01, 3000.0);
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);

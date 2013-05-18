@@ -31,6 +31,14 @@
 #define STATE_ALPHA_BLEND	LUFT_STATE_ALPHA_BLEND
 /* Enable backface culling in this state */
 #define STATE_BF_CULL		LUFT_STATE_BF_CULL
+/* Enable additive blending in this state */
+#define STATE_ADDITIVE_BLEND	LUFT_STATE_ADDITIVE_BLEND
+
+typedef luft_state_blend_mode_t state_blend_mode_t;
+#define STATE_BLEND_DONTCARE	LUFT_STATE_BLEND_DONTCARE
+#define STATE_BLEND_NONE	LUFT_STATE_BLEND_NONE
+#define STATE_BLEND_ALPHA	LUFT_STATE_BLEND_ALPHA
+#define STATE_BLEND_ADDITIVE	LUFT_STATE_BLEND_ADDITIVE
 
 /**
  * A bin of current misc. OpenGL state.
@@ -53,6 +61,7 @@ typedef struct state {
 	shader_t *shader;
 	int mat_id;
 	object_t *root;
+	state_blend_mode_t blend_mode;
 	refcounter_t refcount;
 } state_t;
 
@@ -71,6 +80,7 @@ API_DECLARE(state_set_uniform);
 API_DECLARE(state_set_material);
 API_DECLARE(state_max_colorbufs);
 API_DECLARE(state_set_object);
+API_DECLARE(state_set_blend);
 
 int state_material_active(int mat_id);
 void state_enter(state_t *state);
