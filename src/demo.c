@@ -324,13 +324,15 @@ main(int argc, char **argv)
 	luft_shader_t *textured_shader;
 	luft_shader_t *vcolor_shader;
 	luft_shader_t *gather_shader;
-	luft_object_t *fs_quad = luft_object_get_fs_quad();
+	luft_object_t *light;
 	luft_state_t *cube_state;
 	luft_state_t *plane_state;
 	luft_state_t *canopy_state;
 	luft_uniform_value_t uvtmp;
 	luft_uniform_t *uniform;
-	float clear_color[4] = { 0.5, 0, 0.5, 1 };
+	float clear_color[4] = { 0, 0, 0, 1 };
+	float light_color[3] = { 1.0, 1.0, 1.0 };
+	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
 
 	glutInit(&argc, argv);
 	glutInitWindowPosition(-1,-1);
@@ -419,10 +421,7 @@ main(int argc, char **argv)
 	luft_state_set_object(cube_state, cube_center);
 	luft_state_set_object(canopy_state, cube_center);
 	luft_state_set_object(plane_state, cube_center);
-
-	luft_object_set_material(fs_quad, 3);
-	luft_state_set_object(gather_state, fs_quad);
-	luft_object_ungrab(fs_quad);
+	luft_state_set_object(gather_state, cube_center);
 
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
@@ -444,6 +443,12 @@ main(int argc, char **argv)
 	}
 
 	free(items);
+
+	light = luft_object_create(NULL);
+	luft_object_make_light(light, light_color);
+	luft_object_move(light, light_offset);
+	luft_object_reparent(light, cube_center);
+	luft_object_set_material(light, 3);
 
 	camera = luft_object_create(NULL);
 	luft_object_make_camera(camera, 45, .01, 3000.0);

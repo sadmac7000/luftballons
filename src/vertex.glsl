@@ -31,7 +31,8 @@ uniform mat4 clip_transform;
 
 void main()
 {
-	gl_Position = posout = clip_transform * transform * position;
+	posout = transform * position;
+	gl_Position = clip_transform * posout;
 	colorout = color;
 	texcoordout = texcoord;
 	normalout = normalize(normal_transform * normal);

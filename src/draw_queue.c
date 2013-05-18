@@ -65,7 +65,7 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  **/
 static int
 draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
-		   float clip[16])
+		   float clip[16], object_t *quad)
 {
 	uniform_t *un;
 	uniform_value_t value;
@@ -75,7 +75,10 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	if (! state_material_active(object->mat_id))
 		return 1;
 
-	if (object->type != OBJ_MESH)
+	if (object->type == OBJ_NODE)
+		return 1;
+
+	if (object->type == OBJ_CAMERA)
 		return 1;
 
 	object_get_total_transform(object, trans);
@@ -100,8 +103,21 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	draw_queue_add_mesh(queue, object->mesh);
-	return mesh_draw(object->mesh);
+	if (object->type == OBJ_MESH) {
+		draw_queue_add_mesh(queue, object->mesh);
+		return mesh_draw(object->mesh);
+	} else {
+		value.data_ptr = xcalloc(4, sizeof(float));
+		memcpy(value.data_ptr, object->light_color, 3 * sizeof(float));
+		fl = value.data_ptr;
+		fl[3] = 1;
+		un = uniform_create("light_color", UNIFORM_VEC4, value);
+		shader_set_temp_uniform(un);
+		uniform_ungrab(un);
+
+		draw_queue_add_mesh(queue, quad->mesh);
+		return mesh_draw(quad->mesh);
+	}
 }
 
 /**
@@ -117,6 +133,7 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 	size_t i;
 	size_t j;
 	object_cursor_t cursor;
+	object_t *quad = object_get_fs_quad();
 
 	camera_from_world(camera, cspace);
 	camera_to_clip(camera, clip);
@@ -135,12 +152,15 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 		for (i = 0, j = 0; i < num_flat; i++) {
 			flat[j] = flat[i];
 
-			if (! draw_queue_do_draw(queue, flat[j], cspace, clip))
+			if (! draw_queue_do_draw(queue, flat[j], cspace, clip,
+						 quad))
 				j++;
 		}
 
 		num_flat = j;
 	}
+
+	object_ungrab(quad);
 
 	free(flat);
 }

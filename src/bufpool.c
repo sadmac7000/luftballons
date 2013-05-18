@@ -99,6 +99,9 @@ bufpool_create_buffers(bufpool_t *pool)
 	vbuf_t *vbuf;
 	ebuf_t *ebuf;
 
+	if (list_empty(&pool->generations))
+		return;
+
 	foreach(&gen->meshes, pos) {
 		mesh = CONTAINER_OF(pos, mesh_t, generation_link);
 
