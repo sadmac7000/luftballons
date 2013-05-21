@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 void luft_quat_init(luft_quat_t *quat, float x, float y, float z, float theta);
+void luft_quat_init_euler(luft_quat_t *quat, float x, float y, float z);
 void luft_quat_mul(luft_quat_t *a, luft_quat_t *b, luft_quat_t *out);
 void luft_quat_dup(luft_quat_t *in, luft_quat_t *out);
 void luft_quat_to_matrix(luft_quat_t *quat, float m[16]);
