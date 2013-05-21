@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 API_DECLARE(quat_init);
+API_DECLARE(quat_init_euler);
 API_DECLARE(quat_mul);
 API_DECLARE(quat_dup);
 API_DECLARE(quat_to_matrix);
