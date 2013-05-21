@@ -25,7 +25,7 @@ uniform sampler2D diffusemap;
 
 void main()
 {
-	gl_FragData[0] =  normalout;
-	gl_FragData[1] =  posout;
-	gl_FragData[2] =  texture2D(diffusemap, texcoordout.st);
+	gl_FragData[0] = normalout;
+	gl_FragData[1] = posout;
+	gl_FragData[2] = texture2D(diffusemap, texcoordout.st);
 }
