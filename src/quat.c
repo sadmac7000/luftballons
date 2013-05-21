@@ -60,6 +60,26 @@ quat_init(quat_t *quat, float x, float y, float z, float theta)
 EXPORT(quat_init);
 
 /**
+ * Initialize a quaternion with Euler angles
+ **/
+void
+quat_init_euler(quat_t *quat, float x, float y, float z)
+{
+	float cos_x = cosf(x / 2);
+	float cos_y = cosf(y / 2);
+	float cos_z = cosf(z / 2);
+	float sin_x = sinf(x / 2);
+	float sin_y = sinf(y / 2);
+	float sin_z = sinf(z / 2);
+	quat->c[0] = sin_x * cos_y * cos_z - cos_x * sin_y * sin_z;
+	quat->c[1] = cos_x * sin_y * cos_z + sin_x * cos_y * sin_z;
+	quat->c[2] = cos_x * cos_y * sin_z - sin_x * sin_y * cos_z;
+	quat->c[3] = cos_x * cos_y * cos_z + sin_x * sin_y * sin_z;
+	quat_normalize(quat);
+}
+EXPORT(quat_init_euler);
+
+/**
  * Multiply two quaternions
  **/
 void
