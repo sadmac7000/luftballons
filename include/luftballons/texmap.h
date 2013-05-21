@@ -22,7 +22,9 @@
 
 #define LUFT_TEXMAP_COMPRESSED	0x1
 #define LUFT_TEXMAP_FLOAT32	0x2
-#define LUFT_TEXMAP_INITIALIZED	0x4
+#define LUFT_TEXMAP_DEPTH	0x4
+#define LUFT_TEXMAP_STENCIL	0x8
+#define LUFT_TEXMAP_INITIALIZED	0x400
 
 typedef struct texmap luft_texmap_t;
 

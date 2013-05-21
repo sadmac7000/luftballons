@@ -99,11 +99,18 @@ texmap_create(size_t base_level, size_t max_level, unsigned int flags)
 {
 	texmap_t *map = xmalloc(sizeof(texmap_t));
 
-	if (flags & ~(TEXMAP_COMPRESSED | TEXMAP_FLOAT32))
+	if (flags & ~(TEXMAP_COMPRESSED | TEXMAP_FLOAT32 |
+		      TEXMAP_DEPTH | TEXMAP_STENCIL))
 		errx(1, "Unrecognized flags for texmap");
 
 	if ((flags & TEXMAP_COMPRESSED) && (flags & TEXMAP_FLOAT32))
 		errx(1, "Cannot create a floating point compressed texture");
+
+	if ((flags & TEXMAP_STENCIL) && !(flags & TEXMAP_DEPTH))
+		errx(1, "Stencil textures must also be depth textures.");
+
+	if ((flags & TEXMAP_COMPRESSED) && (flags & TEXMAP_DEPTH))
+		errx(1, "Cannot create a compressed depth texture");
 
 	glGenTextures(1, &map->map);
 	glGenSamplers(1, &map->sampler);
@@ -165,7 +172,8 @@ EXPORT(texmap_set_int_param);
 void
 texmap_init_blank(texmap_t *map, int level, int width, int height)
 {
-	GLint ifmt = GL_RGBA;
+	GLenum ifmt = GL_RGBA;
+	GLenum fmt = GL_RGBA;
 	GLenum colortype = GL_UNSIGNED_BYTE;
 
 	if (map->flags & TEXMAP_INITIALIZED)
@@ -176,16 +184,30 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	map->w = width;
 	map->h = height;
 
+	if (map->flags & TEXMAP_DEPTH) {
+		fmt = GL_RED;
+		if (map->flags & TEXMAP_STENCIL)
+			ifmt = GL_DEPTH24_STENCIL8;
+		else
+			ifmt = GL_DEPTH_COMPONENT32;
+	}
+
 	if (map->flags & TEXMAP_FLOAT32) {
 		colortype = GL_FLOAT;
-		ifmt = GL_RGBA32F;
+
+		if (!(map->flags & TEXMAP_DEPTH))
+			ifmt = GL_RGBA32F;
+		else if (map->flags & TEXMAP_STENCIL)
+			ifmt = GL_DEPTH_COMPONENT32F;
+		else
+			ifmt = GL_DEPTH32F_STENCIL8;
 	}
 
 	if (map->flags & TEXMAP_COMPRESSED)
 		ifmt = GL_COMPRESSED_RGBA;
 
 	texmap_get_texture_unit(map);
-	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
+	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, fmt,
 		     colortype, NULL);
 	CHECK_GL;
 }
