@@ -90,14 +90,6 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	uniform_ungrab(un);
 
 	value.data_ptr = xcalloc(16, sizeof(float));
-	matrix_multiply(cspace, trans, value.data_ptr);
-	fl = value.data_ptr;
-	fl[12] = fl[13] = fl[14] = 0;
-	un = uniform_create("normal_transform", UNIFORM_MAT4, value);
-	shader_set_temp_uniform(un);
-	uniform_ungrab(un);
-
-	value.data_ptr = xcalloc(16, sizeof(float));
 	memcpy(value.data_ptr, clip, 16 * sizeof(float));
 	un = uniform_create("clip_transform", UNIFORM_MAT4, value);
 	shader_set_temp_uniform(un);
