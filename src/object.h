@@ -107,8 +107,8 @@ API_DECLARE(object_cursor_start_pre);
 API_DECLARE(object_cursor_next_pre);
 API_DECLARE(object_cursor_release);
 API_DECLARE(object_get_name);
-API_DECLARE(object_get_fs_quad);
 
+object_t *object_get_fs_quad(void);
 void object_set_mesh(object_t *object, mesh_t *mesh);
 
 void camera_to_clip(object_t *camera, float mat[16]);

@@ -59,7 +59,6 @@ object_get_fs_quad(void)
 
 	return object;
 }
-EXPORT(object_get_fs_quad);
 
 /**
  * Release an object cursor's internal data.
