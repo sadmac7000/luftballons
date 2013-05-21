@@ -163,7 +163,7 @@ EXPORT(texmap_set_int_param);
  * float32: If true, use a 32-bit floating point internal color format.
  **/
 void
-texmap_init_blank(texmap_t *map, int level, int width, int height, int float32)
+texmap_init_blank(texmap_t *map, int level, int width, int height)
 {
 	GLint ifmt = GL_RGBA;
 	GLenum colortype = GL_UNSIGNED_BYTE;
@@ -181,12 +181,8 @@ texmap_init_blank(texmap_t *map, int level, int width, int height, int float32)
 		ifmt = GL_RGBA32F;
 	}
 
-	if (map->flags & TEXMAP_COMPRESSED) {
-		if (float32)
-			errx(1, "Cannot initialize a compressed texture as "
-			     "32-bit float texture.");
+	if (map->flags & TEXMAP_COMPRESSED)
 		ifmt = GL_COMPRESSED_RGBA;
-	}
 
 	texmap_get_texture_unit(map);
 	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
