@@ -108,7 +108,8 @@ clean:
 	$(foreach lib, $(LIBS), $(call QUIET,RM,lib$(lib).la) -f $(lib))
 
 .PHONY: all
-all: $(PROGS) $(LTPROGS) $(NOINST_PROGS) $(NOINST_LTPROGS)
+all: $(PROGS) $(LTPROGS) $(NOINST_PROGS) $(NOINST_LTPROGS) \
+	$(TEST_PROGS) $(LIBS)
 
 define DO_INSTALL
 $(call QUIET,INSTALL,$(1)) -D -m $(3) $(1) $(2)/$(1)
