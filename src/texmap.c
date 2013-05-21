@@ -92,12 +92,18 @@ texmap_destructor(void *texmap_)
  *
  * base_level: Base mipmap level
  * max_level: Max mipmap level
- * compress: Should we compress this texture.
+ * flags: Texture flags
  **/
 texmap_t *
-texmap_create(size_t base_level, size_t max_level, int compress)
+texmap_create(size_t base_level, size_t max_level, unsigned int flags)
 {
 	texmap_t *map = xmalloc(sizeof(texmap_t));
+
+	if (flags & ~(TEXMAP_COMPRESSED | TEXMAP_FLOAT32))
+		errx(1, "Unrecognized flags for texmap");
+
+	if ((flags & TEXMAP_COMPRESSED) && (flags & TEXMAP_FLOAT32))
+		errx(1, "Cannot create a floating point compressed texture");
 
 	glGenTextures(1, &map->map);
 	glGenSamplers(1, &map->sampler);
@@ -110,10 +116,7 @@ texmap_create(size_t base_level, size_t max_level, int compress)
 	refcount_init(&map->refcount);
 	refcount_add_destructor(&map->refcount, texmap_destructor, map);
 
-	map->flags = 0;
-
-	if (compress)
-		map->flags |= TEXMAP_COMPRESSED;
+	map->flags = flags;
 
 	CHECK_GL;
 	return map;
@@ -153,11 +156,17 @@ EXPORT(texmap_set_int_param);
 
 /**
  * Initialize a blank texmap.
+ *
+ * map: Which texmap to initialize.
+ * level: Which level to initialize.
+ * width, height: Pixel size of the map.
+ * float32: If true, use a 32-bit floating point internal color format.
  **/
 void
-texmap_init_blank(texmap_t *map, int level, int width, int height)
+texmap_init_blank(texmap_t *map, int level, int width, int height, int float32)
 {
 	GLint ifmt = GL_RGBA;
+	GLenum colortype = GL_UNSIGNED_BYTE;
 
 	if (map->flags & TEXMAP_INITIALIZED)
 		errx(1, "Tried to initialize texmap twice");
@@ -167,12 +176,21 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	map->w = width;
 	map->h = height;
 
-	if (map->flags & TEXMAP_COMPRESSED)
+	if (map->flags & TEXMAP_FLOAT32) {
+		colortype = GL_FLOAT;
+		ifmt = GL_RGBA32F;
+	}
+
+	if (map->flags & TEXMAP_COMPRESSED) {
+		if (float32)
+			errx(1, "Cannot initialize a compressed texture as "
+			     "32-bit float texture.");
 		ifmt = GL_COMPRESSED_RGBA;
+	}
 
 	texmap_get_texture_unit(map);
 	glTexImage2D(GL_TEXTURE_2D, level, ifmt, width, height, 0, GL_RGBA,
-		     GL_UNSIGNED_BYTE, NULL);
+		     colortype, NULL);
 	CHECK_GL;
 }
 EXPORT(texmap_init_blank);

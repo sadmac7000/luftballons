@@ -24,8 +24,9 @@
 #include "refcount.h"
 #include "util.h"
 
-#define TEXMAP_COMPRESSED	0x1
-#define TEXMAP_INITIALIZED	0x2
+#define TEXMAP_COMPRESSED LUFT_TEXMAP_COMPRESSED
+#define TEXMAP_FLOAT32 LUFT_TEXMAP_FLOAT32
+#define TEXMAP_INITIALIZED LUFT_TEXMAP_INITIALIZED
 
 /**
  * A 2D texture map, usually loaded from a file.

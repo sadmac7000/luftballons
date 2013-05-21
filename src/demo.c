@@ -85,11 +85,11 @@ handle_reshape(void)
 	luft_camera_set_aspect(camera, aspect);
 	luft_colorbuf_set_output_geom(win_sz[0], win_sz[1]);
 
-	normal_texmap = luft_texmap_create(0, 0, 0);
+	normal_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(normal_texmap, 0, win_sz[0], win_sz[1]);
-	position_texmap = luft_texmap_create(0, 0, 0);
+	position_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(position_texmap, 0, win_sz[0], win_sz[1]);
-	diffuse_texmap = luft_texmap_create(0, 0, 0);
+	diffuse_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(diffuse_texmap, 0, win_sz[0], win_sz[1]);
 
 	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
@@ -402,8 +402,8 @@ main(int argc, char **argv)
 	luft_state_set_blend(gather_state, LUFT_STATE_BLEND_ADDITIVE);
 	luft_state_set_material(gather_state, 3);
 
-	canopy_map = luft_texmap_create(0, 0, 1);
-	plane_map = luft_texmap_create(0, 0, 1);
+	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
+	plane_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 
 	luft_texmap_load_image(canopy_map, "../ref_models/P51_canopy.tif", 0);
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);

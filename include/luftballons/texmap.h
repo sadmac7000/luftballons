@@ -20,6 +20,10 @@
 
 #include <GL/gl.h>
 
+#define LUFT_TEXMAP_COMPRESSED	0x1
+#define LUFT_TEXMAP_FLOAT32	0x2
+#define LUFT_TEXMAP_INITIALIZED	0x4
+
 typedef struct texmap luft_texmap_t;
 
 #ifdef __cplusplus
@@ -27,7 +31,7 @@ extern "C" {
 #endif
 
 luft_texmap_t *luft_texmap_create(size_t base_level, size_t max_level,
-				  int compress);
+				  unsigned int flags);
 void luft_texmap_load_image(luft_texmap_t *map, const char *path, int level);
 void luft_texmap_init_blank(luft_texmap_t *map, int level, int width,
 			    int height);
