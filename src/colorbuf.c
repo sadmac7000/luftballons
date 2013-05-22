@@ -473,9 +473,6 @@ colorbuf_prep(colorbuf_t *colorbuf)
 	if (! colorbuf->num_colorbufs)
 		errx(1, "Attempt to use colorbuf with no buffers");
 
-	if (current_colorbuf)
-		colorbuf_ungrab(current_colorbuf);
-
 	current_colorbuf = colorbuf;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, colorbuf->framebuf);
