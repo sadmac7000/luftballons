@@ -50,6 +50,8 @@ void luft_colorbuf_clear_stencil(luft_colorbuf_t *in, int index);
 void luft_colorbuf_init_output(unsigned int flags);
 void luft_colorbuf_set_output_geom(size_t w, size_t h);
 size_t luft_colorbuf_max_bufs(void);
+void luft_colorbuf_set_depth_buf(luft_colorbuf_t *colorbuf,
+				 luft_texmap_t *texmap);
 
 #ifdef __cplusplus
 }

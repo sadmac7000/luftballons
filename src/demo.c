@@ -50,6 +50,7 @@ luft_colorbuf_t *cbuf;
 luft_texmap_t *normal_texmap;
 luft_texmap_t *diffuse_texmap;
 luft_texmap_t *position_texmap;
+luft_texmap_t *depth_texmap;
 luft_target_t *draw_target;
 luft_target_t *gather_target;
 luft_state_t *gather_state;
@@ -92,9 +93,19 @@ handle_reshape(void)
 	diffuse_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(diffuse_texmap, 0, win_sz[0], win_sz[1]);
 
+	depth_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
+					  LUFT_TEXMAP_STENCIL);
+	luft_texmap_init_blank(depth_texmap, 0, win_sz[0], win_sz[1]);
+
 	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
 	luft_colorbuf_set_buf(cbuf, 1, position_texmap);
 	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
+	luft_colorbuf_set_depth_buf(cbuf, depth_texmap);
+
+	luft_texmap_ungrab(normal_texmap);
+	luft_texmap_ungrab(position_texmap);
+	luft_texmap_ungrab(diffuse_texmap);
+	luft_texmap_ungrab(depth_texmap);
 
 	uvtmp.data_ptr = normal_texmap;
 	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, uvtmp);

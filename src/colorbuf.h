@@ -43,6 +43,7 @@
  * clear_color: Color to clear to if we clear.
  * clear_depth: Depth to clear to if we clear depth.
  * clear_stencil: Stencil clear-index if we clear that.
+ * depth_texmap: A texmap to use as a depth buffer.
  * flags: Various flags.
  * autodepth: Our autodepth buffer.
  * refcount: Reference counter.
@@ -57,6 +58,8 @@ typedef struct colorbuf {
 	float clear_color[4];
 	float clear_depth;
 	int clear_stencil;
+
+	texmap_t *depth_texmap;
 
 	unsigned int flags;
 
@@ -81,6 +84,7 @@ API_DECLARE(colorbuf_clear_stencil);
 API_DECLARE(colorbuf_init_output);
 API_DECLARE(colorbuf_set_output_geom);
 API_DECLARE(colorbuf_max_bufs);
+API_DECLARE(colorbuf_set_depth_buf);
 
 void colorbuf_prep(colorbuf_t *colorbuf);
 

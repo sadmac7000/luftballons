@@ -213,6 +213,45 @@ colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap)
 EXPORT(colorbuf_set_buf);
 
 /**
+ * Set a depth buffer texmap for this colorbuf.
+ **/
+void
+colorbuf_set_depth_buf(colorbuf_t *colorbuf, texmap_t *texmap)
+{
+	if (!texmap && !colorbuf->depth_texmap)
+		return;
+
+	colorbuf->flags &= ~COLORBUF_RENDERBUF_HAS_STORAGE;
+
+	if (! (colorbuf->flags & COLORBUF_DEPTH))
+		errx(1, "Cannot set a depth buffer texmap for a "
+		     "colorbuffer with no depth buffer");
+
+	if (colorbuf->depth_texmap)
+		texmap_ungrab(colorbuf->depth_texmap);
+	else
+		glDeleteRenderbuffers(1, &colorbuf->autodepth);
+
+	colorbuf->depth_texmap = texmap;
+
+	if (! texmap) {
+		glGenRenderbuffers(1, &colorbuf->autodepth);
+		return;
+	}
+
+	texmap_grab(texmap);
+
+	if (! (texmap->flags & TEXMAP_DEPTH))
+		errx(1, "Cannot use a non-depth texmap as a depth buffer");
+
+	if (colorbuf->flags & COLORBUF_STENCIL)
+		if (! (texmap->flags & TEXMAP_STENCIL))
+			errx(1, "Colorbuf with a stencil buffer needs a depth"
+			     " texmap that has a stencil buffer");
+}
+EXPORT(colorbuf_set_depth_buf);
+
+/**
  * Clear the contents of the current colorbuf.
  **/
 static void
@@ -297,6 +336,23 @@ colorbuf_check_status(void)
 }
 
 /**
+ * Prepare the depth and stencil buffers from a texmap.
+ **/
+static void
+colorbuf_prep_depth_stencil_texmap()
+{
+	GLenum attach_type = GL_DEPTH_ATTACHMENT;
+
+	if (current_colorbuf->depth_texmap->flags & TEXMAP_STENCIL)
+		attach_type = GL_DEPTH_STENCIL_ATTACHMENT;
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, attach_type,
+			       GL_TEXTURE_2D,
+			       current_colorbuf->depth_texmap->map, 0);
+	CHECK_GL;
+}
+
+/**
  * Prepare the depth and stencil buffers.
  **/
 static void
@@ -307,7 +363,12 @@ colorbuf_prep_depth_stencil()
 	size_t i;
 	GLint ifmt = GL_DEPTH_COMPONENT24;
 	GLenum attach_type = GL_DEPTH_ATTACHMENT;
-	
+
+	if (current_colorbuf->depth_texmap) {
+		colorbuf_prep_depth_stencil_texmap();
+		return;
+	}
+
 	if (current_colorbuf->flags & COLORBUF_STENCIL) {
 		ifmt = GL_DEPTH24_STENCIL8;
 		attach_type = GL_DEPTH_STENCIL_ATTACHMENT;
