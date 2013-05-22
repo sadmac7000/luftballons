@@ -185,7 +185,8 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	map->h = height;
 
 	if (map->flags & TEXMAP_DEPTH) {
-		fmt = GL_RED;
+		fmt = GL_DEPTH_STENCIL;
+		colortype = GL_UNSIGNED_INT_24_8;
 		if (map->flags & TEXMAP_STENCIL)
 			ifmt = GL_DEPTH24_STENCIL8;
 		else
