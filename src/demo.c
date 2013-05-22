@@ -47,10 +47,12 @@ luft_object_t *root;
 luft_object_t *camera;
 luft_quat_t cam_rot;
 luft_colorbuf_t *cbuf;
+luft_colorbuf_t *gather_cbuf;
 luft_texmap_t *normal_texmap;
 luft_texmap_t *diffuse_texmap;
 luft_texmap_t *position_texmap;
 luft_texmap_t *depth_texmap;
+luft_texmap_t *gather_texmap;
 luft_target_t *draw_target;
 luft_target_t *gather_target;
 luft_state_t *gather_state;
@@ -97,10 +99,15 @@ handle_reshape(void)
 					  LUFT_TEXMAP_STENCIL);
 	luft_texmap_init_blank(depth_texmap, 0, win_sz[0], win_sz[1]);
 
+	gather_texmap = luft_texmap_create(0, 0, 0);
+	luft_texmap_init_blank(gather_texmap, 0, win_sz[0], win_sz[1]);
+
 	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
 	luft_colorbuf_set_buf(cbuf, 1, position_texmap);
 	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
 	luft_colorbuf_set_depth_buf(cbuf, depth_texmap);
+
+	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
 	luft_texmap_ungrab(normal_texmap);
 	luft_texmap_ungrab(position_texmap);
@@ -226,9 +233,12 @@ render(void)
 	luft_object_set_translation(cube, offset);
 
 	luft_colorbuf_clear(cbuf);
+	luft_colorbuf_clear(gather_cbuf);
 	luft_colorbuf_clear(NULL);
 
 	luft_target_hit(gather_target);
+
+	luft_colorbuf_copy(gather_cbuf, 0, NULL, 0);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -380,6 +390,9 @@ main(int argc, char **argv)
 	luft_colorbuf_clear_color(cbuf, clear_color);
 	luft_colorbuf_clear_depth(cbuf, 1.0);
 
+	gather_cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR);
+	luft_colorbuf_clear_color(gather_cbuf, clear_color);
+
 	vcolor_shader = luft_shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = luft_shader_create("vertex.glsl", "fragment_texmap.glsl");
 	gather_shader = luft_shader_create("vertex_quad.glsl", "fragment_lighting.glsl");
@@ -412,6 +425,9 @@ main(int argc, char **argv)
 	luft_state_clear_flags(gather_state, LUFT_STATE_DEPTH_TEST);
 	luft_state_set_blend(gather_state, LUFT_STATE_BLEND_ADDITIVE);
 	luft_state_set_material(gather_state, 3);
+	luft_state_set_colorbuf(gather_state, gather_cbuf);
+
+	luft_colorbuf_ungrab(gather_cbuf);
 
 	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 	plane_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
