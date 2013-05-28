@@ -78,7 +78,6 @@ void
 handle_reshape(void)
 {
 	float aspect = (win_sz[0] / (float)win_sz[1]);
-	luft_uniform_value_t uvtmp;
 	luft_uniform_t *uniform;
 
 	if (! need_reshape)
@@ -114,18 +113,15 @@ handle_reshape(void)
 	luft_texmap_ungrab(diffuse_texmap);
 	luft_texmap_ungrab(depth_texmap);
 
-	uvtmp.data_ptr = normal_texmap;
-	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, normal_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
-	uvtmp.data_ptr = position_texmap;
-	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_SAMP2D, position_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
-	uvtmp.data_ptr = diffuse_texmap;
-	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_SAMP2D, diffuse_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 }
@@ -351,7 +347,6 @@ main(int argc, char **argv)
 	luft_state_t *cube_state;
 	luft_state_t *plane_state;
 	luft_state_t *canopy_state;
-	luft_uniform_value_t uvtmp;
 	luft_uniform_t *uniform;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
@@ -437,8 +432,7 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-	uvtmp.data_ptr = canopy_map;
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, canopy_map);
 	luft_state_set_uniform(canopy_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(canopy_map);
@@ -448,8 +442,7 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-	uvtmp.data_ptr = plane_map;
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, uvtmp);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, plane_map);
 	luft_state_set_uniform(plane_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(plane_map);

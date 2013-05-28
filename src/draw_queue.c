@@ -68,7 +68,6 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 		   float clip[16], object_t *quad)
 {
 	uniform_t *un;
-	uniform_value_t value;
 	float trans[16];
 	float *fl;
 
@@ -83,15 +82,15 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 
 	object_get_total_transform(object, trans);
 
-	value.data_ptr = xcalloc(16, sizeof(float));
-	matrix_multiply(cspace, trans, value.data_ptr);
-	un = uniform_create("transform", UNIFORM_MAT4, value);
+	fl = xcalloc(16, sizeof(float));
+	matrix_multiply(cspace, trans, fl);
+	un = uniform_create("transform", UNIFORM_MAT4, fl);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	value.data_ptr = xcalloc(16, sizeof(float));
-	memcpy(value.data_ptr, clip, 16 * sizeof(float));
-	un = uniform_create("clip_transform", UNIFORM_MAT4, value);
+	fl = xcalloc(16, sizeof(float));
+	memcpy(fl, clip, 16 * sizeof(float));
+	un = uniform_create("clip_transform", UNIFORM_MAT4, fl);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
@@ -99,11 +98,10 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 		draw_queue_add_mesh(queue, object->mesh);
 		return mesh_draw(object->mesh);
 	} else {
-		value.data_ptr = xcalloc(4, sizeof(float));
-		memcpy(value.data_ptr, object->light_color, 3 * sizeof(float));
-		fl = value.data_ptr;
+		fl = xcalloc(4, sizeof(float));
+		memcpy(fl, object->light_color, 3 * sizeof(float));
 		fl[3] = 1;
-		un = uniform_create("light_color", UNIFORM_VEC4, value);
+		un = uniform_create("light_color", UNIFORM_VEC4, fl);
 		shader_set_temp_uniform(un);
 		uniform_ungrab(un);
 

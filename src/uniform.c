@@ -16,6 +16,7 @@
  **/
 
 #include <stdlib.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
@@ -48,9 +49,30 @@ uniform_destructor(void *v)
  * Create a uniform object.
  **/
 uniform_t *
-uniform_create(const char *name, uniform_type_t type, uniform_value_t value)
+uniform_create(const char *name, uniform_type_t type, ...)
 {
 	uniform_t *ret = xmalloc(sizeof(uniform_t));
+	uniform_value_t value;
+	va_list ap;
+
+	va_start(ap, type);
+	
+	switch (type) {
+	case UNIFORM_MAT4:
+	case UNIFORM_VEC4:
+	case UNIFORM_SAMP2D:
+	case UNIFORM_SAMP1D:
+		value.data_ptr = va_arg(ap, void *);
+		break;
+	case UNIFORM_UINT:
+		value.uint = va_arg(ap, GLuint);
+		break;
+	default:
+		errx(1, "Must specify a valid uniform type "
+		     "when creating a uniform");
+	}
+
+	va_end(ap);
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, uniform_destructor, ret);

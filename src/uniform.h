@@ -31,7 +31,14 @@
 #define UNIFORM_UINT LUFT_UNIFORM_UINT
 
 typedef luft_uniform_type_t uniform_type_t;
-typedef luft_uniform_value_t uniform_value_t;
+
+/**
+ * Uniform values.
+ **/
+typedef union uniform_value {
+	void *data_ptr;
+	GLuint uint;
+} uniform_value_t;
 
 /**
  * A uniform.
