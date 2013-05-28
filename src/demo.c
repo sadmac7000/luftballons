@@ -45,6 +45,7 @@ luft_object_t *cube;
 luft_object_t *cube_center;
 luft_object_t *root;
 luft_object_t *camera;
+luft_object_t *output_light;
 luft_quat_t cam_rot;
 luft_colorbuf_t *cbuf;
 luft_colorbuf_t *gather_cbuf;
@@ -53,8 +54,9 @@ luft_texmap_t *diffuse_texmap;
 luft_texmap_t *position_texmap;
 luft_texmap_t *depth_texmap;
 luft_texmap_t *gather_texmap;
-luft_target_t *draw_target;
+luft_state_t *output_state;
 luft_target_t *gather_target;
+luft_target_t *output_target;
 luft_state_t *gather_state;
 
 GLsizei win_sz[2] = {800, 600};
@@ -123,6 +125,10 @@ handle_reshape(void)
 
 	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_SAMP2D, diffuse_texmap);
 	luft_state_set_uniform(gather_state, uniform);
+	luft_uniform_ungrab(uniform);
+
+	uniform = luft_uniform_create("in_buf", LUFT_UNIFORM_SAMP2D, gather_texmap);
+	luft_state_set_uniform(output_state, uniform);
 	luft_uniform_ungrab(uniform);
 }
 
@@ -233,8 +239,7 @@ render(void)
 	luft_colorbuf_clear(NULL);
 
 	luft_target_hit(gather_target);
-
-	luft_colorbuf_copy(gather_cbuf, 0, NULL, 0);
+	luft_target_hit(output_target);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -342,12 +347,14 @@ main(int argc, char **argv)
 	luft_shader_t *textured_shader;
 	luft_shader_t *vcolor_shader;
 	luft_shader_t *gather_shader;
+	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
 	luft_state_t *cube_state;
 	luft_state_t *plane_state;
 	luft_state_t *canopy_state;
 	luft_uniform_t *uniform;
+	luft_target_t *draw_target;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
@@ -391,6 +398,7 @@ main(int argc, char **argv)
 	vcolor_shader = luft_shader_create("vertex.glsl", "fragment_vcolor.glsl");
 	textured_shader = luft_shader_create("vertex.glsl", "fragment_texmap.glsl");
 	gather_shader = luft_shader_create("vertex_quad.glsl", "fragment_lighting.glsl");
+	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
 	cube_state = luft_state_create(vcolor_shader);
 	luft_state_set_flags(cube_state, LUFT_STATE_DEPTH_TEST |
@@ -424,6 +432,12 @@ main(int argc, char **argv)
 
 	luft_colorbuf_ungrab(gather_cbuf);
 
+	output_state = luft_state_create(output_shader);
+	luft_state_set_flags(output_state, LUFT_STATE_BF_CULL);
+	luft_state_clear_flags(output_state, LUFT_STATE_DEPTH_TEST);
+	luft_state_set_blend(output_state, LUFT_STATE_BLEND_REVERSE_ALPHA);
+	luft_state_set_material(output_state, 0);
+
 	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 	plane_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 
@@ -454,6 +468,12 @@ main(int argc, char **argv)
 	luft_state_set_object(canopy_state, root);
 	luft_state_set_object(plane_state, root);
 	luft_state_set_object(gather_state, root);
+
+	output_light = luft_object_create(NULL);
+	luft_object_make_light(output_light, light_color_2);
+	luft_object_set_material(output_light, 0);
+
+	luft_state_set_object(output_state, output_light);
 
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
@@ -503,6 +523,10 @@ main(int argc, char **argv)
 	luft_target_add_state(gather_target, gather_state);
 	luft_state_ungrab(gather_state);
 	luft_target_add_dep(gather_target, draw_target);
+
+	output_target = luft_target_create(camera);
+	luft_target_add_state(output_target, output_state);
+	luft_state_ungrab(output_state);
 
 	glutMainLoop();
 	return 0;
