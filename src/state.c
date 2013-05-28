@@ -142,6 +142,8 @@ state_apply_blend_mode(state_t *state, state_blend_mode_t old)
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	else if (state->blend_mode == STATE_BLEND_ADDITIVE)
 		glBlendFunc(GL_ONE, GL_ONE);
+	else if (state->blend_mode == STATE_BLEND_REVERSE_ALPHA)
+		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
 }
 
 
