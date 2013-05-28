@@ -1,4 +1,4 @@
-INCLUDES = \
+nobase_include_HEADERS = \
 	luftballons/colorbuf.h	\
 	luftballons/dae_load.h	\
 	luftballons/matrix.h	\
@@ -9,5 +9,3 @@ INCLUDES = \
 	luftballons/target.h	\
 	luftballons/texmap.h	\
 	luftballons/uniform.h
-
-include ../Makefile.defaults
