@@ -382,7 +382,7 @@ main(int argc, char **argv)
 				  LUFT_COLORBUF_CLEAR |
 				  LUFT_COLORBUF_DEPTH |
 				  LUFT_COLORBUF_STENCIL);
-	luft_colorbuf_clear_color(cbuf, clear_color);
+	luft_colorbuf_clear_color(NULL, clear_color);
 	luft_colorbuf_clear_depth(NULL, 1.0);
 
 	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
