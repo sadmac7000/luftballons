@@ -22,9 +22,16 @@ in vec4 texcoordout;
 in vec4 normalout;
 in vec4 posout;
 uniform sampler2D diffusemap;
+uniform sampler2D last_depth;
+uniform int last_depth_valid;
+uniform mat4 clip_transform;
 
 void main()
 {
+	vec2 screen_pos = vec2(gl_FragCoord.x / 800, gl_FragCoord.y / 600);
+	float depth = texture2D(last_depth, screen_pos).r;
+	if (last_depth_valid != 0 && depth >= gl_FragCoord.z)
+		discard;
 	gl_FragData[0] = normalout;
 	gl_FragData[1] = posout;
 	gl_FragData[2] = texture2D(diffusemap, texcoordout.st);

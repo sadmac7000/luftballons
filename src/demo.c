@@ -52,16 +52,20 @@ luft_colorbuf_t *gather_cbuf;
 luft_texmap_t *normal_texmap;
 luft_texmap_t *diffuse_texmap;
 luft_texmap_t *position_texmap;
-luft_texmap_t *depth_texmap;
+luft_texmap_t *depth_texmap[2] = {NULL, NULL};
 luft_texmap_t *gather_texmap;
 luft_state_t *output_state;
 luft_target_t *gather_target;
 luft_target_t *output_target;
 luft_state_t *gather_state;
+luft_state_t *cube_state;
+luft_state_t *plane_state;
+luft_state_t *canopy_state;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
 float frame_time = 0;
+int active_depth = 0;
 
 struct {
 	int forward;
@@ -96,9 +100,17 @@ handle_reshape(void)
 	diffuse_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(diffuse_texmap, 0, win_sz[0], win_sz[1]);
 
-	depth_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
-					  LUFT_TEXMAP_STENCIL);
-	luft_texmap_init_blank(depth_texmap, 0, win_sz[0], win_sz[1]);
+	if (depth_texmap[0])
+		luft_texmap_ungrab(depth_texmap[0]);
+	if (depth_texmap[1])
+		luft_texmap_ungrab(depth_texmap[1]);
+
+	depth_texmap[0] = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
+					     LUFT_TEXMAP_STENCIL);
+	luft_texmap_init_blank(depth_texmap[0], 0, win_sz[0], win_sz[1]);
+	depth_texmap[1] = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
+					     LUFT_TEXMAP_STENCIL);
+	luft_texmap_init_blank(depth_texmap[1], 0, win_sz[0], win_sz[1]);
 
 	gather_texmap = luft_texmap_create(0, 0, 0);
 	luft_texmap_init_blank(gather_texmap, 0, win_sz[0], win_sz[1]);
@@ -106,14 +118,13 @@ handle_reshape(void)
 	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
 	luft_colorbuf_set_buf(cbuf, 1, position_texmap);
 	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
-	luft_colorbuf_set_depth_buf(cbuf, depth_texmap);
+	luft_colorbuf_set_depth_buf(cbuf, depth_texmap[active_depth]);
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
 	luft_texmap_ungrab(normal_texmap);
 	luft_texmap_ungrab(position_texmap);
 	luft_texmap_ungrab(diffuse_texmap);
-	luft_texmap_ungrab(depth_texmap);
 
 	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, normal_texmap);
 	luft_state_set_uniform(gather_state, uniform);
@@ -222,6 +233,8 @@ render(void)
 	float angle;
 	luft_quat_t cube_rot;
 	luft_quat_t center_rot;
+	luft_uniform_t *uniform;
+	int i;
 
 	handle_reshape();
 	update_camera(time);
@@ -234,12 +247,40 @@ render(void)
 	luft_object_set_rotation(cube_center, &center_rot);
 	luft_object_set_translation(cube, offset);
 
-	luft_colorbuf_clear(cbuf);
-	luft_colorbuf_clear(gather_cbuf);
 	luft_colorbuf_clear(NULL);
 
-	luft_target_hit(gather_target);
-	luft_target_hit(output_target);
+	for (i = 0; i < 4; i++) {
+		if (i) {
+			uniform = luft_uniform_create("last_depth",
+						      LUFT_UNIFORM_SAMP2D,
+						      depth_texmap[active_depth]);
+
+			luft_state_set_uniform(plane_state, uniform);
+			luft_state_set_uniform(cube_state, uniform);
+			luft_state_set_uniform(canopy_state, uniform);
+
+			luft_uniform_ungrab(uniform);
+		}
+
+		uniform = luft_uniform_create("last_depth_valid",
+					      LUFT_UNIFORM_UINT,
+					      i ? 1 : 0);
+
+		luft_state_set_uniform(plane_state, uniform);
+		luft_state_set_uniform(cube_state, uniform);
+		luft_state_set_uniform(canopy_state, uniform);
+
+		luft_uniform_ungrab(uniform);
+
+		active_depth++;
+		active_depth %= 2;
+		luft_colorbuf_set_depth_buf(cbuf, depth_texmap[active_depth]);
+		luft_colorbuf_clear(cbuf);
+		luft_colorbuf_clear(gather_cbuf);
+
+		luft_target_hit(gather_target);
+		luft_target_hit(output_target);
+	}
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -350,9 +391,6 @@ main(int argc, char **argv)
 	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
-	luft_state_t *cube_state;
-	luft_state_t *plane_state;
-	luft_state_t *canopy_state;
 	luft_uniform_t *uniform;
 	luft_target_t *draw_target;
 	float clear_color[4] = { 0, 0, 0, 0 };
