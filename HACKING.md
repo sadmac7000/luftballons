@@ -1,10 +1,10 @@
-== Hacking on Luftballons ==
+# Hacking on Luftballons #
 
 Here are the contribution guidelines for Luftballons. This should stay brief,
 but it's definitely important.
 
 
-=== Communication ===
+## Communication ##
 
 Luftballons has its own IRC channel, `#luftballons`, on the [freenode
 network](http://freenode.net). For now we'll let this handle all
@@ -15,7 +15,7 @@ The mailing list is `devel@lists.luftengine.org`. This should be handling
 development traffic exclusively.
 
 
-=== Commit Guidelines ===
+## Commit Guidelines ##
 
 Git has been around long enough that people more or less know by now what makes
 sense, but we'll go over the important and/or quirky stuff. Commit messages
@@ -54,7 +54,7 @@ Other kernel-isms like `Acked-by` and `Reviewed-by` won't be defined here, but
 you can use them if you like.
 
 
-==== Commit Contents ====
+### Commit Contents ###
 
 A commit should contain "minimal, atomic changes." Atomic is easy to define:
 
@@ -70,7 +70,7 @@ first line it's probably too big. There may be some shuffling for long words,
 but you should be able to use judgment.
 
 
-=== Submitting commits ===
+## Submitting commits ##
 
 Changes should generally pass through the mailing list. For large changesets
 you can use `git request-pull` and for smaller ones you can use `git
@@ -83,7 +83,7 @@ when you submit them. Be aware that depending on how things go, we may disallow
 them later. You're safer just using the list.
 
 
-=== Languages ===
+## Languages ##
 
 Luftballons is written in "Gnu99" standard C, which makes it a bit
 GCC-dependent. If you have cause to build it on another compiler, that can be
@@ -99,7 +99,7 @@ Should any tasks emerge that are better suited to a scripting language, Python
 is preferred.
 
 
-=== C Style ===
+## C Style ##
 
 Where not contradicted here, Linux kernel official style is generally
 applicable.
@@ -184,7 +184,7 @@ Should be written:
 	}
 
 
-=== Comments ===
+## Comments ##
 
 We generally avoid the `//` convention for comments. Stick to `/* */`. Structs
 and functions should have a documentation comment. The format looks like this:

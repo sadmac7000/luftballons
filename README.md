@@ -1,4 +1,4 @@
-== Luftballons ==
+# Luftballons #
 
 Luftballons is a project to create a fully-featured platform for cutting-edge
 game development.
@@ -7,7 +7,7 @@ Right now, Luftballons consists of a framework for describing rendering
 "pipelines" as a series of dependent draw operations on buffers.
 
 
-=== Downloading ===
+## Downloading ##
 
 The latest release of Luftballons can be had from [the
 website](http://www.luftengine.org/).  Development happens on
@@ -15,7 +15,7 @@ website](http://www.luftengine.org/).  Development happens on
 latest unstable versions there.
 
 
-=== Dependencies ===
+## Dependencies ##
 
 Luftballons depends on the following libraries:
 
@@ -28,7 +28,7 @@ Luftballons depends on the following libraries:
 * [libpng](http://www.libpng.org/pub/png/libpng.html)
 * [libtiff](http://www.libtiff.org/)
 
-== Installation ==
+## Installation ##
 
 To build Luftballons, from the root directory, run:
 
@@ -43,12 +43,12 @@ To install on to your system, run as an administrator:
     make install
 
 
-=== Contributing ===
+## Contributing ##
 
 See HACKING.md for guidelines on contributing.
 
 
-=== License ===
+## License ##
 
 Luftballons is licensed under the GNU Lesser General Public License, Version 3.
 Please see COPYING and COPYING.LESSER
