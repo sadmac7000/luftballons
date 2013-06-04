@@ -877,7 +877,7 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="p51_mustang" name="p51_mustang" type="NODE">
-        <translate sid="location">0.003700018 -0.2628904 106.5475</translate>
+        <translate sid="location">0.003700018 -0.2628904 0 <!--106.5475--></translate>
         <rotate sid="rotationZ">0 0 1 0</rotate>
         <rotate sid="rotationY">0 1 0 11.24542</rotate>
         <rotate sid="rotationX">1 0 0 0</rotate>
