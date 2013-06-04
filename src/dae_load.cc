@@ -303,32 +303,26 @@ DAEDataSource(domInputLocalOffsetRef input)
 }; /* class DAEDataSource */
 
 /**
- * Set the up axis.
+ * Get a transform matrix to correct the up axis.
  **/
-static object_t *
-dae_set_up(object_t *object, domUpAxisType up)
+static void
+dae_up_axis_to_xfrm(domUpAxisType up, float out[16])
 {
-	MATRIX_DECL_IDENT(alteration);
+	memset(out, 0, 16 * sizeof(float));
 
-	if (up == UPAXISTYPE_Y_UP)
-		return object;
+	out[0] = out[5] = out[10] = out[15] = 1;
 
 	if (up == UPAXISTYPE_Z_UP) {
-		alteration[5] = 0;
-		alteration[6] = 1;
-		alteration[9] = -1;
-		alteration[10] = 0;
+		out[5] = 0;
+		out[6] = 1;
+		out[9] = -1;
+		out[10] = 0;
 	} else if (up == UPAXISTYPE_X_UP) {
-		alteration[0] = 0;
-		alteration[1] = -1;
-		alteration[4] = 1;
-		alteration[5] = 0;
+		out[0] = 0;
+		out[1] = -1;
+		out[4] = 1;
+		out[5] = 0;
 	}
-
-	matrix_multiply(alteration, object->pretransform,
-			object->pretransform);
-
-	return object;
 }
 
 /**
@@ -476,7 +470,7 @@ dae_load_geom(domGeometryRef geo)
  * of just do what's convenient.
  **/
 static void
-dae_apply_transform(domNodeRef node, object_t *object)
+dae_apply_transform(domNodeRef node, object_t *object, domUpAxisType up)
 {
 	daeTArray< daeSmartRef<daeElement> > elems = node->getChildren();
 	domFloat4 fl;
@@ -484,6 +478,11 @@ dae_apply_transform(domNodeRef node, object_t *object)
 	quat_t quat;
 	size_t i, j, k;
 	MATRIX_DECL_IDENT(xfrm_total);
+	float axis[16];
+	float axis_trans[16];
+
+	dae_up_axis_to_xfrm(up, axis);
+	matrix_transpose(axis, axis_trans);
 
 	for (i = 0; i < elems.getCount(); i++) {
 		MATRIX_DECL_IDENT(xfrm);
@@ -512,6 +511,12 @@ dae_apply_transform(domNodeRef node, object_t *object)
 
 		matrix_multiply(xfrm_total, xfrm, xfrm_total);
 	}
+
+	matrix_multiply(axis_trans, xfrm_total, xfrm_total);
+	matrix_multiply(xfrm_total, axis, xfrm_total);
+
+	object->private_transform = xcalloc(16, sizeof(float));
+	memcpy(object->private_transform, axis_trans, 16 * sizeof(float));
 
 	object_apply_pretransform(object, xfrm_total);
 }
@@ -561,8 +566,7 @@ dae_process_node(domNodeRef node, object_t *parent, domUpAxisType up)
 	object_ungrab(object);
 
 out:
-	dae_apply_transform(node, object);
-	dae_set_up(object, up);
+	dae_apply_transform(node, object, up);
 	name = node->getName();
 	children = node->getNode_array();
 

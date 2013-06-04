@@ -1,5 +1,3 @@
-* COLLADA import doesn't deal with Non-Y-Up coordinates quite the way it
-  should. More fiddling required.
 * Texmaps need to leak less OpenGL. It'd be nice if we could freely resize
   them, etc, and everything would Just Work(tm) with OpenGL under the hood.
   Right now resizing doesn't work at all though, and I have a feeling the
