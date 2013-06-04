@@ -495,6 +495,7 @@ dae_apply_transform(domNodeRef node, object_t *object)
 			xfrm[14] = fl[2];
 		} else if (elems[i]->typeID() == domRotate::ID()) {
 			fl = ((domRotateRef)elems[i])->getValue();
+			fl[3] = fl[3] * 3.14159 / 180;
 			quat_init(&quat, fl[0], fl[1], fl[2], fl[3]);
 			quat_to_matrix(&quat, xfrm);
 		} else if (elems[i]->typeID() == domScale::ID()) {
