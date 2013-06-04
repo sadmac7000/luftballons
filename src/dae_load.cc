@@ -544,19 +544,23 @@ dae_process_node(domNodeRef node, object_t *parent, domUpAxisType up)
 	object = dae_load_geom(arr[0]->getUrl().getElement());
 
 	if (! object)
-		return NULL;
+		errx(1, "Unsupported mesh format or mesh missing");
 
-	if (parent) {
-		if (object->parent)
-			object_grab(object);
+	if (! parent)
+		goto out;
 
-		object_reparent(object, parent);
-		object_ungrab(object);
-	}
+	/* If we have no parent, then the importer itself is holding a
+	 * reference. If we have a parent, then we add a new reference so that
+	 * in either case we can destroy a reference after reparenting.
+	 */
+	if (object->parent)
+		object_grab(object);
 
-	dae_apply_transform(node, object);
+	object_reparent(object, parent);
+	object_ungrab(object);
 
 out:
+	dae_apply_transform(node, object);
 	dae_set_up(object, up);
 	name = node->getName();
 	children = node->getNode_array();
