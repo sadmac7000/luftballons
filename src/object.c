@@ -261,6 +261,7 @@ object_destructor(void *object_)
 
 	free(object->name);
 	free(object->transform_cache);
+	free(object->private_transform);
 
 	object_make_nodetype(object);
 
