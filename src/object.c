@@ -281,6 +281,7 @@ object_create(object_t *parent)
 	ret->name = NULL;
 	ret->mat_id = 0;
 	ret->transform_cache = NULL;
+	ret->private_transform = NULL;
 
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
@@ -578,7 +579,11 @@ object_get_total_transform(object_t *object, float mat[16])
 {
 	object_fill_transform_cache(object);
 
-	memcpy(mat, object->transform_cache, 16 * sizeof(float));
+	if (! object->private_transform)
+		memcpy(mat, object->transform_cache, 16 * sizeof(float));
+	else
+		matrix_multiply(object->transform_cache,
+				object->private_transform, mat);
 }
 EXPORT(object_get_total_transform);
 
