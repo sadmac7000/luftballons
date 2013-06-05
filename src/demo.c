@@ -126,19 +126,23 @@ handle_reshape(void)
 	luft_texmap_ungrab(position_texmap);
 	luft_texmap_ungrab(diffuse_texmap);
 
-	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_SAMP2D, normal_texmap);
+	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_TEXMAP,
+				      normal_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
-	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_SAMP2D, position_texmap);
+	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_TEXMAP,
+				      position_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
-	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_SAMP2D, diffuse_texmap);
+	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_TEXMAP,
+				      diffuse_texmap);
 	luft_state_set_uniform(gather_state, uniform);
 	luft_uniform_ungrab(uniform);
 
-	uniform = luft_uniform_create("in_buf", LUFT_UNIFORM_SAMP2D, gather_texmap);
+	uniform = luft_uniform_create("in_buf", LUFT_UNIFORM_TEXMAP,
+				      gather_texmap);
 	luft_state_set_uniform(output_state, uniform);
 	luft_uniform_ungrab(uniform);
 }
@@ -252,7 +256,7 @@ render(void)
 	for (i = 0; i < 4; i++) {
 		if (i) {
 			uniform = luft_uniform_create("last_depth",
-						      LUFT_UNIFORM_SAMP2D,
+						      LUFT_UNIFORM_TEXMAP,
 						      depth_texmap[active_depth]);
 
 			luft_state_set_uniform(plane_state, uniform);
@@ -484,7 +488,8 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, canopy_map);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
+				      canopy_map);
 	luft_state_set_uniform(canopy_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(canopy_map);
@@ -494,7 +499,8 @@ main(int argc, char **argv)
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_SAMP2D, plane_map);
+	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
+				      plane_map);
 	luft_state_set_uniform(plane_state, uniform);
 	luft_uniform_ungrab(uniform);
 	luft_texmap_ungrab(plane_map);

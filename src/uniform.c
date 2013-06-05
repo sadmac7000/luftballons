@@ -38,7 +38,7 @@ uniform_destructor(void *v)
 {
 	uniform_t *uniform = v;
 
-	if (uniform->type == UNIFORM_SAMP2D)
+	if (uniform->type == UNIFORM_TEXMAP)
 		texmap_ungrab(uniform->value.data_ptr);
 
 	free(uniform->name);
@@ -60,7 +60,7 @@ uniform_create(const char *name, uniform_type_t type, ...)
 	switch (type) {
 	case UNIFORM_MAT4:
 	case UNIFORM_VEC4:
-	case UNIFORM_SAMP2D:
+	case UNIFORM_TEXMAP:
 		value.data_ptr = va_arg(ap, void *);
 		break;
 	case UNIFORM_UINT:
@@ -79,7 +79,7 @@ uniform_create(const char *name, uniform_type_t type, ...)
 	ret->value = value;
 	ret->name = xstrdup(name);
 
-	if (type == UNIFORM_SAMP2D)
+	if (type == UNIFORM_TEXMAP)
 		texmap_grab(ret->value.data_ptr);
 
 	return ret;

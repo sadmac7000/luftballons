@@ -241,7 +241,7 @@ shader_apply_uniform(shader_t *shader, uniform_t *uniform)
 		case UNIFORM_VEC4:
 			glUniform4fv(loc, 1, uniform->value.data_ptr);
 			break;
-		case UNIFORM_SAMP2D:
+		case UNIFORM_TEXMAP:
 			shader_set_uniform_samp2D(shader, uniform->name,
 						  uniform->value.data_ptr);
 			break;
