@@ -221,9 +221,9 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 		if (!(map->flags & TEXMAP_DEPTH))
 			ifmt = GL_RGBA32F;
 		else if (map->flags & TEXMAP_STENCIL)
-			ifmt = GL_DEPTH_COMPONENT32F;
-		else
 			ifmt = GL_DEPTH32F_STENCIL8;
+		else
+			ifmt = GL_DEPTH_COMPONENT32F;
 	}
 
 	if (map->flags & TEXMAP_COMPRESSED)
