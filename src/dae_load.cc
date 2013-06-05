@@ -515,7 +515,7 @@ dae_apply_transform(domNodeRef node, object_t *object, domUpAxisType up)
 	matrix_multiply(axis_trans, xfrm_total, xfrm_total);
 	matrix_multiply(xfrm_total, axis, xfrm_total);
 
-	object->private_transform = xcalloc(16, sizeof(float));
+	object->private_transform = (float *)xcalloc(16, sizeof(float));
 	memcpy(object->private_transform, axis_trans, 16 * sizeof(float));
 
 	object_apply_pretransform(object, xfrm_total);
