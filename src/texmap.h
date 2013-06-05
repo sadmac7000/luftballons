@@ -28,7 +28,6 @@
 #define TEXMAP_FLOAT32 LUFT_TEXMAP_FLOAT32
 #define TEXMAP_DEPTH LUFT_TEXMAP_DEPTH
 #define TEXMAP_STENCIL LUFT_TEXMAP_STENCIL
-#define TEXMAP_INITIALIZED LUFT_TEXMAP_INITIALIZED
 
 /**
  * A 2D texture map, usually loaded from a file.
@@ -36,6 +35,9 @@
  * map: OpenGL texture ID
  * sampler: OpenGL sampler object
  * flags: Misc flags.
+ * base_mip: Base mip map level.
+ * max_mip: Maximum mip map level.
+ * initialized: Bit field of which mip map levels are initialized.
  * w, h: Width and height
  * texture_unit: What texture unit this texture was assigned.
  * refcount: Number of references to this texture
@@ -44,6 +46,9 @@ typedef struct texmap {
 	GLuint map;
 	GLuint sampler;
 	unsigned int flags;
+	size_t base_mip;
+	size_t max_mip;
+	uint64_t *initialized;
 	size_t w, h;
 	GLuint texture_unit;
 	refcounter_t refcount;

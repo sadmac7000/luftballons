@@ -39,6 +39,26 @@ size_t generation_size = 0;
 size_t max_units = 0;
 
 /**
+ * Mark a texmap as initialized for a given level.
+ **/
+static void
+texmap_mark_init(texmap_t *map, int level)
+{
+	uint64_t *word;
+	uint64_t mask;
+
+	level -= map->base_mip;
+
+	word = &map->initialized[level / 64];
+	mask = 1 << (level % 64);
+
+	if ((*word) & mask)
+		errx(1, "Each texmap level can be inititalized only once");
+
+	(*word) |= mask;
+}
+
+/**
  * Load image from a file into a texture map.
  *
  * map: Map to load in to.
@@ -50,10 +70,7 @@ texmap_load_image(texmap_t *map, const char *path, int level)
 {
 	int fd = open(path, O_RDONLY | O_CLOEXEC);
 
-	if (map->flags & TEXMAP_INITIALIZED)
-		errx(1, "Tried to initialize texmap twice");
-
-	map->flags |= TEXMAP_INITIALIZED;
+	texmap_mark_init(map, level);
 
 	if (fd < 0)
 		err(1, "Could not open image file %s", path);
@@ -98,6 +115,11 @@ texmap_t *
 texmap_create(size_t base_level, size_t max_level, unsigned int flags)
 {
 	texmap_t *map = xmalloc(sizeof(texmap_t));
+	size_t num_mips = max_level - base_level;
+	size_t num_bit_words = (num_mips + 63) / 64;
+
+	if (max_level < base_level)
+		errx(1, "Max mip map level can't be less than base");
 
 	if (flags & ~(TEXMAP_COMPRESSED | TEXMAP_FLOAT32 |
 		      TEXMAP_DEPTH | TEXMAP_STENCIL))
@@ -115,7 +137,10 @@ texmap_create(size_t base_level, size_t max_level, unsigned int flags)
 	glGenTextures(1, &map->map);
 	glGenSamplers(1, &map->sampler);
 
+	map->base_mip = base_level;
+	map->max_mip = max_level;
 	map->texture_unit = 0;
+	map->initialized = xcalloc(num_bit_words, sizeof(uint64_t));
 	texmap_get_texture_unit(map);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, base_level);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, max_level);
@@ -176,10 +201,7 @@ texmap_init_blank(texmap_t *map, int level, int width, int height)
 	GLenum fmt = GL_RGBA;
 	GLenum colortype = GL_UNSIGNED_BYTE;
 
-	if (map->flags & TEXMAP_INITIALIZED)
-		errx(1, "Tried to initialize texmap twice");
-
-	map->flags |= TEXMAP_INITIALIZED;
+	texmap_mark_init(map, level);
 
 	map->w = width;
 	map->h = height;
