@@ -59,9 +59,16 @@ uniform_create(const char *name, uniform_type_t type, ...)
 	
 	switch (type) {
 	case UNIFORM_MAT4:
+		value.data_ptr = xmemdup(va_arg(ap, void *),
+					 16 * sizeof(float));
+		break;
 	case UNIFORM_VEC4:
+		value.data_ptr = xmemdup(va_arg(ap, void *),
+					 4 * sizeof(float));
+		break;
 	case UNIFORM_TEXMAP:
 		value.data_ptr = va_arg(ap, void *);
+		texmap_grab(value.data_ptr);
 		break;
 	case UNIFORM_UINT:
 		value.uint = va_arg(ap, GLuint);
@@ -78,9 +85,6 @@ uniform_create(const char *name, uniform_type_t type, ...)
 	ret->type = type;
 	ret->value = value;
 	ret->name = xstrdup(name);
-
-	if (type == UNIFORM_TEXMAP)
-		texmap_grab(ret->value.data_ptr);
 
 	return ret;
 }

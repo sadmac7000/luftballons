@@ -69,7 +69,7 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 {
 	uniform_t *un;
 	float trans[16];
-	float *fl;
+	float fl[16];
 
 	if (! state_material_active(object->mat_id))
 		return 1;
@@ -82,32 +82,28 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 
 	object_get_total_transform(object, trans);
 
-	fl = xcalloc(16, sizeof(float));
 	matrix_multiply(cspace, trans, fl);
 	un = uniform_create("transform", UNIFORM_MAT4, fl);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	fl = xcalloc(16, sizeof(float));
-	memcpy(fl, clip, 16 * sizeof(float));
-	un = uniform_create("clip_transform", UNIFORM_MAT4, fl);
+	un = uniform_create("clip_transform", UNIFORM_MAT4, clip);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
 	if (object->type == OBJ_MESH) {
 		draw_queue_add_mesh(queue, object->mesh);
 		return mesh_draw(object->mesh);
-	} else {
-		fl = xcalloc(4, sizeof(float));
-		memcpy(fl, object->light_color, 3 * sizeof(float));
-		fl[3] = 1;
-		un = uniform_create("light_color", UNIFORM_VEC4, fl);
-		shader_set_temp_uniform(un);
-		uniform_ungrab(un);
-
-		draw_queue_add_mesh(queue, quad->mesh);
-		return mesh_draw(quad->mesh);
 	}
+
+	memcpy(fl, object->light_color, 3 * sizeof(float));
+	fl[3] = 1;
+	un = uniform_create("light_color", UNIFORM_VEC4, fl);
+	shader_set_temp_uniform(un);
+	uniform_ungrab(un);
+
+	draw_queue_add_mesh(queue, quad->mesh);
+	return mesh_draw(quad->mesh);
 }
 
 /**

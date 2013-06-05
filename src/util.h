@@ -83,6 +83,16 @@ xstrdup(const char *str)
 	return ret;
 }
 
+static inline void *
+xmemdup(const void *data, size_t size)
+{
+	void *ret = xmalloc(size);
+
+	memcpy(ret, data, size);
+
+	return ret;
+}
+
 typedef struct list {
 	struct list *next, *prev;
 } list_node_t;
