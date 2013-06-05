@@ -61,7 +61,6 @@ uniform_create(const char *name, uniform_type_t type, ...)
 	case UNIFORM_MAT4:
 	case UNIFORM_VEC4:
 	case UNIFORM_SAMP2D:
-	case UNIFORM_SAMP1D:
 		value.data_ptr = va_arg(ap, void *);
 		break;
 	case UNIFORM_UINT:

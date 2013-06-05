@@ -245,10 +245,6 @@ shader_apply_uniform(shader_t *shader, uniform_t *uniform)
 			shader_set_uniform_samp2D(shader, uniform->name,
 						  uniform->value.data_ptr);
 			break;
-		/* case UNIFORM_SAMP1D:
-			shader_set_uniform_samp1D(shader, uniform->name,
-						  uniform->value.data_ptr);
-			break; */
 		case UNIFORM_UINT:
 			glUniform1i(loc, (int)uniform->value.uint);
 			break;
