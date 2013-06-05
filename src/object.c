@@ -251,7 +251,8 @@ object_destructor(void *object_)
 	object_t *object = object_;
 
 	while (object->child_count)
-		object_reparent(object->children[object->child_count - 1], NULL);
+		object_reparent(object->children[object->child_count - 1],
+				NULL);
 
 	free(object->children);
 
