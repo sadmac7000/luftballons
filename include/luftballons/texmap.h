@@ -18,7 +18,7 @@
 #ifndef LUFTBALLONS_TEXMAP_H
 #define LUFTBALLONS_TEXMAP_H
 
-#include <GL/gl.h>
+#include <sys/types.h>
 
 #define LUFT_TEXMAP_COMPRESSED	0x1
 #define LUFT_TEXMAP_FLOAT32	0x2
@@ -54,7 +54,6 @@ void luft_texmap_set_min(luft_texmap_t *map, luft_texmap_interp_t local,
 			 luft_texmap_interp_t mip);
 void luft_texmap_set_wrap(luft_texmap_t *map, unsigned int wrap_axes,
 			  unsigned int wrap_type);
-void luft_texmap_set_int_param(luft_texmap_t *map, GLenum param, GLint value);
 void luft_texmap_grab(luft_texmap_t *luft_texmap);
 void luft_texmap_ungrab(luft_texmap_t *luft_texmap);
 

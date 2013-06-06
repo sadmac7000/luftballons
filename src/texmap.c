@@ -287,17 +287,6 @@ texmap_set_wrap(texmap_t *map, unsigned int wrap_axes, unsigned int wrap_type)
 EXPORT(texmap_set_wrap);
 
 /**
- * Set an OpenGL parameter for this texture map.
- **/
-void
-texmap_set_int_param(texmap_t *map, GLenum param, GLint value)
-{
-	glSamplerParameteri(map->sampler, param, value);
-	CHECK_GL;
-}
-EXPORT(texmap_set_int_param);
-
-/**
  * Initialize a blank texmap.
  *
  * map: Which texmap to initialize.

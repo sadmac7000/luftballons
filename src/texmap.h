@@ -78,7 +78,6 @@ API_DECLARE(texmap_init_blank);
 API_DECLARE(texmap_set_mag);
 API_DECLARE(texmap_set_min);
 API_DECLARE(texmap_set_wrap);
-API_DECLARE(texmap_set_int_param);
 API_DECLARE(texmap_grab);
 API_DECLARE(texmap_ungrab);
 
