@@ -176,6 +176,76 @@ texmap_ungrab(texmap_t *texmap)
 EXPORT(texmap_ungrab);
 
 /**
+ * Set magnification mode for this texmap.
+ *
+ * map: Map to operate on.
+ * interp: Interpolation mode to use.
+ **/
+void
+texmap_set_mag(texmap_t *map, texmap_interp_t interp)
+{
+	if (interp == TEXMAP_INTERP_NONE)
+		errx(1, "Magnification interpolation cannot be none");
+	else if (interp == TEXMAP_INTERP_NEAREST)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MAG_FILTER,
+				    GL_NEAREST);
+	else if (interp == TEXMAP_INTERP_LINEAR)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MAG_FILTER,
+				    GL_LINEAR);
+	else
+		errx(1, "Magnification interpolation must be a valid "
+		     "interpolation constant");
+
+	CHECK_GL;
+}
+EXPORT(texmap_set_mag);
+
+/**
+ * Set minification mode for this texmap.
+ *
+ * map: Map to operate on.
+ * local: Interpolation to use sampling a single mip map.
+ * mip: Interpolation to use between samples of multiple mip maps.
+ **/
+void
+texmap_set_min(texmap_t *map, texmap_interp_t local, texmap_interp_t mip)
+{
+	if (local == TEXMAP_INTERP_NONE)
+		errx(1, "Local interpolation cannot be none");
+
+	if (local == TEXMAP_INTERP_NEAREST &&
+	    mip == TEXMAP_INTERP_NONE)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_NEAREST);
+	else if (local == TEXMAP_INTERP_NEAREST &&
+	    mip == TEXMAP_INTERP_NEAREST)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_NEAREST_MIPMAP_NEAREST);
+	else if (local == TEXMAP_INTERP_NEAREST &&
+	    mip == TEXMAP_INTERP_LINEAR)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_NEAREST_MIPMAP_LINEAR);
+	else if (local == TEXMAP_INTERP_LINEAR &&
+	    mip == TEXMAP_INTERP_NONE)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_LINEAR);
+	else if (local == TEXMAP_INTERP_LINEAR&&
+	    mip == TEXMAP_INTERP_NEAREST)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_LINEAR_MIPMAP_NEAREST);
+	else if (local == TEXMAP_INTERP_LINEAR &&
+	    mip == TEXMAP_INTERP_LINEAR)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_MIN_FILTER,
+				    GL_LINEAR_MIPMAP_LINEAR);
+	else
+		errx(1, "Interpolation values must be valid texmap "
+		     "interpolation constants");
+
+	CHECK_GL;
+}
+EXPORT(texmap_set_min);
+
+/**
  * Set the texture wrapping mode.
  *
  * map: Map to operate on.

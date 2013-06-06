@@ -37,6 +37,12 @@
 #define TEXMAP_WRAP_MIRROR LUFT_TEXMAP_WRAP_MIRROR
 #define TEXMAP_WRAP_REPEAT LUFT_TEXMAP_WRAP_REPEAT
 
+#define TEXMAP_INTERP_NONE LUFT_TEXMAP_INTERP_NONE
+#define TEXMAP_INTERP_NEAREST LUFT_TEXMAP_INTERP_NEAREST
+#define TEXMAP_INTERP_LINEAR LUFT_TEXMAP_INTERP_LINEAR
+
+typedef luft_texmap_interp_t texmap_interp_t;
+
 /**
  * A 2D texture map, usually loaded from a file.
  *
@@ -69,6 +75,8 @@ extern "C" {
 API_DECLARE(texmap_create);
 API_DECLARE(texmap_load_image);
 API_DECLARE(texmap_init_blank);
+API_DECLARE(texmap_set_mag);
+API_DECLARE(texmap_set_min);
 API_DECLARE(texmap_set_wrap);
 API_DECLARE(texmap_set_int_param);
 API_DECLARE(texmap_grab);

@@ -34,6 +34,11 @@
 #define LUFT_TEXMAP_WRAP_REPEAT 0x3
 
 typedef struct texmap luft_texmap_t;
+typedef enum {
+	LUFT_TEXMAP_INTERP_NONE,
+	LUFT_TEXMAP_INTERP_NEAREST,
+	LUFT_TEXMAP_INTERP_LINEAR,
+} luft_texmap_interp_t;
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,6 +49,9 @@ luft_texmap_t *luft_texmap_create(size_t base_level, size_t max_level,
 void luft_texmap_load_image(luft_texmap_t *map, const char *path, int level);
 void luft_texmap_init_blank(luft_texmap_t *map, int level, int width,
 			    int height);
+void luft_texmap_set_mag(luft_texmap_t *map, luft_texmap_interp_t interp);
+void luft_texmap_set_min(luft_texmap_t *map, luft_texmap_interp_t local,
+			 luft_texmap_interp_t mip);
 void luft_texmap_set_wrap(luft_texmap_t *map, unsigned int wrap_axes,
 			  unsigned int wrap_type);
 void luft_texmap_set_int_param(luft_texmap_t *map, GLenum param, GLint value);
