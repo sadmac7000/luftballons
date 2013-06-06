@@ -25,6 +25,14 @@
 #define LUFT_TEXMAP_DEPTH	0x4
 #define LUFT_TEXMAP_STENCIL	0x8
 
+#define LUFT_TEXMAP_WRAP_R 0x1
+#define LUFT_TEXMAP_WRAP_S 0x2
+#define LUFT_TEXMAP_WRAP_T 0x4
+
+#define LUFT_TEXMAP_WRAP_CLAMP  0x1
+#define LUFT_TEXMAP_WRAP_MIRROR 0x2
+#define LUFT_TEXMAP_WRAP_REPEAT 0x3
+
 typedef struct texmap luft_texmap_t;
 
 #ifdef __cplusplus
@@ -36,6 +44,8 @@ luft_texmap_t *luft_texmap_create(size_t base_level, size_t max_level,
 void luft_texmap_load_image(luft_texmap_t *map, const char *path, int level);
 void luft_texmap_init_blank(luft_texmap_t *map, int level, int width,
 			    int height);
+void luft_texmap_set_wrap(luft_texmap_t *map, unsigned int wrap_axes,
+			  unsigned int wrap_type);
 void luft_texmap_set_int_param(luft_texmap_t *map, GLenum param, GLint value);
 void luft_texmap_grab(luft_texmap_t *luft_texmap);
 void luft_texmap_ungrab(luft_texmap_t *luft_texmap);

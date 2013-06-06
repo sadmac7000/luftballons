@@ -29,6 +29,14 @@
 #define TEXMAP_DEPTH LUFT_TEXMAP_DEPTH
 #define TEXMAP_STENCIL LUFT_TEXMAP_STENCIL
 
+#define TEXMAP_WRAP_R LUFT_TEXMAP_WRAP_R
+#define TEXMAP_WRAP_S LUFT_TEXMAP_WRAP_S
+#define TEXMAP_WRAP_T LUFT_TEXMAP_WRAP_T
+
+#define TEXMAP_WRAP_CLAMP LUFT_TEXMAP_WRAP_CLAMP
+#define TEXMAP_WRAP_MIRROR LUFT_TEXMAP_WRAP_MIRROR
+#define TEXMAP_WRAP_REPEAT LUFT_TEXMAP_WRAP_REPEAT
+
 /**
  * A 2D texture map, usually loaded from a file.
  *
@@ -61,6 +69,7 @@ extern "C" {
 API_DECLARE(texmap_create);
 API_DECLARE(texmap_load_image);
 API_DECLARE(texmap_init_blank);
+API_DECLARE(texmap_set_wrap);
 API_DECLARE(texmap_set_int_param);
 API_DECLARE(texmap_grab);
 API_DECLARE(texmap_ungrab);

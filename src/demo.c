@@ -486,7 +486,7 @@ main(int argc, char **argv)
 	luft_texmap_load_image(canopy_map, "../ref_models/P51_canopy.tif", 0);
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	luft_texmap_set_int_param(canopy_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	luft_texmap_set_wrap(canopy_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
 	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
 				      canopy_map);
@@ -497,7 +497,7 @@ main(int argc, char **argv)
 	luft_texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	luft_texmap_set_int_param(plane_map, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	luft_texmap_set_int_param(plane_map, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	luft_texmap_set_wrap(plane_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
 	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
 				      plane_map);

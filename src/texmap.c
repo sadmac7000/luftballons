@@ -176,6 +176,47 @@ texmap_ungrab(texmap_t *texmap)
 EXPORT(texmap_ungrab);
 
 /**
+ * Set the texture wrapping mode.
+ *
+ * map: Map to operate on.
+ * wrap_axes: Bit field indicating which axes to set wrapping for.
+ * wrap_type: Constant indicating what type of wrapping to do.
+ **/
+void
+texmap_set_wrap(texmap_t *map, unsigned int wrap_axes, unsigned int wrap_type)
+{
+	GLint gl_value;
+
+	if (wrap_axes & ~(TEXMAP_WRAP_R | TEXMAP_WRAP_S | TEXMAP_WRAP_T))
+		errx(1, "Wrap axes must be an OR of one "
+		     "or more wrap axis constants");
+
+	switch (wrap_type) {
+	case TEXMAP_WRAP_REPEAT:
+		gl_value = GL_REPEAT;
+		break;
+	case TEXMAP_WRAP_MIRROR:
+		gl_value = GL_MIRRORED_REPEAT;
+		break;
+	case TEXMAP_WRAP_CLAMP:
+		gl_value = GL_CLAMP_TO_EDGE;
+		break;
+	default:
+		errx(1, "Wrap type must be a valid wrap type constant");
+	};
+
+	if (wrap_axes & TEXMAP_WRAP_R)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_WRAP_R, gl_value);
+
+	if (wrap_axes & TEXMAP_WRAP_S)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_WRAP_S, gl_value);
+
+	if (wrap_axes & TEXMAP_WRAP_T)
+		glSamplerParameteri(map->sampler, GL_TEXTURE_WRAP_T, gl_value);
+}
+EXPORT(texmap_set_wrap);
+
+/**
  * Set an OpenGL parameter for this texture map.
  **/
 void
