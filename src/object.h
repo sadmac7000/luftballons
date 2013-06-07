@@ -25,7 +25,7 @@
 #include "refcount.h"
 
 #define object_type_t luft_object_type_t
-#define pre_skip_children luft_pre_skip_children
+#define pre_skip_children(x) luft_pre_skip_children(x)
 
 #define OBJ_NODE LUFT_OBJ_NODE
 #define OBJ_MESH LUFT_OBJ_MESH
@@ -45,6 +45,8 @@
  * pretransform: A transform matrix to apply before our local transforms.
  * transform_cache: Combined transform of this object and its parent.
  * private_transform: Transform to apply to this object, but not its children.
+ * draw_distance: Distance beyond which we stop drawing this object.
+ * child_draw_distance: Distance beyond which we stop drawing our children.
  * children: List of child objects of this object.
  * child_count: Size of the children list.
  * type: What type of object this is.
@@ -62,6 +64,9 @@ typedef struct object {
 	float pretransform[16];
 	float *transform_cache;
 	float *private_transform;
+
+	float draw_distance;
+	float child_draw_distance;
 
 	struct object **children;
 	size_t child_count;
@@ -111,6 +116,9 @@ API_DECLARE(object_cursor_start_pre);
 API_DECLARE(object_cursor_next_pre);
 API_DECLARE(object_cursor_skip_children_pre);
 API_DECLARE(object_cursor_release);
+API_DECLARE(object_set_draw_distance_local);
+API_DECLARE(object_set_draw_distance_children);
+API_DECLARE(object_set_draw_distance);
 API_DECLARE(object_get_name);
 
 object_t *object_get_fs_quad(void);

@@ -298,6 +298,9 @@ object_create(object_t *parent)
 	ret->transform_cache = NULL;
 	ret->private_transform = NULL;
 
+	ret->draw_distance = 0;
+	ret->child_draw_distance = 0;
+
 	ret->trans[0] = ret->trans[1] = ret->trans[2] = 0;
 	ret->scale[0] = ret->scale[1] = ret->scale[2] = 1;
 	quat_init(&ret->rot, 0, 1, 0, 0);
@@ -684,6 +687,37 @@ object_set_material(object_t *object, int mat_id)
 	object->mat_id = mat_id;
 }
 EXPORT(object_set_material);
+
+/**
+ * Set draw distance for this object, but not its children.
+ **/
+void
+object_set_draw_distance_local(object_t *object, float dist)
+{
+	object->draw_distance = dist;
+}
+EXPORT(object_set_draw_distance_local);
+
+/**
+ * Set draw distance for this object's children.
+ **/
+void
+object_set_draw_distance_children(object_t *object, float dist)
+{
+	object->child_draw_distance = dist;
+}
+EXPORT(object_set_draw_distance_children);
+
+/**
+ * Set draw distance for this object.
+ **/
+void
+object_set_draw_distance(object_t *object, float dist)
+{
+	object_set_draw_distance_local(object, dist);
+	object_set_draw_distance_children(object, dist);
+}
+EXPORT(object_set_draw_distance);
 
 /**
  * Get an object's name.

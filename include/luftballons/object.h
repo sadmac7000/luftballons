@@ -69,6 +69,9 @@ void luft_object_apply_pretransform(luft_object_t *object, float matrix[16]);
 void luft_object_get_total_transform(luft_object_t *object, float mat[16]);
 luft_object_t *luft_object_lookup(luft_object_t *object, const char *name);
 void luft_object_set_material(luft_object_t *object, int mat_id);
+void luft_object_set_draw_distance_local(luft_object_t *object, float dist);
+void luft_object_set_draw_distance_children(luft_object_t *object, float dist);
+void luft_object_set_draw_distance(luft_object_t *object, float dist);
 
 void luft_camera_set_aspect(luft_object_t *camera, float aspect);
 

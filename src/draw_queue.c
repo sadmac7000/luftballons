@@ -114,6 +114,7 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 {
 	float cspace[16];
 	float clip[16];
+	float distance;
 	object_t **flat = NULL;
 	size_t num_flat = 0;
 	size_t i;
@@ -125,8 +126,17 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 	camera_to_clip(camera, clip);
 
 	object_foreach_pre(cursor, object) {
-		flat = vec_expand(flat, num_flat);
-		flat[num_flat++] = object;
+		distance = object_distance(object, camera);
+
+		if (object->draw_distance == 0 ||
+		    distance <= object->draw_distance) {
+			flat = vec_expand(flat, num_flat);
+			flat[num_flat++] = object;
+		}
+
+		if (object->child_draw_distance > 0 &&
+		    distance > object->child_draw_distance)
+			pre_skip_children(&cursor);
 	}
 
 	object_cursor_release(&cursor);
