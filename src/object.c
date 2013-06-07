@@ -184,6 +184,7 @@ object_lookup(object_t *object, const char *name)
 	if (! strcmp(object->name, name))
 		return object;
 
+	/* FIXME: use cursors, not recursion */
 	for (i = 0; i < object->child_count; i++) {
 		ret = object_lookup(object->children[i], name);
 
@@ -588,6 +589,27 @@ object_get_total_transform(object_t *object, float mat[16])
 				object->private_transform, mat);
 }
 EXPORT(object_get_total_transform);
+
+/**
+ * Find the distance between two objects.
+ **/
+float
+object_distance(object_t *a, object_t *b)
+{
+	float a_trans[16];
+	float b_trans[16];
+	float x, y, z;
+
+	object_get_total_transform(a, a_trans);
+	object_get_total_transform(b, b_trans);
+
+	x = a_trans[13] - b_trans[13];
+	y = a_trans[14] - b_trans[14];
+	z = a_trans[15] - b_trans[15];
+
+	return sqrtf(x * x + y * y + z * z);
+}
+EXPORT(object_distance);
 
 /**
  * Remove an object from its parent. This will ungrab the object and MAY FREE

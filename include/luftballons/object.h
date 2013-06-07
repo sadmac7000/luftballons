@@ -63,6 +63,7 @@ void luft_object_set_rotation(luft_object_t *object, luft_quat_t *quat);
 void luft_object_set_translation(luft_object_t *object, float vec[3]);
 void luft_object_set_scale(luft_object_t *object, float scale[3]);
 void luft_object_get_transform_mat(luft_object_t *object, float matrix[16]);
+float luft_object_distance(luft_object_t *a, luft_object_t *b);
 void luft_object_reparent(luft_object_t *object, luft_object_t *parent);
 void luft_object_apply_pretransform(luft_object_t *object, float matrix[16]);
 void luft_object_get_total_transform(luft_object_t *object, float mat[16]);

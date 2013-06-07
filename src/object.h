@@ -94,6 +94,7 @@ API_DECLARE(object_set_rotation);
 API_DECLARE(object_set_translation);
 API_DECLARE(object_set_scale);
 API_DECLARE(object_get_transform_mat);
+API_DECLARE(object_distance);
 API_DECLARE(object_reparent);
 API_DECLARE(object_apply_pretransform);
 API_DECLARE(object_get_total_transform);
