@@ -25,6 +25,7 @@
 #include "refcount.h"
 
 #define object_type_t luft_object_type_t
+#define pre_skip_children luft_pre_skip_children
 
 #define OBJ_NODE LUFT_OBJ_NODE
 #define OBJ_MESH LUFT_OBJ_MESH
@@ -108,6 +109,7 @@ API_DECLARE(object_cursor_down);
 API_DECLARE(object_cursor_up);
 API_DECLARE(object_cursor_start_pre);
 API_DECLARE(object_cursor_next_pre);
+API_DECLARE(object_cursor_skip_children_pre);
 API_DECLARE(object_cursor_release);
 API_DECLARE(object_get_name);
 

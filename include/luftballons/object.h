@@ -79,6 +79,7 @@ ssize_t luft_object_cursor_up(luft_object_cursor_t *cursor);
 luft_object_t *luft_object_cursor_start_pre(luft_object_cursor_t *cursor,
 					    luft_object_t *root);
 luft_object_t *luft_object_cursor_next_pre(luft_object_cursor_t *cursor);
+void luft_object_cursor_skip_children_pre(luft_object_cursor_t *cursor);
 void luft_object_cursor_release(luft_object_cursor_t *cursor);
 
 /**
@@ -87,6 +88,11 @@ void luft_object_cursor_release(luft_object_cursor_t *cursor);
 #define luft_object_foreach_pre(cursor, obj) \
 	for ((obj) = luft_object_cursor_start_pre(&(cursor), (obj)); (obj); \
 	     (obj) = luft_object_cursor_next_pre(&(cursor)))
+
+#define luft_pre_skip_children(cursor) ({ \
+	luft_object_cursor_skip_children_pre(cursor); \
+	continue; \
+})
 
 #ifdef __cplusplus
 }

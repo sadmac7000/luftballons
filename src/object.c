@@ -121,6 +121,18 @@ object_cursor_next_pre(object_cursor_t *cursor)
 EXPORT(object_cursor_next_pre);
 
 /**
+ * Set a cursor so that the next call to next_pre will skip over the current
+ * object's children.
+ **/
+void
+object_cursor_skip_children_pre(object_cursor_t *cursor)
+{
+	while (cursor->current->child_count)
+		object_cursor_down(cursor, cursor->current->child_count - 1);
+}
+EXPORT(object_cursor_skip_children_pre);
+
+/**
  * Set up a cursor to traverse objects rooted at the given object.
  **/
 void
