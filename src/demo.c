@@ -416,10 +416,6 @@ main(int argc, char **argv)
 	glutKeyboardFunc(onkey);
 	glutKeyboardUpFunc(offkey);
 
-	glClampColorARB(GL_CLAMP_VERTEX_COLOR_ARB, GL_FALSE);
-	glClampColorARB(GL_CLAMP_READ_COLOR_ARB, GL_FALSE);
-	glClampColorARB(GL_CLAMP_FRAGMENT_COLOR_ARB, GL_FALSE);
-
 	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
 				  LUFT_COLORBUF_CLEAR |
 				  LUFT_COLORBUF_DEPTH |
