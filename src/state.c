@@ -68,6 +68,33 @@ state_create(shader_t *shader)
 EXPORT(state_create);
 
 /**
+ * Create a new state with the same properties as an existing state.
+ **/
+state_t *
+state_clone(state_t *in)
+{
+	state_t *state = xmalloc(sizeof(state_t));
+	size_t i;
+
+	memcpy(state, in, sizeof(state_t));
+
+	if (state->root)
+		object_grab(state->root);
+
+	if (state->colorbuf)
+		colorbuf_grab(state->colorbuf);
+
+	for (i = 0; i < state->num_uniforms; i++)
+		uniform_grab(state->uniforms[i]);
+
+	refcount_init(&state->refcount);
+	refcount_add_destructor(&state->refcount, state_destructor, state);
+
+	return state;
+}
+EXPORT(state_clone);
+
+/**
  * Grab a state object.
  **/
 void

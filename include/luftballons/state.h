@@ -43,6 +43,7 @@ extern "C" {
 #endif
 
 luft_state_t *luft_state_create(luft_shader_t *shader);
+luft_state_t *luft_state_clone(luft_state_t *in);
 void luft_state_set_blend(luft_state_t *state, luft_state_blend_mode_t mode);
 void luft_state_grab(luft_state_t *state);
 void luft_state_ungrab(luft_state_t *state);
