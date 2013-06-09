@@ -6,6 +6,7 @@
   benefit I'm not sure if I need to leak this particular OpenGL-ism.
 * Formal articulation of feedback loops for targets.
 * Stackable (push/pop) active state objects?
+* Add refcounting for shaders
 
 ## Harder ##
 * Materials system. Basically this is a way to extend pipelines in a templated
