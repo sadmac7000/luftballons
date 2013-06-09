@@ -32,11 +32,14 @@
  *
  * gl_handle: The OpenGL designation for the shader.
  * uniforms, uniform_count: Vector of uniforms applied to this shader.
+ * refcount: Reference counter for this state.
  **/
 typedef struct shader {
 	GLuint gl_handle;
 	uniform_t **uniforms;
 	size_t uniform_count;
+
+	refcounter_t refcount;
 } shader_t;
 
 #ifdef __cplusplus
@@ -44,6 +47,8 @@ extern "C" {
 #endif
 
 API_DECLARE(shader_create);
+API_DECLARE(shader_grab);
+API_DECLARE(shader_ungrab);
 API_DECLARE(shader_activate);
 API_DECLARE(shader_set_uniform);
 API_DECLARE(shader_set_temp_uniform);

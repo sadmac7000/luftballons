@@ -133,6 +133,24 @@ shader_instantiate(void)
 }
 
 /**
+ * Destructor for a shader_t
+ **/
+static void
+shader_destructor(void *shader_)
+{
+	shader_t *shader = shader_;
+	size_t i;
+
+	glDeleteProgram(shader->gl_handle);
+	CLEAR_GL;
+
+	for (i = 0; i < shader->uniform_count; i++)
+		uniform_ungrab(shader->uniforms[i]);
+
+	free(shader);
+}
+
+/**
  * Given a file for a vertex shader and fragment shader, load them.
  **/
 shader_t *
@@ -154,9 +172,32 @@ shader_create(const char *vertex, const char *frag)
 	glDeleteShader(frag_shader);
 
 	CHECK_GL;
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, shader_destructor, ret);
 	return ret;
 }
 EXPORT(shader_create);
+
+/**
+ * Grab a shader.
+ **/
+void
+shader_grab(shader_t *shader)
+{
+	refcount_grab(&shader->refcount);
+}
+EXPORT(shader_grab);
+
+/**
+ * Ungrab a shader
+ **/
+void
+shader_ungrab(shader_t *shader)
+{
+	refcount_ungrab(&shader->refcount);
+}
+EXPORT(shader_ungrab);
 
 /**
  * Set vertex attributes.
