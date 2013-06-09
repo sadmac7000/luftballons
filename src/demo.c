@@ -449,12 +449,9 @@ main(int argc, char **argv)
 	luft_state_set_material(cube_state, 0);
 	luft_state_set_colorbuf(cube_state, cbuf);
 
-	canopy_state = luft_state_create(textured_shader);
-	luft_state_set_flags(canopy_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_BF_CULL);
-	luft_state_set_blend(canopy_state, LUFT_STATE_BLEND_NONE);
+	canopy_state = luft_state_clone(cube_state);
+	luft_state_set_shader(canopy_state, textured_shader);
 	luft_state_set_material(canopy_state, 1);
-	luft_state_set_colorbuf(canopy_state, cbuf);
 
 	plane_state = luft_state_clone(canopy_state);
 	luft_state_set_material(plane_state, 2);

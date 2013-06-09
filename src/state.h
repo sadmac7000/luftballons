@@ -67,6 +67,7 @@ extern "C" {
 #endif
 
 API_DECLARE(state_create);
+API_DECLARE(state_set_shader);
 API_DECLARE(state_clone);
 API_DECLARE(state_grab);
 API_DECLARE(state_ungrab);

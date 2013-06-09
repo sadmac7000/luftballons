@@ -56,7 +56,7 @@ state_create(shader_t *shader)
 {
 	state_t *state = xcalloc(1, sizeof(state_t));
 
-	state->shader = shader;
+	state_set_shader(state, shader);
 	state->mat_id = -1;
 	state->blend_mode = STATE_BLEND_DONTCARE;
 
@@ -66,6 +66,22 @@ state_create(shader_t *shader)
 	return state;
 }
 EXPORT(state_create);
+
+/**
+ * Set a state object's shader.
+ **/
+void
+state_set_shader(state_t *state, shader_t *shader)
+{
+	if (state->shader)
+		shader_ungrab(state->shader);
+
+	if (shader)
+		shader_grab(shader);
+
+	state->shader = shader;
+}
+EXPORT(state_set_shader);
 
 /**
  * Create a new state with the same properties as an existing state.
