@@ -379,6 +379,30 @@ assign_material(luft_object_t *object)
 }
 
 
+void
+init_glut(int argc, char **argv, float clear_color[4])
+{
+	glutInit(&argc, argv);
+	glutInitWindowPosition(-1,-1);
+	glutInitWindowSize(win_sz[0], win_sz[1]);
+	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_ACCUM |
+			    GLUT_DEPTH | GLUT_STENCIL);
+
+	glutCreateWindow(argv[0]);
+
+	glutDisplayFunc(render);
+	glutReshapeFunc(reshape);
+	glutKeyboardFunc(onkey);
+	glutKeyboardUpFunc(offkey);
+
+	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
+				  LUFT_COLORBUF_CLEAR |
+				  LUFT_COLORBUF_DEPTH |
+				  LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_color(NULL, clear_color);
+	luft_colorbuf_clear_depth(NULL, 1.0);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -403,25 +427,7 @@ main(int argc, char **argv)
 	float light_color_2[3] = { 1.0, 1.0, 0.0 };
 	float light_offset_2[4] = { 0.0, 2.0, 0.0, 1.0 };
 
-	glutInit(&argc, argv);
-	glutInitWindowPosition(-1,-1);
-	glutInitWindowSize(win_sz[0], win_sz[1]);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_ACCUM |
-			    GLUT_DEPTH | GLUT_STENCIL);
-
-	glutCreateWindow(argv[0]);
-
-	glutDisplayFunc(render);
-	glutReshapeFunc(reshape);
-	glutKeyboardFunc(onkey);
-	glutKeyboardUpFunc(offkey);
-
-	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
-				  LUFT_COLORBUF_CLEAR |
-				  LUFT_COLORBUF_DEPTH |
-				  LUFT_COLORBUF_STENCIL);
-	luft_colorbuf_clear_color(NULL, clear_color);
-	luft_colorbuf_clear_depth(NULL, 1.0);
+	init_glut(argc, argv, clear_color);
 
 	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
 				    LUFT_COLORBUF_CLEAR_DEPTH |
