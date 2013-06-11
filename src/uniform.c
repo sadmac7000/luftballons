@@ -16,7 +16,6 @@
  **/
 
 #include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <err.h>
 #include <errno.h>
@@ -51,12 +50,29 @@ uniform_destructor(void *v)
 uniform_t *
 uniform_create(const char *name, uniform_type_t type, ...)
 {
-	uniform_t *ret = xmalloc(sizeof(uniform_t));
-	uniform_value_t value;
+	uniform_t *ret;
 	va_list ap;
 
 	va_start(ap, type);
 	
+	ret = uniform_vcreate(name, type, ap);
+
+	va_end(ap);
+
+
+	return ret;
+}
+EXPORT(uniform_create);
+
+/**
+ * Create a uniform object. Use a va_list for the final indeterminite argument.
+ **/
+uniform_t *
+uniform_vcreate(const char *name, uniform_type_t type, va_list ap)
+{
+	uniform_t *ret = xmalloc(sizeof(uniform_t));
+	uniform_value_t value;
+
 	switch (type) {
 	case UNIFORM_MAT4:
 		value.data_ptr = xmemdup(va_arg(ap, void *),
@@ -78,8 +94,6 @@ uniform_create(const char *name, uniform_type_t type, ...)
 		     "when creating a uniform");
 	}
 
-	va_end(ap);
-
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, uniform_destructor, ret);
 	ret->type = type;
@@ -88,7 +102,6 @@ uniform_create(const char *name, uniform_type_t type, ...)
 
 	return ret;
 }
-EXPORT(uniform_create);
 
 /**
  * Grab a uniform.

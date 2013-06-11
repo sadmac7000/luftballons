@@ -19,6 +19,8 @@
 #define UNIFORM_H
 #include <luftballons/uniform.h>
 
+#include <stdarg.h>
+
 #include <GL/gl.h>
 
 #include "refcount.h"
@@ -56,6 +58,8 @@ extern "C" {
 API_DECLARE(uniform_create);
 API_DECLARE(uniform_grab);
 API_DECLARE(uniform_ungrab);
+
+uniform_t *uniform_vcreate(const char *name, uniform_type_t type, va_list ap);
 
 #ifdef __cplusplus
 }
