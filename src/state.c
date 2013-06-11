@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <GL/gl.h>
 
@@ -300,11 +301,17 @@ EXPORT(state_set_colorbuf);
  * Set a uniform that is applied when this state is entered.
  **/
 void
-state_set_uniform(state_t *state, uniform_t *uniform)
+state_set_uniform(state_t *state, uniform_type_t type, ...)
 {
 	size_t i;
+	uniform_t *uniform;
+	va_list ap;
 
-	uniform_grab(uniform);
+	va_start(ap, type);
+
+	uniform = uniform_vcreate(type, ap);
+
+	va_end(ap);
 
 	for (i = 0; i < state->num_uniforms; i++) {
 		if (strcmp(state->uniforms[i]->name, uniform->name))

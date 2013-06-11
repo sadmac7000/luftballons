@@ -46,16 +46,24 @@ uniform_destructor(void *v)
 
 /**
  * Create a uniform object.
+ *
+ * type: The type of uniform to create.
+ *
+ * If type is LUFT_UNIFORM_OBJECT:
+ *   uniform: A uniform_t to clone
+ * Otherwise:
+ *   name: The name of the uniform to create.
+ *   value: The value to assign to the uniform.
  **/
 uniform_t *
-uniform_create(const char *name, uniform_type_t type, ...)
+uniform_create(uniform_type_t type, ...)
 {
 	uniform_t *ret;
 	va_list ap;
 
 	va_start(ap, type);
 	
-	ret = uniform_vcreate(name, type, ap);
+	ret = uniform_vcreate(type, ap);
 
 	va_end(ap);
 
@@ -68,10 +76,19 @@ EXPORT(uniform_create);
  * Create a uniform object. Use a va_list for the final indeterminite argument.
  **/
 uniform_t *
-uniform_vcreate(const char *name, uniform_type_t type, va_list ap)
+uniform_vcreate(uniform_type_t type, va_list ap)
 {
 	uniform_t *ret;
 	uniform_value_t value;
+	const char *name;
+
+	if (type == UNIFORM_OBJECT) {
+		ret = va_arg(ap, uniform_t *);
+		uniform_grab(ret);
+		return ret;
+	}
+
+	name = va_arg(ap, const char *);
 
 	switch (type) {
 	case UNIFORM_MAT4:
@@ -90,9 +107,6 @@ uniform_vcreate(const char *name, uniform_type_t type, va_list ap)
 		value.uint = va_arg(ap, GLuint);
 		break;
 	case UNIFORM_OBJECT:
-		ret = va_arg(ap, uniform_t *);
-		uniform_grab(ret);
-		return ret;
 	default:
 		errx(1, "Must specify a valid uniform type "
 		     "when creating a uniform");

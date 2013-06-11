@@ -84,7 +84,6 @@ void
 handle_reshape(void)
 {
 	float aspect = (win_sz[0] / (float)win_sz[1]);
-	luft_uniform_t *uniform;
 
 	if (! need_reshape)
 		return;
@@ -126,25 +125,17 @@ handle_reshape(void)
 	luft_texmap_ungrab(position_texmap);
 	luft_texmap_ungrab(diffuse_texmap);
 
-	uniform = luft_uniform_create("normal_buf", LUFT_UNIFORM_TEXMAP,
-				      normal_texmap);
-	luft_state_set_uniform(gather_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
+			       "normal_buf", normal_texmap);
 
-	uniform = luft_uniform_create("position_buf", LUFT_UNIFORM_TEXMAP,
-				      position_texmap);
-	luft_state_set_uniform(gather_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
+			       "position_buf", position_texmap);
 
-	uniform = luft_uniform_create("diffuse_buf", LUFT_UNIFORM_TEXMAP,
-				      diffuse_texmap);
-	luft_state_set_uniform(gather_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
+			       "diffuse_buf", diffuse_texmap);
 
-	uniform = luft_uniform_create("in_buf", LUFT_UNIFORM_TEXMAP,
-				      gather_texmap);
-	luft_state_set_uniform(output_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(output_state, LUFT_UNIFORM_TEXMAP,
+			       "in_buf", gather_texmap);
 }
 
 float
@@ -255,24 +246,30 @@ render(void)
 
 	for (i = 0; i < 4; i++) {
 		if (i) {
-			uniform = luft_uniform_create("last_depth",
-						      LUFT_UNIFORM_TEXMAP,
+			uniform = luft_uniform_create(LUFT_UNIFORM_TEXMAP,
+						      "last_depth",
 						      depth_texmap[active_depth]);
 
-			luft_state_set_uniform(plane_state, uniform);
-			luft_state_set_uniform(cube_state, uniform);
-			luft_state_set_uniform(canopy_state, uniform);
+			luft_state_set_uniform(plane_state,
+					       LUFT_UNIFORM_OBJECT, uniform);
+			luft_state_set_uniform(cube_state,
+					       LUFT_UNIFORM_OBJECT, uniform);
+			luft_state_set_uniform(canopy_state,
+					       LUFT_UNIFORM_OBJECT, uniform);
 
 			luft_uniform_ungrab(uniform);
 		}
 
-		uniform = luft_uniform_create("last_depth_valid",
-					      LUFT_UNIFORM_UINT,
+		uniform = luft_uniform_create(LUFT_UNIFORM_UINT,
+					      "last_depth_valid",
 					      i ? 1 : 0);
 
-		luft_state_set_uniform(plane_state, uniform);
-		luft_state_set_uniform(cube_state, uniform);
-		luft_state_set_uniform(canopy_state, uniform);
+		luft_state_set_uniform(plane_state,
+				       LUFT_UNIFORM_OBJECT, uniform);
+		luft_state_set_uniform(cube_state,
+				       LUFT_UNIFORM_OBJECT, uniform);
+		luft_state_set_uniform(canopy_state,
+				       LUFT_UNIFORM_OBJECT, uniform);
 
 		luft_uniform_ungrab(uniform);
 
@@ -419,7 +416,6 @@ main(int argc, char **argv)
 	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
-	luft_uniform_t *uniform;
 	luft_target_t *draw_target;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
@@ -484,10 +480,8 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(canopy_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(canopy_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
-				      canopy_map);
-	luft_state_set_uniform(canopy_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(canopy_state, LUFT_UNIFORM_TEXMAP,
+			       "diffusemap", canopy_map);
 	luft_texmap_ungrab(canopy_map);
 
 	luft_texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
@@ -496,10 +490,8 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(plane_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(plane_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	uniform = luft_uniform_create("diffusemap", LUFT_UNIFORM_TEXMAP,
-				      plane_map);
-	luft_state_set_uniform(plane_state, uniform);
-	luft_uniform_ungrab(uniform);
+	luft_state_set_uniform(plane_state, LUFT_UNIFORM_TEXMAP,
+			       "diffusemap", plane_map);
 	luft_texmap_ungrab(plane_map);
 
 	root = luft_object_create(NULL);

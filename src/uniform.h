@@ -60,7 +60,7 @@ API_DECLARE(uniform_create);
 API_DECLARE(uniform_grab);
 API_DECLARE(uniform_ungrab);
 
-uniform_t *uniform_vcreate(const char *name, uniform_type_t type, va_list ap);
+uniform_t *uniform_vcreate(uniform_type_t type, va_list ap);
 
 #ifdef __cplusplus
 }

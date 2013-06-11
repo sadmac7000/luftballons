@@ -83,11 +83,11 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	object_get_total_transform(object, trans);
 
 	matrix_multiply(cspace, trans, fl);
-	un = uniform_create("transform", UNIFORM_MAT4, fl);
+	un = uniform_create(UNIFORM_MAT4, "transform", fl);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	un = uniform_create("clip_transform", UNIFORM_MAT4, clip);
+	un = uniform_create(UNIFORM_MAT4, "clip_transform", clip);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
@@ -98,7 +98,7 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 
 	memcpy(fl, object->light_color, 3 * sizeof(float));
 	fl[3] = 1;
-	un = uniform_create("light_color", UNIFORM_VEC4, fl);
+	un = uniform_create(UNIFORM_VEC4, "light_color", fl);
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 

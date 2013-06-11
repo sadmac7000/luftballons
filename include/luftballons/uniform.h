@@ -37,8 +37,7 @@ typedef enum {
 extern "C" {
 #endif
 
-luft_uniform_t *luft_uniform_create(const char *name,
-				    luft_uniform_type_t type, ...);
+luft_uniform_t *luft_uniform_create(luft_uniform_type_t type, ...);
 void luft_uniform_grab(luft_uniform_t *uniform);
 void luft_uniform_ungrab(luft_uniform_t *uniform);
 
