@@ -7,13 +7,13 @@ m4_pattern_allow([AM_PROG_AR])
 AM_PROG_AR
 
 ## Check for COLLADA ##
-AC_ARG_WITH([collada], [
-	AS_HELP_STRING([--with-collada],
+AC_ARG_WITH([collada], [AS_HELP_STRING(
+	     [--with-collada],
 	 [Support the COLLADA 1.4 model file format @<:@default=check@:>@])
 ], [], [with_collada=check])
 
 AS_IF([test "x$with_collada" != xno], [
-	PKG_CHECK_MODULES([collada], [collada14dom], [
+	PKG_CHECK_MODULES([collada_dom], [collada14dom], [
 		AC_DEFINE([HAVE_COLLADA], [1], [COLLADA support enabled])
 		with_collada=yes
 	], [

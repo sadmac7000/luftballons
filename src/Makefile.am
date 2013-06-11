@@ -36,7 +36,7 @@ if HAVE_COLLADA
 libluftdraw_la_SOURCES += dae_load.cc
 endif
 
-libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(collada_CFLAGS)
-libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(collada_CFLAGS)
+libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(collada_dom_CFLAGS)
+libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(collada_dom_CFLAGS)
 libluftdraw_la_LIBADD = -lglut -lGL -lm -lstdc++ \
 	  -lboost_system -lpng -ltiff $(collada_LIBS)
