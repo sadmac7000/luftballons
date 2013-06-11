@@ -70,7 +70,7 @@ EXPORT(uniform_create);
 uniform_t *
 uniform_vcreate(const char *name, uniform_type_t type, va_list ap)
 {
-	uniform_t *ret = xmalloc(sizeof(uniform_t));
+	uniform_t *ret;
 	uniform_value_t value;
 
 	switch (type) {
@@ -89,10 +89,16 @@ uniform_vcreate(const char *name, uniform_type_t type, va_list ap)
 	case UNIFORM_UINT:
 		value.uint = va_arg(ap, GLuint);
 		break;
+	case UNIFORM_OBJECT:
+		ret = va_arg(ap, uniform_t *);
+		uniform_grab(ret);
+		return ret;
 	default:
 		errx(1, "Must specify a valid uniform type "
 		     "when creating a uniform");
 	}
+
+	ret = xmalloc(sizeof(uniform_t));
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, uniform_destructor, ret);
