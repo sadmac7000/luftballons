@@ -6,6 +6,9 @@ AC_PROG_CXX
 m4_pattern_allow([AM_PROG_AR])
 AM_PROG_AR
 
+## Check for OpenGL ##
+PKG_CHECK_MODULES([OpenGL], [gl])
+
 ## Check for COLLADA ##
 AC_ARG_WITH([collada], [AS_HELP_STRING(
 	     [--with-collada],
