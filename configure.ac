@@ -1,4 +1,4 @@
-AC_INIT([luftballons], [0.0], [casey.dahlin@gmail.com])
+AC_INIT([luftballons], [0.0], [devel@lists.luftengine.org])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign parallel-tests])
 AM_SILENT_RULES([yes])
 AC_PROG_CC
