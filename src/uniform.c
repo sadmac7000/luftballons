@@ -49,7 +49,7 @@ uniform_destructor(void *v)
  *
  * type: The type of uniform to create.
  *
- * If type is LUFT_UNIFORM_OBJECT:
+ * If type is LUFT_UNIFORM_CLONE:
  *   uniform: A uniform_t to clone
  * Otherwise:
  *   name: The name of the uniform to create.
@@ -82,7 +82,7 @@ uniform_vcreate(uniform_type_t type, va_list ap)
 	uniform_value_t value;
 	const char *name;
 
-	if (type == UNIFORM_OBJECT) {
+	if (type == UNIFORM_CLONE) {
 		ret = va_arg(ap, uniform_t *);
 		uniform_grab(ret);
 		return ret;
@@ -106,7 +106,6 @@ uniform_vcreate(uniform_type_t type, va_list ap)
 	case UNIFORM_UINT:
 		value.uint = va_arg(ap, GLuint);
 		break;
-	case UNIFORM_OBJECT:
 	default:
 		errx(1, "Must specify a valid uniform type "
 		     "when creating a uniform");

@@ -26,7 +26,7 @@ typedef struct uniform luft_uniform_t;
  * Type of a shader uniform.
  **/
 typedef enum {
-	LUFT_UNIFORM_OBJECT,
+	LUFT_UNIFORM_CLONE,
 	LUFT_UNIFORM_MAT4,
 	LUFT_UNIFORM_VEC4,
 	LUFT_UNIFORM_TEXMAP,

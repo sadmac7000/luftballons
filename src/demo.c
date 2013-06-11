@@ -251,11 +251,11 @@ render(void)
 						      depth_texmap[active_depth]);
 
 			luft_state_set_uniform(plane_state,
-					       LUFT_UNIFORM_OBJECT, uniform);
+					       LUFT_UNIFORM_CLONE, uniform);
 			luft_state_set_uniform(cube_state,
-					       LUFT_UNIFORM_OBJECT, uniform);
+					       LUFT_UNIFORM_CLONE, uniform);
 			luft_state_set_uniform(canopy_state,
-					       LUFT_UNIFORM_OBJECT, uniform);
+					       LUFT_UNIFORM_CLONE, uniform);
 
 			luft_uniform_ungrab(uniform);
 		}
@@ -265,11 +265,11 @@ render(void)
 					      i ? 1 : 0);
 
 		luft_state_set_uniform(plane_state,
-				       LUFT_UNIFORM_OBJECT, uniform);
+				       LUFT_UNIFORM_CLONE, uniform);
 		luft_state_set_uniform(cube_state,
-				       LUFT_UNIFORM_OBJECT, uniform);
+				       LUFT_UNIFORM_CLONE, uniform);
 		luft_state_set_uniform(canopy_state,
-				       LUFT_UNIFORM_OBJECT, uniform);
+				       LUFT_UNIFORM_CLONE, uniform);
 
 		luft_uniform_ungrab(uniform);
 
