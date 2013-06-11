@@ -1,6 +1,5 @@
 nobase_include_HEADERS = \
 	luftballons/colorbuf.h	\
-	luftballons/dae_load.h	\
 	luftballons/matrix.h	\
 	luftballons/object.h	\
 	luftballons/quat.h	\
@@ -9,3 +8,7 @@ nobase_include_HEADERS = \
 	luftballons/target.h	\
 	luftballons/texmap.h	\
 	luftballons/uniform.h
+
+if HAVE_COLLADA
+nobase_include_HEADERS += luftballons/dae_load.h
+endif

@@ -1,16 +1,15 @@
-GENERIC_CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES \
-	 -isystem/usr/include/collada-dom \
-	 -isystem/usr/include/collada-dom/1.4 -fvisibility=hidden \
-	 -I../include -fvisibility=hidden
+GENERIC_CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -I../include
 AM_CFLAGS = $(GENERIC_CFLAGS) --std=gnu99
 AM_CXXFLAGS = $(GENERIC_CFLAGS) -fpermissive
 
 lib_LTLIBRARIES = libluftdraw.la
 
+if HAVE_COLLADA
 noinst_PROGRAMS = demo
 
 demo_SOURCES = demo.c
 demo_LDADD = libluftdraw.la
+endif
 
 libluftdraw_la_SOURCES = \
 	shader.c	\
@@ -20,7 +19,6 @@ libluftdraw_la_SOURCES = \
 	interval.c	\
 	matrix.c	\
 	object.c	\
-	dae_load.cc	\
 	vbuf_fmt.c	\
 	bufpool.c	\
 	draw_queue.c	\
@@ -33,5 +31,12 @@ libluftdraw_la_SOURCES = \
 	colorbuf.c	\
 	target.c	\
 	state.c
+
+if HAVE_COLLADA
+libluftdraw_la_SOURCES += dae_load.cc
+endif
+
+libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(collada_CFLAGS)
+libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(collada_CFLAGS)
 libluftdraw_la_LIBADD = -lglut -lGL -lm -lstdc++ \
-	  -lcollada14dom -lboost_system -lpng -ltiff
+	  -lboost_system -lpng -ltiff $(collada_LIBS)

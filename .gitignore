@@ -23,6 +23,8 @@ configure
 depcomp
 include/Makefile.in
 include/config.h.in
+include/config.h
+include/config.h.in~
 install-sh
 ltmain.sh
 m4/
