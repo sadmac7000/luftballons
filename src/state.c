@@ -366,25 +366,29 @@ state_pop(state_t *state)
 }
 
 /**
- * Crash if this state is the current state.
- **/
-static void
-state_assert_not_current(state_t *state)
-{
-	if (state == current_state)
-		errx(1, "Attempt to modify active state");
-}
-
-/**
  * Set the given flags in the given state.
  **/
 void
 state_set_flags(state_t *state, uint64_t flags)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	state->flags |= flags;
 	state->care_about |= flags;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_set_flags);
 
@@ -394,10 +398,24 @@ EXPORT(state_set_flags);
 void
 state_clear_flags(state_t *state, uint64_t flags)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	state->flags &= ~flags;
 	state->care_about |= flags;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_clear_flags);
 
@@ -407,9 +425,23 @@ EXPORT(state_clear_flags);
 void
 state_ignore_flags(state_t *state, uint64_t flags)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	state->care_about &= ~flags;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_ignore_flags);
 
@@ -419,13 +451,27 @@ EXPORT(state_ignore_flags);
 void
 state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	if (state->colorbuf)
 		colorbuf_ungrab(state->colorbuf);
 
 	colorbuf_grab(colorbuf);
 	state->colorbuf = colorbuf;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_set_colorbuf);
 
@@ -493,7 +539,16 @@ state_material_active(int mat_id)
 void
 state_set_object(state_t *state, object_t *object)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	if (state->root)
 		object_ungrab(state->root);
@@ -502,6 +557,11 @@ state_set_object(state_t *state, object_t *object)
 		object_grab(object);
 
 	state->root = object;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_set_object);
 
@@ -511,8 +571,22 @@ EXPORT(state_set_object);
 void
 state_set_blend(state_t *state, state_blend_mode_t mode)
 {
-	state_assert_not_current(state);
+	int re_enter = 0;
+	state_t *tmp;
+
+	if (state == current_state) {
+		re_enter = 1;
+		state_grab(state);
+		tmp = state_clone(state);
+		state_enter(tmp);
+		state_ungrab(tmp);
+	}
 
 	state->blend_mode = mode;
+
+	if (re_enter) {
+		state_enter(state);
+		state_ungrab(state);
+	}
 }
 EXPORT(state_set_blend);
