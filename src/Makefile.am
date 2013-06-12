@@ -52,7 +52,6 @@ LIB_CFLAGS = \
 libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(LIB_CFLAGS)
 libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIB_CFLAGS)
 libluftdraw_la_LIBADD = -lm	\
-	-lboost_system		\
 	$(glut_LIBS)		\
 	$(libtiff_LIBS)		\
 	$(collada_dom_LIBS)	\
