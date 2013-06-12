@@ -4,7 +4,7 @@ AM_CXXFLAGS = $(GENERIC_CFLAGS) -fpermissive
 
 lib_LTLIBRARIES = libluftdraw.la
 
-if HAVE_COLLADA
+if BUILD_DEMO
 noinst_PROGRAMS = demo
 
 demo_SOURCES = demo.c

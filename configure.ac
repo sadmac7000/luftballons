@@ -47,6 +47,9 @@ AS_IF([test "x$with_png" != xno], [
 
 AM_CONDITIONAL([HAVE_PNG], [ test "x$with_png" = xyes ])
 
+## Should we build the demo ##
+AM_CONDITIONAL([BUILD_DEMO], [ test "x$with_collada" = xyes ])
+
 LT_INIT
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([include/config.h])
