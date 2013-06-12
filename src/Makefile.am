@@ -42,4 +42,4 @@ endif
 libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(collada_dom_CFLAGS) $(libpng_CFLAGS)
 libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(collada_dom_CFLAGS) $(libpng_CFLAGS)
 libluftdraw_la_LIBADD = -lglut -lGL -lm -lstdc++ \
-	  -lboost_system -ltiff $(collada_LIBS) $(libpng_LIBS)
+	  -lboost_system -ltiff $(collada_dom_LIBS) $(libpng_LIBS)
