@@ -28,6 +28,25 @@ AS_IF([test "x$with_collada" != xno], [
 
 AM_CONDITIONAL([HAVE_COLLADA], [ test "x$with_collada" = xyes ])
 
+## Check for libpng ##
+AC_ARG_WITH([png], [AS_HELP_STRING(
+	     [--with-png],
+	 [Support for importing PNG textures])
+], [], [with_png=check])
+
+AS_IF([test "x$with_png" != xno], [
+	PKG_CHECK_MODULES([libpng], [libpng], [
+		AC_DEFINE([HAVE_PNG], [1], [PNG support enabled])
+		with_png=yes
+	], [
+		if test "x$with_png" != xcheck; then
+			AC_MSG_FAILURE([--with-png requires libpng])
+		fi
+	])
+])
+
+AM_CONDITIONAL([HAVE_PNG], [ test "x$with_png" = xyes ])
+
 LT_INIT
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([include/config.h])

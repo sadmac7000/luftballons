@@ -26,12 +26,6 @@
 #include "texmap.h"
 #include "util.h"
 
-/* Prototypes for image format handlers */
-extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
-				 const char *path);
-extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
-				  const char *path);
-
 /* Texture unit assignment */
 texmap_t **units = NULL;
 GLuint *generation = NULL;

@@ -21,6 +21,8 @@
 
 #include <GL/gl.h>
 
+#include <config.h>
+
 #include "refcount.h"
 #include "util.h"
 
@@ -83,6 +85,26 @@ API_DECLARE(texmap_ungrab);
 
 size_t texmap_get_texture_unit(texmap_t *texmap);
 void texmap_end_unit_generation(void);
+
+/* Prototypes for image format handlers */
+#ifdef HAVE_PNG
+extern int texmap_load_image_png(texmap_t *map, GLint level, int fd,
+				 const char *path);
+#else
+static inline int
+texmap_load_image_png(texmap_t *map, GLint level, int fd, const char *path)
+{
+	(void)map;
+	(void)level;
+	(void)fd;
+	(void)path;
+
+	return 0;
+}
+#endif
+
+extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
+				  const char *path);
 
 #ifdef __cplusplus
 }
