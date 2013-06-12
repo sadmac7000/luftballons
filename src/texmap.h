@@ -103,8 +103,21 @@ texmap_load_image_png(texmap_t *map, GLint level, int fd, const char *path)
 }
 #endif
 
+#ifdef HAVE_TIFF
 extern int texmap_load_image_tiff(texmap_t *map, GLint level, int fd,
 				  const char *path);
+#else
+static inline int
+texmap_load_image_tiff(texmap_t *map, GLint level, int fd, const char *path)
+{
+	(void)map;
+	(void)level;
+	(void)fd;
+	(void)path;
+
+	return 0;
+}
+#endif
 
 #ifdef __cplusplus
 }

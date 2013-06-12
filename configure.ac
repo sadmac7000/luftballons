@@ -47,8 +47,30 @@ AS_IF([test "x$with_png" != xno], [
 
 AM_CONDITIONAL([HAVE_PNG], [ test "x$with_png" = xyes ])
 
+## Check for libtiff ##
+AC_ARG_WITH([tiff], [AS_HELP_STRING(
+	     [--with-tiff],
+	 [Support for importing TIFF textures])
+], [], [with_tiff=check])
+
+AS_IF([test "x$with_tiff" != xno], [
+	PKG_CHECK_MODULES([libtiff], [libtiff-4], [
+		AC_DEFINE([HAVE_TIFF], [1], [TIFF support enabled])
+		with_tiff=yes
+	], [
+		if test "x$with_tiff" != xcheck; then
+			AC_MSG_FAILURE([--with-tiff requires libtiff])
+		fi
+	])
+])
+
+AM_CONDITIONAL([HAVE_TIFF], [ test "x$with_tiff" = xyes ])
+
 ## Should we build the demo ##
-AM_CONDITIONAL([BUILD_DEMO], [ test "x$with_collada" = xyes ])
+AM_CONDITIONAL([BUILD_DEMO], [
+	test "x$with_collada" = xyes -a	\
+		"x$with_tiff" = xyes	\
+])
 
 LT_INIT
 AC_CONFIG_MACRO_DIR([m4])

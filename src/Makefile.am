@@ -24,7 +24,6 @@ libluftdraw_la_SOURCES = \
 	draw_queue.c	\
 	uniform.c	\
 	texmap.c	\
-	texmap_tiff.c	\
 	quat.c		\
 	refcount.c	\
 	colorbuf.c	\
@@ -39,7 +38,19 @@ if HAVE_PNG
 libluftdraw_la_SOURCES += texmap_png.c
 endif
 
-libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(collada_dom_CFLAGS) $(libpng_CFLAGS)
-libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(collada_dom_CFLAGS) $(libpng_CFLAGS)
+if HAVE_TIFF
+libluftdraw_la_SOURCES += texmap_tiff.c
+endif
+
+LIB_CFLAGS = \
+	$(collada_dom_CFLAGS)	\
+	$(libpng_CFLAGS)	\
+	$(libtiff_CFLAGS)
+
+libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(LIB_CFLAGS)
+libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIB_CFLAGS)
 libluftdraw_la_LIBADD = -lglut -lGL -lm -lstdc++ \
-	  -lboost_system -ltiff $(collada_dom_LIBS) $(libpng_LIBS)
+	  -lboost_system	\
+	  $(libtiff_LIBS)	\
+	  $(collada_dom_LIBS)	\
+	  $(libpng_LIBS)
