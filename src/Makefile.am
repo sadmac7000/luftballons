@@ -46,12 +46,14 @@ LIB_CFLAGS = \
 	$(collada_dom_CFLAGS)	\
 	$(libpng_CFLAGS)	\
 	$(OpenGL_CFLAGS)	\
+	$(glut_CFLAGS)		\
 	$(libtiff_CFLAGS)
 
 libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(LIB_CFLAGS)
 libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIB_CFLAGS)
-libluftdraw_la_LIBADD = -lglut -lm -lstdc++ \
+libluftdraw_la_LIBADD = -lm	\
 	-lboost_system		\
+	$(glut_LIBS)		\
 	$(libtiff_LIBS)		\
 	$(collada_dom_LIBS)	\
 	$(OpenGL_LIBS)		\

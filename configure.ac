@@ -9,6 +9,32 @@ AM_PROG_AR
 ## Check for OpenGL ##
 PKG_CHECK_MODULES([OpenGL], [gl])
 
+## Check for GLUT ##
+AC_ARG_WITH([glut], [AS_HELP_STRING(
+	     [--with-glut],
+	 [Allow usage of GLUT for demo apps])
+], [], [with_glut=check])
+
+glut_LIBS=
+glut_CFLAGS=
+
+AS_IF([test "x$with_glut" != xno], [
+	AC_CHECK_LIB([glut], [glutInit], [
+		AC_DEFINE([HAVE_GLUT], [1], [GLUT support enabled])
+		with_glut=yes
+		glut_LIBS=-lglut
+	], [
+		if test "x$with_glut" != xcheck; then
+			AC_MSG_FAILURE([--with-glut requires GLUT-DOM])
+		fi
+	])
+])
+
+AC_ARG_VAR([glut_CFLAGS], [C compiler flags for GLUT])
+AC_ARG_VAR([glut_LIBS], [linker flags for GLUT])
+
+AM_CONDITIONAL([HAVE_GLUT], [ test "x$with_glut" = xyes ])
+
 ## Check for COLLADA ##
 AC_ARG_WITH([collada], [AS_HELP_STRING(
 	     [--with-collada],
@@ -69,6 +95,7 @@ AM_CONDITIONAL([HAVE_TIFF], [ test "x$with_tiff" = xyes ])
 ## Should we build the demo ##
 AM_CONDITIONAL([BUILD_DEMO], [
 	test "x$with_collada" = xyes -a	\
+		"x$with_glut" = xyes -a	\
 		"x$with_tiff" = xyes	\
 ])
 
