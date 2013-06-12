@@ -7,6 +7,9 @@
 * Formal articulation of feedback loops for targets.
 * Stackable (push/pop) active state objects?
 * Make colorbufs use named framebuffers, matching to out variables in shaders.
+* Find some way to properly Autoconf-ify our boost dependency. Looks like Boost
+  is so screwed up they've been unable to figure out how to make pkg-config
+  work with it.
 
 ## Harder ##
 * Materials system. Basically this is a way to extend pipelines in a templated
