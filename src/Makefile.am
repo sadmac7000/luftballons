@@ -45,12 +45,14 @@ endif
 LIB_CFLAGS = \
 	$(collada_dom_CFLAGS)	\
 	$(libpng_CFLAGS)	\
+	$(OpenGL_CFLAGS)	\
 	$(libtiff_CFLAGS)
 
 libluftdraw_la_CFLAGS = $(AM_CFLAGS) $(LIB_CFLAGS)
 libluftdraw_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIB_CFLAGS)
-libluftdraw_la_LIBADD = -lglut -lGL -lm -lstdc++ \
-	  -lboost_system	\
-	  $(libtiff_LIBS)	\
-	  $(collada_dom_LIBS)	\
-	  $(libpng_LIBS)
+libluftdraw_la_LIBADD = -lglut -lm -lstdc++ \
+	-lboost_system		\
+	$(libtiff_LIBS)		\
+	$(collada_dom_LIBS)	\
+	$(OpenGL_LIBS)		\
+	$(libpng_LIBS)
