@@ -43,7 +43,7 @@ typedef luft_state_blend_mode_t state_blend_mode_t;
  * flags: Flags indicating properties of this draw state.
  * care_about: Which flags we actually care about the state of.
  * colorbuf: Color buffer to render to.
- * num_uniforms, uniforms: Name-sorted vector of uniforms to install.
+ * num_uniforms, uniforms: Vector of uniforms to install.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
  * root: Root of objects we will draw in this state.
@@ -82,7 +82,8 @@ API_DECLARE(state_set_object);
 API_DECLARE(state_set_blend);
 
 int state_material_active(int mat_id);
-void state_enter(state_t *state);
+void state_push(state_t *state);
+void state_pop(state_t *state);
 
 #ifdef __cplusplus
 }

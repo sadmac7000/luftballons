@@ -30,6 +30,12 @@
 state_t *current_state = NULL;
 
 /**
+ * The current state stack.
+ **/
+state_t **state_stack;
+size_t state_stack_size = 0;
+
+/**
  * Destroy a state object. Don't defer until the state is no longer active.
  **/
 static void
@@ -194,7 +200,7 @@ state_apply_blend_mode(state_t *state, state_blend_mode_t old)
 /**
  * Enter the given state.
  **/
-void
+static void
 state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
@@ -231,6 +237,132 @@ state_enter(state_t *state)
 		state_ungrab(current_state);
 
 	current_state = state;
+}
+
+/**
+ * Set all values that we don't care about in the given state to the values
+ * given by other, where other does care about those values.
+ **/
+static void
+state_underlay(state_t *state, state_t *other)
+{
+	uint64_t set;
+	uint64_t clear;
+	size_t i;
+	size_t j;
+
+	set = other->flags;
+	clear = ~other->flags;
+
+	set &= other->care_about;
+	clear &= other->care_about;
+
+	set &= ~state->care_about;
+	clear &= ~state->care_about;
+
+	state->care_about |= set | clear;
+	state->flags |= set;
+	state->flags &= ~clear;
+
+	if (state->mat_id == -1)
+		state->mat_id = other->mat_id;
+
+	if (!state->colorbuf && other->colorbuf) {
+		state->colorbuf = other->colorbuf;
+		colorbuf_grab(other->colorbuf);
+	}
+
+	if (!state->shader && other->shader) {
+		state->shader = other->shader;
+		shader_grab(other->shader);
+	}
+
+	if (!state->root && other->root) {
+		state->root = other->root;
+		object_grab(other->root);
+	}
+
+	if (state->blend_mode == STATE_BLEND_DONTCARE)
+		state->blend_mode = other->blend_mode;
+
+	for (i = 0; i < other->num_uniforms; i++) {
+		for (j = 0; j < state->num_uniforms; j++)
+			if (! strcmp(state->uniforms[j]->name,
+				     other->uniforms[i]->name))
+				break;
+
+		if (j == state->num_uniforms)
+			state_set_uniform(state, UNIFORM_CLONE,
+					  other->uniforms[i]);
+	}
+}
+
+/**
+ * Compile the state stack into a single state and enter it.
+ **/
+static void
+state_stack_aggregate(void)
+{
+	state_t *state;
+	size_t i;
+
+	if (! state_stack_size)
+		return;
+
+	if (state_stack_size == 1) {
+		state_enter(state_stack[0]);
+		return;
+	}
+
+	state = state_create(NULL);
+
+	for (i = state_stack_size; i; i--)
+		state_underlay(state, state_stack[i - 1]);
+
+	state_enter(state);
+	state_ungrab(state);
+}
+
+/**
+ * Push a state on to the stack.
+ **/
+void
+state_push(state_t *state)
+{
+	state_stack = vec_expand(state_stack, state_stack_size);
+
+	state_stack[state_stack_size++] = state;
+	state_grab(state);
+
+	state_stack_aggregate();
+}
+
+/**
+ * Pop a state from the stack.
+ *
+ * state: If the state popped isn't equal to this value, and this value isn't
+ *        NULL, raise an error
+ **/
+void
+state_pop(state_t *state)
+{
+	state_t *popped;
+	if (! state_stack_size) {
+		if (state)
+			errx(1, "Expected to pop a state when"
+			     " there was none pushed");
+
+		return;
+	}
+
+	popped = state_stack[--state_stack_size];
+
+	if (state && popped != state)
+		errx(1, "Unexpected state popped");
+
+	state_ungrab(popped);
+
+	state_stack_aggregate();
 }
 
 /**

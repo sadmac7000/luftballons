@@ -28,18 +28,25 @@
  * A rendering goal.
  *
  * deps, num_deps: Dependency list for a target.
+ * seq_deps, num_seq_deps: Sequential dependency list for a target.
  * states, num_states: States we need to pass through to hit this target.
  * camera: Camera to draw from.
+ * repeat: Times to repeat this target's deps.
  * refcount: Reference counter.
  **/
 typedef struct target {
 	struct target **deps;
 	size_t num_deps;
 
+	struct target **seq_deps;
+	size_t num_seq_deps;
+
 	state_t **states;
 	size_t num_states;
 
 	object_t *camera;
+
+	size_t repeat;
 
 	refcounter_t refcount;
 } target_t;

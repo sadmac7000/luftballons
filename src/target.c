@@ -43,14 +43,26 @@ target_destructor(void *target_)
 
 /**
  * Create a new target.
+ *
+ * Each target has a repeat count. When the count is zero, the target simply
+ * ensures its dependencies have been met before executing drawing in its
+ * states. When the count is one, the target ensures its dependencies are hit
+ * sequentially, and dependencies are resolved in a separate space from the
+ * rest of the draw task. 2 or more is the same as 1, but the target will be
+ * hit repeatedly.
+ *
+ * camera: The camera to use while hitting this target.
+ * repeat: Repeat count for this target.
  **/
 target_t *
-target_create(object_t *camera)
+target_create(object_t *camera, size_t repeat)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
 
 	ret->camera = camera;
 	object_grab(camera);
+
+	ret->repeat = repeat;
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, target_destructor, ret);
@@ -85,9 +97,16 @@ EXPORT(target_ungrab);
 void
 target_add_dep(target_t *target, target_t *dep)
 {
-	target->deps = vec_expand(target->deps, target->num_deps);
-	target->deps[target->num_deps++] = dep;
 	target_grab(dep);
+
+	if (! dep->repeat) {
+		target->deps = vec_expand(target->deps, target->num_deps);
+		target->deps[target->num_deps++] = dep;
+		return;
+	}
+
+	target->seq_deps = vec_expand(target->seq_deps, target->num_seq_deps);
+	target->seq_deps[target->num_seq_deps++] = dep;
 }
 EXPORT(target_add_dep);
 
@@ -116,23 +135,29 @@ target_in_list(target_t *target, target_t **list, size_t len)
 }
 
 /**
- * Hit all targets in a list. Assume their dependencies are satisfied.
+ * Hit all targets in a list. Assume their non-sequential
+ * dependencies are satisfied.
  **/
 static void
 target_hit_all_nodep(target_t **targets, size_t num_targets)
 {
 	size_t i;
 	size_t j;
+	size_t k;
 
 	for (i = 0; i < num_targets; i++) {
+		for (k = 0; k < targets[i]->num_seq_deps; k++)
+			target_hit(targets[i]->seq_deps[k]);
+
 		for (j = 0; j < targets[i]->num_states; j++) {
 			if (! targets[i]->states[j]->root)
 				return;
 
-			state_enter(targets[i]->states[j]);
+			state_push(targets[i]->states[j]);
 			draw_queue_draw(draw_queue,
 					targets[i]->states[j]->root,
 					targets[i]->camera);
+			state_pop(targets[i]->states[j]);
 		}
 	}
 }
@@ -178,10 +203,10 @@ target_drain_queue(target_t **queue, size_t queue_len)
 }
 
 /**
- * Hit this target.
+ * Hit this target exactly once.
  **/
-void
-target_hit(target_t *target)
+static void
+target_hit_once(target_t *target)
 {
 	target_t **queue = NULL;
 	size_t queue_len = 1;
@@ -213,5 +238,21 @@ target_hit(target_t *target)
 
 	target_drain_queue(queue, queue_len);
 	free(queue);
+}
+
+/**
+ * Hit this target
+ **/
+void
+target_hit(target_t *target)
+{
+	size_t count = target->repeat;
+	size_t i;
+
+	if (! count)
+		count++;
+
+	for (i = 0; i < count; i++)
+		target_hit_once(target);
 }
 EXPORT(target_hit);
