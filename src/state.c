@@ -366,29 +366,51 @@ state_pop(state_t *state)
 }
 
 /**
+ * Protect the state in case it is the current state and we need to modify it.
+ **/
+static void
+state_protect(state_t *state, int *needs_it)
+{
+	state_t *tmp;
+
+	*needs_it = (state == current_state);
+
+	if (! *needs_it)
+		return;
+
+	state_grab(state);
+	tmp = state_clone(state);
+	state_enter(tmp);
+	state_ungrab(tmp);
+}
+
+/**
+ * Undo a state_protect call.
+ **/
+static void
+state_unprotect(state_t *state, int needed_it)
+{
+	if (! needed_it)
+		return;
+
+	state_enter(state);
+	state_ungrab(state);
+}
+
+/**
  * Set the given flags in the given state.
  **/
 void
 state_set_flags(state_t *state, uint64_t flags)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	state->flags |= flags;
 	state->care_about |= flags;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_set_flags);
 
@@ -398,24 +420,14 @@ EXPORT(state_set_flags);
 void
 state_clear_flags(state_t *state, uint64_t flags)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	state->flags &= ~flags;
 	state->care_about |= flags;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_clear_flags);
 
@@ -425,23 +437,13 @@ EXPORT(state_clear_flags);
 void
 state_ignore_flags(state_t *state, uint64_t flags)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	state->care_about &= ~flags;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_ignore_flags);
 
@@ -451,16 +453,9 @@ EXPORT(state_ignore_flags);
 void
 state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	if (state->colorbuf)
 		colorbuf_ungrab(state->colorbuf);
@@ -468,10 +463,7 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 	colorbuf_grab(colorbuf);
 	state->colorbuf = colorbuf;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_set_colorbuf);
 
@@ -539,16 +531,9 @@ state_material_active(int mat_id)
 void
 state_set_object(state_t *state, object_t *object)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	if (state->root)
 		object_ungrab(state->root);
@@ -558,10 +543,7 @@ state_set_object(state_t *state, object_t *object)
 
 	state->root = object;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_set_object);
 
@@ -571,22 +553,12 @@ EXPORT(state_set_object);
 void
 state_set_blend(state_t *state, state_blend_mode_t mode)
 {
-	int re_enter = 0;
-	state_t *tmp;
+	int needed_it;
 
-	if (state == current_state) {
-		re_enter = 1;
-		state_grab(state);
-		tmp = state_clone(state);
-		state_enter(tmp);
-		state_ungrab(tmp);
-	}
+	state_protect(state, &needed_it);
 
 	state->blend_mode = mode;
 
-	if (re_enter) {
-		state_enter(state);
-		state_ungrab(state);
-	}
+	state_unprotect(state, needed_it);
 }
 EXPORT(state_set_blend);
