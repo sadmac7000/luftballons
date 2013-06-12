@@ -2,6 +2,9 @@ GENERIC_CFLAGS = -g -Wall -Wextra -DGL_GLEXT_PROTOTYPES -I../include
 AM_CFLAGS = $(GENERIC_CFLAGS) --std=gnu99
 AM_CXXFLAGS = $(GENERIC_CFLAGS) -fpermissive
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = luftdraw.pc
+
 lib_LTLIBRARIES = libluftdraw.la
 
 if BUILD_DEMO

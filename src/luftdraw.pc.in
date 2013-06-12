@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: LuftDraw
+Description: A pipeline-based 3D drawing library
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lluftdraw
+Cflags: -I${includedir}/luftballons
