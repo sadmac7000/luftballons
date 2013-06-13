@@ -212,10 +212,12 @@ state_enter(state_t *state)
 
 	state_grab(state);
 
-	for (i = 0; i < state->num_uniforms; i++)
-		shader_set_uniform(state->shader, state->uniforms[i]);
+	if (state->shader) {
+		shader_activate(state->shader);
 
-	shader_activate(state->shader);
+		for (i = 0; i < state->num_uniforms; i++)
+			shader_set_uniform(state->shader, state->uniforms[i]);
+	}
 
 	if (current_state) {
 		change_flags = current_state->flags ^ state->flags;
