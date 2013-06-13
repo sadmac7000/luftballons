@@ -34,6 +34,8 @@ target_destructor(void *target_)
 		state_ungrab(target->states[i]);
 	for (i = 0; i < target->num_deps; i++)
 		target_ungrab(target->deps[i]);
+	for (i = 0; i < target->num_seq_deps; i++)
+		target_ungrab(target->seq_deps[i]);
 
 	free(target->states);
 	free(target->deps);
