@@ -37,6 +37,9 @@ target_destructor(void *target_)
 	for (i = 0; i < target->num_seq_deps; i++)
 		target_ungrab(target->seq_deps[i]);
 
+	if (target->base_state)
+		state_ungrab(target->base_state);
+
 	free(target->states);
 	free(target->deps);
 	object_ungrab(target->camera);
@@ -54,15 +57,21 @@ target_destructor(void *target_)
  * hit repeatedly.
  *
  * camera: The camera to use while hitting this target.
+ * base: The base state for this target.
  * repeat: Repeat count for this target.
  **/
 target_t *
-target_create(object_t *camera, size_t repeat)
+target_create(object_t *camera, state_t *base, size_t repeat)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
 
 	ret->camera = camera;
 	object_grab(camera);
+
+	ret->base_state = base;
+
+	if (base)
+		state_grab(base);
 
 	ret->repeat = repeat;
 
@@ -151,6 +160,9 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 		for (k = 0; k < targets[i]->num_seq_deps; k++)
 			target_hit(targets[i]->seq_deps[k]);
 
+		if (targets[i]->base_state)
+			state_push(targets[i]->base_state);
+
 		for (j = 0; j < targets[i]->num_states; j++) {
 			if (! targets[i]->states[j]->root)
 				return;
@@ -161,6 +173,9 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 					targets[i]->camera);
 			state_pop(targets[i]->states[j]);
 		}
+
+		if (targets[i]->base_state)
+			state_pop(targets[i]->base_state);
 	}
 }
 

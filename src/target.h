@@ -29,6 +29,7 @@
  *
  * deps, num_deps: Dependency list for a target.
  * seq_deps, num_seq_deps: Sequential dependency list for a target.
+ * base_state: State to push before the individual states.
  * states, num_states: States we need to pass through to hit this target.
  * camera: Camera to draw from.
  * repeat: Times to repeat this target's deps.
@@ -40,6 +41,8 @@ typedef struct target {
 
 	struct target **seq_deps;
 	size_t num_seq_deps;
+
+	state_t *base_state;
 
 	state_t **states;
 	size_t num_states;
