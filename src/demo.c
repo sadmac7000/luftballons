@@ -61,6 +61,7 @@ luft_state_t *gather_state;
 luft_state_t *cube_state;
 luft_state_t *plane_state;
 luft_state_t *canopy_state;
+luft_state_t *draw_base_state;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -228,7 +229,6 @@ render(void)
 	float angle;
 	luft_quat_t cube_rot;
 	luft_quat_t center_rot;
-	luft_uniform_t *uniform;
 	int i;
 
 	handle_reshape();
@@ -245,33 +245,14 @@ render(void)
 	luft_colorbuf_clear(NULL);
 
 	for (i = 0; i < 4; i++) {
-		if (i) {
-			uniform = luft_uniform_create(LUFT_UNIFORM_TEXMAP,
-						      "last_depth",
-						      depth_texmap[active_depth]);
+		luft_state_set_uniform(draw_base_state,
+				       LUFT_UNIFORM_TEXMAP,
+				       "last_depth",
+				       depth_texmap[active_depth]);
 
-			luft_state_set_uniform(plane_state,
-					       LUFT_UNIFORM_CLONE, uniform);
-			luft_state_set_uniform(cube_state,
-					       LUFT_UNIFORM_CLONE, uniform);
-			luft_state_set_uniform(canopy_state,
-					       LUFT_UNIFORM_CLONE, uniform);
-
-			luft_uniform_ungrab(uniform);
-		}
-
-		uniform = luft_uniform_create(LUFT_UNIFORM_UINT,
-					      "last_depth_valid",
-					      i ? 1 : 0);
-
-		luft_state_set_uniform(plane_state,
-				       LUFT_UNIFORM_CLONE, uniform);
-		luft_state_set_uniform(cube_state,
-				       LUFT_UNIFORM_CLONE, uniform);
-		luft_state_set_uniform(canopy_state,
-				       LUFT_UNIFORM_CLONE, uniform);
-
-		luft_uniform_ungrab(uniform);
+		luft_state_set_uniform(draw_base_state,
+				       LUFT_UNIFORM_UINT, "last_depth_valid",
+				       i ? 1 : 0);
 
 		active_depth++;
 		active_depth %= 2;
@@ -543,7 +524,9 @@ main(int argc, char **argv)
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	draw_target = luft_target_create(camera, NULL, 0);
+	draw_base_state = luft_state_create(NULL);
+
+	draw_target = luft_target_create(camera, draw_base_state, 0);
 	luft_target_add_state(draw_target, cube_state);
 	luft_target_add_state(draw_target, canopy_state);
 	luft_target_add_state(draw_target, plane_state);
