@@ -47,12 +47,14 @@ luft_object_t *root;
 luft_object_t *camera;
 luft_object_t *output_light;
 luft_quat_t cam_rot;
-luft_colorbuf_t *cbuf;
+luft_colorbuf_t *cbuf_a;
+luft_colorbuf_t *cbuf_b;
 luft_colorbuf_t *gather_cbuf;
 luft_texmap_t *normal_texmap;
 luft_texmap_t *diffuse_texmap;
 luft_texmap_t *position_texmap;
-luft_texmap_t *depth_texmap[2] = {NULL, NULL};
+luft_texmap_t *depth_texmap_a;
+luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
 luft_state_t *output_state;
 luft_target_t *gather_target;
@@ -66,7 +68,6 @@ luft_state_t *draw_base_state;
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
 float frame_time = 0;
-int active_depth = 0;
 
 struct {
 	int forward;
@@ -100,25 +101,30 @@ handle_reshape(void)
 	diffuse_texmap = luft_texmap_create(0, 0, LUFT_TEXMAP_FLOAT32);
 	luft_texmap_init_blank(diffuse_texmap, 0, win_sz[0], win_sz[1]);
 
-	if (depth_texmap[0])
-		luft_texmap_ungrab(depth_texmap[0]);
-	if (depth_texmap[1])
-		luft_texmap_ungrab(depth_texmap[1]);
+	if (depth_texmap_a)
+		luft_texmap_ungrab(depth_texmap_a);
+	if (depth_texmap_b)
+		luft_texmap_ungrab(depth_texmap_b);
 
-	depth_texmap[0] = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
-					     LUFT_TEXMAP_STENCIL);
-	luft_texmap_init_blank(depth_texmap[0], 0, win_sz[0], win_sz[1]);
-	depth_texmap[1] = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
-					     LUFT_TEXMAP_STENCIL);
-	luft_texmap_init_blank(depth_texmap[1], 0, win_sz[0], win_sz[1]);
+	depth_texmap_a = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
+					    LUFT_TEXMAP_STENCIL);
+	luft_texmap_init_blank(depth_texmap_a, 0, win_sz[0], win_sz[1]);
+	depth_texmap_b = luft_texmap_create(0, 0, LUFT_TEXMAP_DEPTH |
+					    LUFT_TEXMAP_STENCIL);
+	luft_texmap_init_blank(depth_texmap_b, 0, win_sz[0], win_sz[1]);
 
 	gather_texmap = luft_texmap_create(0, 0, 0);
 	luft_texmap_init_blank(gather_texmap, 0, win_sz[0], win_sz[1]);
 
-	luft_colorbuf_set_buf(cbuf, 0, normal_texmap);
-	luft_colorbuf_set_buf(cbuf, 1, position_texmap);
-	luft_colorbuf_set_buf(cbuf, 2, diffuse_texmap);
-	luft_colorbuf_set_depth_buf(cbuf, depth_texmap[active_depth]);
+	luft_colorbuf_set_buf(cbuf_a, 0, normal_texmap);
+	luft_colorbuf_set_buf(cbuf_a, 1, position_texmap);
+	luft_colorbuf_set_buf(cbuf_a, 2, diffuse_texmap);
+	luft_colorbuf_set_depth_buf(cbuf_a, depth_texmap_a);
+
+	luft_colorbuf_set_buf(cbuf_b, 0, normal_texmap);
+	luft_colorbuf_set_buf(cbuf_b, 1, position_texmap);
+	luft_colorbuf_set_buf(cbuf_b, 2, diffuse_texmap);
+	luft_colorbuf_set_depth_buf(cbuf_b, depth_texmap_b);
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
@@ -246,20 +252,26 @@ render(void)
 
 	for (i = 0; i < 4; i++) {
 		luft_state_set_uniform(draw_base_state,
-				       LUFT_UNIFORM_TEXMAP,
-				       "last_depth",
-				       depth_texmap[active_depth]);
-
-		luft_state_set_uniform(draw_base_state,
 				       LUFT_UNIFORM_UINT, "last_depth_valid",
 				       i ? 1 : 0);
 
-		active_depth++;
-		active_depth %= 2;
-		luft_colorbuf_set_depth_buf(cbuf, depth_texmap[active_depth]);
-		luft_colorbuf_clear(cbuf);
-		luft_colorbuf_clear(gather_cbuf);
+		if (i % 2) {
+			luft_state_set_uniform(draw_base_state,
+					       LUFT_UNIFORM_TEXMAP,
+					       "last_depth",
+					       depth_texmap_a);
+			luft_state_set_colorbuf(draw_base_state, cbuf_b);
+			luft_colorbuf_clear(cbuf_b);
+		} else {
+			luft_state_set_uniform(draw_base_state,
+					       LUFT_UNIFORM_TEXMAP,
+					       "last_depth",
+					       depth_texmap_b);
+			luft_state_set_colorbuf(draw_base_state, cbuf_a);
+			luft_colorbuf_clear(cbuf_a);
+		}
 
+		luft_colorbuf_clear(gather_cbuf);
 		luft_target_hit(output_target);
 	}
 
@@ -405,12 +417,19 @@ main(int argc, char **argv)
 
 	init_glut(argc, argv, clear_color);
 
-	cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
-				    LUFT_COLORBUF_CLEAR_DEPTH |
-				    LUFT_COLORBUF_DEPTH |
-				    LUFT_COLORBUF_STENCIL);
-	luft_colorbuf_clear_color(cbuf, clear_color);
-	luft_colorbuf_clear_depth(cbuf, 1.0);
+	cbuf_a = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
+				      LUFT_COLORBUF_CLEAR_DEPTH |
+				      LUFT_COLORBUF_DEPTH |
+				      LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_color(cbuf_a, clear_color);
+	luft_colorbuf_clear_depth(cbuf_a, 1.0);
+
+	cbuf_b = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
+				      LUFT_COLORBUF_CLEAR_DEPTH |
+				      LUFT_COLORBUF_DEPTH |
+				      LUFT_COLORBUF_STENCIL);
+	luft_colorbuf_clear_color(cbuf_b, clear_color);
+	luft_colorbuf_clear_depth(cbuf_b, 1.0);
 
 	gather_cbuf = luft_colorbuf_create(LUFT_COLORBUF_CLEAR);
 	luft_colorbuf_clear_color(gather_cbuf, clear_color);
@@ -425,7 +444,6 @@ main(int argc, char **argv)
 			     LUFT_STATE_BF_CULL);
 	luft_state_set_blend(cube_state, LUFT_STATE_BLEND_NONE);
 	luft_state_set_material(cube_state, 0);
-	luft_state_set_colorbuf(cube_state, cbuf);
 
 	canopy_state = luft_state_clone(cube_state);
 	luft_state_set_shader(canopy_state, textured_shader);
@@ -433,8 +451,6 @@ main(int argc, char **argv)
 
 	plane_state = luft_state_clone(canopy_state);
 	luft_state_set_material(plane_state, 2);
-
-	luft_colorbuf_ungrab(cbuf);
 
 	gather_state = luft_state_create(gather_shader);
 	luft_state_set_flags(gather_state, LUFT_STATE_BF_CULL);
