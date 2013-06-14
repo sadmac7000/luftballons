@@ -50,5 +50,5 @@ See HACKING.md for guidelines on contributing.
 
 ## License ##
 
-Luftballons is licensed under the GNU Lesser General Public License, Version 3.
-Please see COPYING and COPYING.LESSER
+Luftballons is licensed under the GNU Lesser General Public License, Version
+\3.0.  Please see COPYING and COPYING.LESSER
