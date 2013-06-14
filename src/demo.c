@@ -271,7 +271,6 @@ render(void)
 			luft_colorbuf_clear(cbuf_a);
 		}
 
-		luft_colorbuf_clear(gather_cbuf);
 		luft_target_hit(output_target);
 	}
 
@@ -554,6 +553,7 @@ main(int argc, char **argv)
 	luft_target_add_state(gather_target, gather_state);
 	luft_state_ungrab(gather_state);
 	luft_target_add_dep(gather_target, draw_target);
+	luft_target_clear_buf(gather_target, gather_cbuf);
 
 	output_target = luft_target_create(camera, NULL, 0);
 	luft_target_add_dep(output_target, gather_target);

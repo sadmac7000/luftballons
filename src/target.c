@@ -36,6 +36,8 @@ target_destructor(void *target_)
 		target_ungrab(target->deps[i]);
 	for (i = 0; i < target->num_seq_deps; i++)
 		target_ungrab(target->seq_deps[i]);
+	for (i = 0; i < target->num_clear_bufs; i++)
+		colorbuf_ungrab(target->clear_bufs[i]);
 
 	if (target->base_state)
 		state_ungrab(target->base_state);
@@ -103,6 +105,21 @@ target_ungrab(target_t *target)
 EXPORT(target_ungrab);
 
 /**
+ * Set a colorbuf to be cleared by this target after its dependencies are
+ * satisfied, but before it runs its draw operations.
+ **/
+void
+target_clear_buf(target_t *target, colorbuf_t *buf)
+{
+	target->clear_bufs = vec_expand(target->clear_bufs,
+					target->num_clear_bufs);
+
+	target->clear_bufs[target->num_clear_bufs++] = buf;
+	colorbuf_grab(buf);
+}
+EXPORT(target_clear_buf);
+
+/**
  * Add a dependency to a target.
  **/
 void
@@ -159,6 +176,9 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 	for (i = 0; i < num_targets; i++) {
 		for (k = 0; k < targets[i]->num_seq_deps; k++)
 			target_hit(targets[i]->seq_deps[k]);
+
+		for (k = 0; k < targets[i]->num_clear_bufs; k++)
+			colorbuf_clear(targets[i]->clear_bufs[k]);
 
 		if (targets[i]->base_state)
 			state_push(targets[i]->base_state);

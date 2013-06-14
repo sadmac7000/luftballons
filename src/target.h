@@ -23,6 +23,7 @@
 #include "object.h"
 #include "refcount.h"
 #include "util.h"
+#include "colorbuf.h"
 
 /**
  * A rendering goal.
@@ -31,6 +32,7 @@
  * seq_deps, num_seq_deps: Sequential dependency list for a target.
  * base_state: State to push before the individual states.
  * states, num_states: States we need to pass through to hit this target.
+ * clear_bufs, num_clear_bufs: Colorbufs to clear before running.
  * camera: Camera to draw from.
  * repeat: Times to repeat this target's deps.
  * refcount: Reference counter.
@@ -46,6 +48,9 @@ typedef struct target {
 
 	state_t **states;
 	size_t num_states;
+
+	colorbuf_t **clear_bufs;
+	size_t num_clear_bufs;
 
 	object_t *camera;
 
@@ -63,6 +68,7 @@ API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
 API_DECLARE(target_add_dep);
 API_DECLARE(target_add_state);
+API_DECLARE(target_clear_buf);
 API_DECLARE(target_hit);
 
 #ifdef __cplusplus
