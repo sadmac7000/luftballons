@@ -118,6 +118,9 @@ EXPORT(target_clear_buf);
 void
 target_add_dep(target_t *target, target_t *dep)
 {
+	if (target_in_list(dep, target->deps, target->num_deps))
+		errx(1, "A target cannot depend on a target twice");
+
 	target_grab(dep);
 
 	target->deps = vec_expand(target->deps, target->num_deps);
