@@ -57,13 +57,17 @@ luft_texmap_t *depth_texmap_a;
 luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
 luft_state_t *output_state;
-luft_target_t *gather_target;
+luft_target_t *gather_target_1;
+luft_target_t *gather_target_2;
+luft_target_t *gather_target_3;
 luft_target_t *output_target;
 luft_state_t *gather_state;
 luft_state_t *cube_state;
 luft_state_t *plane_state;
 luft_state_t *canopy_state;
-luft_state_t *draw_base_state;
+luft_state_t *draw_base_state_1;
+luft_state_t *draw_base_state_2;
+luft_state_t *draw_base_state_3;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -127,6 +131,11 @@ handle_reshape(void)
 	luft_colorbuf_set_depth_buf(cbuf_b, depth_texmap_b);
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
+
+	luft_state_set_uniform(draw_base_state_2, LUFT_UNIFORM_TEXMAP,
+			       "last_depth", depth_texmap_a);
+	luft_state_set_uniform(draw_base_state_3, LUFT_UNIFORM_TEXMAP,
+			       "last_depth", depth_texmap_b);
 
 	luft_texmap_ungrab(normal_texmap);
 	luft_texmap_ungrab(position_texmap);
@@ -235,7 +244,6 @@ render(void)
 	float angle;
 	luft_quat_t cube_rot;
 	luft_quat_t center_rot;
-	int i;
 
 	handle_reshape();
 	update_camera(time);
@@ -250,29 +258,7 @@ render(void)
 
 	luft_colorbuf_clear(NULL);
 
-	for (i = 0; i < 4; i++) {
-		luft_state_set_uniform(draw_base_state,
-				       LUFT_UNIFORM_UINT, "last_depth_valid",
-				       i ? 1 : 0);
-
-		if (i % 2) {
-			luft_state_set_uniform(draw_base_state,
-					       LUFT_UNIFORM_TEXMAP,
-					       "last_depth",
-					       depth_texmap_a);
-			luft_state_set_colorbuf(draw_base_state, cbuf_b);
-			luft_colorbuf_clear(cbuf_b);
-		} else {
-			luft_state_set_uniform(draw_base_state,
-					       LUFT_UNIFORM_TEXMAP,
-					       "last_depth",
-					       depth_texmap_b);
-			luft_state_set_colorbuf(draw_base_state, cbuf_a);
-			luft_colorbuf_clear(cbuf_a);
-		}
-
-		luft_target_hit(output_target);
-	}
+	luft_target_hit(output_target);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -407,7 +393,12 @@ main(int argc, char **argv)
 	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
-	luft_target_t *draw_target;
+	luft_target_t *draw_target_1;
+	luft_target_t *draw_target_2;
+	luft_target_t *draw_target_3;
+	luft_target_t *output_target_1;
+	luft_target_t *output_target_2;
+	luft_target_t *output_target_3;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
@@ -539,26 +530,79 @@ main(int argc, char **argv)
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	draw_base_state = luft_state_create(NULL);
+	draw_base_state_1 = luft_state_create(NULL);
+	draw_base_state_2 = luft_state_create(NULL);
+	draw_base_state_3 = luft_state_create(NULL);
 
-	draw_target = luft_target_create(camera, draw_base_state, 0);
-	luft_target_add_state(draw_target, cube_state);
-	luft_target_add_state(draw_target, canopy_state);
-	luft_target_add_state(draw_target, plane_state);
+	luft_state_set_uniform(draw_base_state_1,
+			       LUFT_UNIFORM_UINT, "last_depth_valid", 0);
+	luft_state_set_uniform(draw_base_state_2,
+			       LUFT_UNIFORM_UINT, "last_depth_valid", 1);
+	luft_state_set_uniform(draw_base_state_3,
+			       LUFT_UNIFORM_UINT, "last_depth_valid", 1);
+
+	luft_state_set_colorbuf(draw_base_state_1, cbuf_a);
+	luft_state_set_colorbuf(draw_base_state_2, cbuf_b);
+	luft_state_set_colorbuf(draw_base_state_3, cbuf_a);
+
+	draw_target_1 = luft_target_create(camera, draw_base_state_1, 1);
+	luft_target_add_state(draw_target_1, cube_state);
+	luft_target_add_state(draw_target_1, canopy_state);
+	luft_target_add_state(draw_target_1, plane_state);
+	luft_target_clear_buf(draw_target_1, cbuf_a);
+
+	draw_target_2 = luft_target_create(camera, draw_base_state_2, 1);
+	luft_target_add_state(draw_target_2, cube_state);
+	luft_target_add_state(draw_target_2, canopy_state);
+	luft_target_add_state(draw_target_2, plane_state);
+	luft_target_clear_buf(draw_target_2, cbuf_b);
+
+	draw_target_3 = luft_target_create(camera, draw_base_state_3, 1);
+	luft_target_add_state(draw_target_3, cube_state);
+	luft_target_add_state(draw_target_3, canopy_state);
+	luft_target_add_state(draw_target_3, plane_state);
+	luft_target_clear_buf(draw_target_3, cbuf_a);
+
 	luft_state_ungrab(cube_state);
 	luft_state_ungrab(canopy_state);
 	luft_state_ungrab(plane_state);
 
-	gather_target = luft_target_create(camera, NULL, 0);
-	luft_target_add_state(gather_target, gather_state);
-	luft_state_ungrab(gather_state);
-	luft_target_add_dep(gather_target, draw_target);
-	luft_target_clear_buf(gather_target, gather_cbuf);
+	gather_target_1 = luft_target_create(camera, NULL, 1);
+	luft_target_add_state(gather_target_1, gather_state);
+	luft_target_add_dep(gather_target_1, draw_target_1);
+	luft_target_clear_buf(gather_target_1, gather_cbuf);
 
-	output_target = luft_target_create(camera, NULL, 0);
-	luft_target_add_dep(output_target, gather_target);
-	luft_target_add_state(output_target, output_state);
+	gather_target_2 = luft_target_create(camera, NULL, 1);
+	luft_target_add_state(gather_target_2, gather_state);
+	luft_target_add_dep(gather_target_2, draw_target_2);
+	luft_target_clear_buf(gather_target_2, gather_cbuf);
+
+	gather_target_3 = luft_target_create(camera, NULL, 1);
+	luft_target_add_state(gather_target_3, gather_state);
+	luft_target_add_dep(gather_target_3, draw_target_3);
+	luft_target_clear_buf(gather_target_3, gather_cbuf);
+
+	luft_state_ungrab(gather_state);
+
+	output_target_1 = luft_target_create(camera, NULL, 1);
+	luft_target_add_dep(output_target_1, gather_target_1);
+	luft_target_add_state(output_target_1, output_state);
+
+	output_target_2 = luft_target_create(camera, NULL, 1);
+	luft_target_add_dep(output_target_2, gather_target_2);
+	luft_target_add_state(output_target_2, output_state);
+
+	output_target_3 = luft_target_create(camera, NULL, 1);
+	luft_target_add_dep(output_target_3, gather_target_3);
+	luft_target_add_state(output_target_3, output_state);
+
 	luft_state_ungrab(output_state);
+
+	output_target = luft_target_create(camera, NULL, 1);
+	luft_target_add_seq_dep(output_target, output_target_1);
+	luft_target_add_seq_dep(output_target, output_target_2);
+	luft_target_add_seq_dep(output_target, output_target_3);
+	luft_target_add_seq_dep(output_target, output_target_2);
 
 	glutMainLoop();
 	return 0;

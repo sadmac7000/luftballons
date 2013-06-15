@@ -51,13 +51,6 @@ target_destructor(void *target_)
 /**
  * Create a new target.
  *
- * Each target has a repeat count. When the count is zero, the target simply
- * ensures its dependencies have been met before executing drawing in its
- * states. When the count is one, the target ensures its dependencies are hit
- * sequentially, and dependencies are resolved in a separate space from the
- * rest of the draw task. 2 or more is the same as 1, but the target will be
- * hit repeatedly.
- *
  * camera: The camera to use while hitting this target.
  * base: The base state for this target.
  * repeat: Repeat count for this target.
@@ -127,16 +120,24 @@ target_add_dep(target_t *target, target_t *dep)
 {
 	target_grab(dep);
 
-	if (! dep->repeat) {
-		target->deps = vec_expand(target->deps, target->num_deps);
-		target->deps[target->num_deps++] = dep;
-		return;
-	}
+	target->deps = vec_expand(target->deps, target->num_deps);
+	target->deps[target->num_deps++] = dep;
+}
+EXPORT(target_add_dep);
 
+/**
+ * Add a sequential dependency to a target. Sequential dependencies have their
+ * subdependencies solved independently in their own space, and are always run
+ * in exactly the order added.
+ **/
+void
+target_add_seq_dep(target_t *target, target_t *dep)
+{
+	target_grab(dep);
 	target->seq_deps = vec_expand(target->seq_deps, target->num_seq_deps);
 	target->seq_deps[target->num_seq_deps++] = dep;
 }
-EXPORT(target_add_dep);
+EXPORT(target_add_seq_dep);
 
 /**
  * Add a state that is passed through in order to hit a target.
@@ -285,9 +286,6 @@ target_hit(target_t *target)
 {
 	size_t count = target->repeat;
 	size_t i;
-
-	if (! count)
-		count++;
 
 	for (i = 0; i < count; i++)
 		target_hit_once(target);

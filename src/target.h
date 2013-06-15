@@ -67,6 +67,7 @@ API_DECLARE(target_create);
 API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
 API_DECLARE(target_add_dep);
+API_DECLARE(target_add_seq_dep);
 API_DECLARE(target_add_state);
 API_DECLARE(target_clear_buf);
 API_DECLARE(target_hit);
