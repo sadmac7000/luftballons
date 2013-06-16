@@ -24,23 +24,11 @@
 #include "object.h"
 #include "shader.h"
 
-/**
- * A list of draw operations to be performed.
- *
- * pools: bufpools to back meshes we are drawing
- * pool_count: Number of pools
- **/
-typedef struct draw_queue {
-	bufpool_t **pools;
-	size_t pool_count;
-} draw_queue_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-draw_queue_t *draw_queue_create(void);
-void draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera);
+void draw_queue_draw(object_t *object, object_t *camera);
 
 #ifdef __cplusplus
 }

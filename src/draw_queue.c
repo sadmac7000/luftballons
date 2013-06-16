@@ -20,42 +20,31 @@
 #include "shader.h"
 #include "matrix.h"
 
-/**
- * Create a new draw queue.
- **/
-draw_queue_t *
-draw_queue_create(void)
-{
-	draw_queue_t *queue = xmalloc(sizeof(draw_queue_t));
-
-	queue->pool_count = 0;
-	queue->pools = NULL;
-
-	return queue;
-}
+bufpool_t **pools;
+size_t num_pools;
 
 /**
- * Add a mesh to this draw queue.
+ * Add a mesh to our array of bufpools.
  **/
 static void
-draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
+draw_queue_add_mesh(mesh_t *mesh)
 {
 	size_t i;
 	bufpool_t *pool;
 
-	for (i = 0; i < queue->pool_count; i++) {
-		if (queue->pools[i]->format != mesh->format)
+	for (i = 0; i < num_pools; i++) {
+		if (pools[i]->format != mesh->format)
 			continue;
 
-		bufpool_add_mesh(queue->pools[i], mesh);
+		bufpool_add_mesh(pools[i], mesh);
 		return;
 	}
 
-	queue->pools = vec_expand(queue->pools, queue->pool_count);
+	pools = vec_expand(pools, num_pools);
 
 	pool = bufpool_create(mesh->format);
 	bufpool_add_mesh(pool, mesh);
-	queue->pools[queue->pool_count++] = pool;
+	pools[num_pools++] = pool;
 }
 
 /**
@@ -64,7 +53,7 @@ draw_queue_add_mesh(draw_queue_t *queue, mesh_t *mesh)
  * Returns: true on success.
  **/
 static int
-draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
+draw_queue_do_draw(object_t *object, float cspace[16],
 		   float clip[16], object_t *quad)
 {
 	uniform_t *un;
@@ -92,7 +81,7 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	uniform_ungrab(un);
 
 	if (object->type == OBJ_MESH) {
-		draw_queue_add_mesh(queue, object->mesh);
+		draw_queue_add_mesh(object->mesh);
 		return mesh_draw(object->mesh);
 	}
 
@@ -102,7 +91,7 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	draw_queue_add_mesh(queue, quad->mesh);
+	draw_queue_add_mesh(quad->mesh);
 	return mesh_draw(quad->mesh);
 }
 
@@ -110,7 +99,7 @@ draw_queue_do_draw(draw_queue_t *queue, object_t *object, float cspace[16],
  * Draw a given object from the perspective of the given camera.
  **/
 void
-draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
+draw_queue_draw(object_t *object, object_t *camera)
 {
 	float cspace[16];
 	float clip[16];
@@ -142,14 +131,13 @@ draw_queue_draw(draw_queue_t *queue, object_t *object, object_t *camera)
 	object_cursor_release(&cursor);
 
 	while (num_flat) {
-		for (i = 0; i < queue->pool_count; i++)
-			bufpool_end_generation(queue->pools[i]);
+		for (i = 0; i < num_pools; i++)
+			bufpool_end_generation(pools[i]);
 
 		for (i = 0, j = 0; i < num_flat; i++) {
 			flat[j] = flat[i];
 
-			if (! draw_queue_do_draw(queue, flat[j], cspace, clip,
-						 quad))
+			if (! draw_queue_do_draw(flat[j], cspace, clip, quad))
 				j++;
 		}
 

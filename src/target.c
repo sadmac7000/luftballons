@@ -19,8 +19,6 @@
 #include "util.h"
 #include "draw_queue.h"
 
-draw_queue_t *draw_queue;
-
 /**
  * The destructor for a target_t
  **/
@@ -113,6 +111,18 @@ target_clear_buf(target_t *target, colorbuf_t *buf)
 EXPORT(target_clear_buf);
 
 /**
+ * Return whether a target is in an array of targets.
+ **/
+static int
+target_in_list(target_t *target, target_t **list, size_t len)
+{
+	while (len--)
+		if (list[len] == target)
+			return 1;
+	return 0;
+}
+
+/**
  * Add a dependency to a target.
  **/
 void
@@ -155,18 +165,6 @@ target_add_state(target_t *target, state_t *state)
 EXPORT(target_add_state);
 
 /**
- * Return whether a target is in an array of targets.
- **/
-static int
-target_in_list(target_t *target, target_t **list, size_t len)
-{
-	while (len--)
-		if (list[len] == target)
-			return 1;
-	return 0;
-}
-
-/**
  * Hit all targets in a list. Assume their non-sequential
  * dependencies are satisfied.
  **/
@@ -192,8 +190,7 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 				return;
 
 			state_push(targets[i]->states[j]);
-			draw_queue_draw(draw_queue,
-					targets[i]->states[j]->root,
+			draw_queue_draw(targets[i]->states[j]->root,
 					targets[i]->camera);
 			state_pop(targets[i]->states[j]);
 		}
@@ -256,9 +253,6 @@ target_hit_once(target_t *target)
 
 	queue = vec_expand(queue, 0);
 	queue[0] = target;
-
-	if (! draw_queue)
-		draw_queue = draw_queue_create();
 
 	/* Ok, I try to stick to simple arrays instead of interesting data
 	 * structures on account of most data sets are small and the low-level
