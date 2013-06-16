@@ -18,6 +18,8 @@
 #ifndef LUFTBALLONS_QUAT_H
 #define LUFTBALLONS_QUAT_H
 
+#include <stdlib.h>
+
 typedef struct quat {
 	float c[4];
 	size_t mul_count;
