@@ -17,7 +17,7 @@
 
 #include "target.h"
 #include "util.h"
-#include "draw_queue.h"
+#include "draw_op.h"
 
 /**
  * The destructor for a target_t
@@ -186,13 +186,14 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 			state_push(targets[i]->base_state);
 
 		for (j = 0; j < targets[i]->num_states; j++) {
+			draw_op_t *op = draw_op_create(targets[i]->states[j]->root,
+						       targets[i]->camera,
+						       targets[i]->states[j]);
 			if (! targets[i]->states[j]->root)
 				return;
 
-			state_push(targets[i]->states[j]);
-			draw_queue_draw(targets[i]->states[j]->root,
-					targets[i]->camera);
-			state_pop(targets[i]->states[j]);
+			draw_op_exec(op);
+			draw_op_ungrab(op);
 		}
 
 		if (targets[i]->base_state)

@@ -24,7 +24,7 @@ libluftdraw_la_SOURCES = \
 	object.c	\
 	vbuf_fmt.c	\
 	bufpool.c	\
-	draw_queue.c	\
+	draw_op.c	\
 	uniform.c	\
 	texmap.c	\
 	quat.c		\

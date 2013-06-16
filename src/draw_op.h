@@ -18,17 +18,35 @@
 #ifndef DRAW_QUEUE_H
 #define DRAW_QUEUE_H
 
-#include "bufpool.h"
-#include "mesh.h"
-#include "util.h"
 #include "object.h"
-#include "shader.h"
+#include "util.h"
+#include "state.h"
+#include "refcount.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void draw_queue_draw(object_t *object, object_t *camera);
+/**
+ * A draw operation.
+ * 
+ * object: Object root to draw.
+ * camera: Camera to draw from.
+ * state: State to enter while drawing.
+ * refcount: Reference count for this object.
+ **/
+typedef struct draw_op {
+	object_t *object;
+	object_t *camera;
+	state_t *state;
+
+	refcounter_t refcount;
+} draw_op_t;
+
+draw_op_t *draw_op_create(object_t *object, object_t *camera, state_t *state);
+void draw_op_grab(draw_op_t *op);
+void draw_op_ungrab(draw_op_t *op);
+void draw_op_exec(draw_op_t *op);
 
 #ifdef __cplusplus
 }

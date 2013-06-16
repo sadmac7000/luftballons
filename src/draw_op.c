@@ -15,19 +15,79 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#include "draw_queue.h"
-#include "state.h"
-#include "shader.h"
+#include "draw_op.h"
 #include "matrix.h"
+#include "bufpool.h"
+#include "mesh.h"
+#include "shader.h"
 
 bufpool_t **pools;
 size_t num_pools;
 
 /**
+ * Destroy a draw operation.
+ **/
+void
+draw_op_destructor(void *op_)
+{
+	draw_op_t *op = op_;
+
+	object_ungrab(op->object);
+	object_ungrab(op->camera);
+
+	if (op->state)
+		state_ungrab(op->state);
+
+	free(op);
+}
+
+/**
+ * Create a new draw operation.
+ **/
+draw_op_t *
+draw_op_create(object_t *object, object_t *camera, state_t *state)
+{
+	draw_op_t *ret = xcalloc(1, sizeof(draw_op_t));
+
+	object_grab(object);
+	object_grab(camera);
+
+	if (state)
+		state_grab(state);
+
+	ret->object = object;
+	ret->camera = camera;
+	ret->state = state;
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, draw_op_destructor, ret);
+
+	return ret;
+}
+
+/**
+ * Grab a Operation.
+ **/
+void
+draw_op_grab(draw_op_t *op)
+{
+	refcount_grab(&op->refcount);
+}
+
+/**
+ * Ungrab a Operation.
+ **/
+void
+draw_op_ungrab(draw_op_t *op)
+{
+	refcount_ungrab(&op->refcount);
+}
+
+/**
  * Add a mesh to our array of bufpools.
  **/
 static void
-draw_queue_add_mesh(mesh_t *mesh)
+draw_op_add_mesh(mesh_t *mesh)
 {
 	size_t i;
 	bufpool_t *pool;
@@ -53,7 +113,7 @@ draw_queue_add_mesh(mesh_t *mesh)
  * Returns: true on success.
  **/
 static int
-draw_queue_do_draw(object_t *object, float cspace[16],
+draw_op_do_draw(object_t *object, float cspace[16],
 		   float clip[16], object_t *quad)
 {
 	uniform_t *un;
@@ -81,7 +141,7 @@ draw_queue_do_draw(object_t *object, float cspace[16],
 	uniform_ungrab(un);
 
 	if (object->type == OBJ_MESH) {
-		draw_queue_add_mesh(object->mesh);
+		draw_op_add_mesh(object->mesh);
 		return mesh_draw(object->mesh);
 	}
 
@@ -91,15 +151,15 @@ draw_queue_do_draw(object_t *object, float cspace[16],
 	shader_set_temp_uniform(un);
 	uniform_ungrab(un);
 
-	draw_queue_add_mesh(quad->mesh);
+	draw_op_add_mesh(quad->mesh);
 	return mesh_draw(quad->mesh);
 }
 
 /**
- * Draw a given object from the perspective of the given camera.
+ * Perform a given draw operation
  **/
 void
-draw_queue_draw(object_t *object, object_t *camera)
+draw_op_exec(draw_op_t *op)
 {
 	float cspace[16];
 	float clip[16];
@@ -110,12 +170,13 @@ draw_queue_draw(object_t *object, object_t *camera)
 	size_t j;
 	object_cursor_t cursor;
 	object_t *quad = object_get_fs_quad();
+	object_t *object = op->object;
 
-	camera_from_world(camera, cspace);
-	camera_to_clip(camera, clip);
+	camera_from_world(op->camera, cspace);
+	camera_to_clip(op->camera, clip);
 
 	object_foreach_pre(cursor, object) {
-		distance = object_distance(object, camera);
+		distance = object_distance(object, op->camera);
 
 		if (object->draw_distance == 0 ||
 		    distance <= object->draw_distance) {
@@ -130,6 +191,9 @@ draw_queue_draw(object_t *object, object_t *camera)
 
 	object_cursor_release(&cursor);
 
+	if (op->state)
+		state_push(op->state);
+
 	while (num_flat) {
 		for (i = 0; i < num_pools; i++)
 			bufpool_end_generation(pools[i]);
@@ -137,12 +201,15 @@ draw_queue_draw(object_t *object, object_t *camera)
 		for (i = 0, j = 0; i < num_flat; i++) {
 			flat[j] = flat[i];
 
-			if (! draw_queue_do_draw(flat[j], cspace, clip, quad))
+			if (! draw_op_do_draw(flat[j], cspace, clip, quad))
 				j++;
 		}
 
 		num_flat = j;
 	}
+
+	if (op->state)
+		state_pop(op->state);
 
 	object_ungrab(quad);
 
