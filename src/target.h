@@ -24,6 +24,25 @@
 #include "refcount.h"
 #include "util.h"
 #include "colorbuf.h"
+#include "draw_op.h"
+
+
+/**
+ * Types of actions taken in a given target step.
+ **/
+typedef enum target_step_type {
+	TARGET_STEP_DRAW,
+} target_step_type_t;
+
+/**
+ * A step to take in drawing this target.
+ **/
+typedef struct target_step {
+	target_step_type_t type;
+	union {
+		draw_op_t *draw_op;
+	};
+} target_step_t;
 
 /**
  * A rendering goal.
@@ -49,6 +68,9 @@ typedef struct target {
 	state_t **states;
 	size_t num_states;
 
+	target_step_t *steps;
+	size_t num_steps;
+
 	colorbuf_t **clear_bufs;
 	size_t num_clear_bufs;
 
@@ -70,6 +92,7 @@ API_DECLARE(target_add_dep);
 API_DECLARE(target_add_seq_dep);
 API_DECLARE(target_add_state);
 API_DECLARE(target_clear_buf);
+API_DECLARE(target_draw);
 API_DECLARE(target_hit);
 
 #ifdef __cplusplus

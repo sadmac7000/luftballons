@@ -21,6 +21,7 @@
 #include <luftballons/state.h>
 #include <luftballons/object.h>
 #include <luftballons/colorbuf.h>
+#include <luftballons/draw_op.h>
 
 typedef struct target luft_target_t;
 
@@ -36,6 +37,7 @@ void luft_target_add_dep(luft_target_t *target, luft_target_t *dep);
 void luft_target_add_seq_dep(luft_target_t *target, luft_target_t *dep);
 void luft_target_add_state(luft_target_t *target, luft_state_t *state);
 void luft_target_clear_buf(luft_target_t *target, luft_colorbuf_t *buf);
+void luft_target_draw(luft_target_t *target, luft_draw_op_t *op);
 void luft_target_hit(luft_target_t *target);
 
 #ifdef __cplusplus

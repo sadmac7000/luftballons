@@ -37,6 +37,13 @@ target_destructor(void *target_)
 	for (i = 0; i < target->num_clear_bufs; i++)
 		colorbuf_ungrab(target->clear_bufs[i]);
 
+	for (i = 0; i < target->num_steps; i++) {
+		if (target->steps[i].type == TARGET_STEP_DRAW)
+			draw_op_ungrab(target->steps[i].draw_op);
+		else
+			errx(1, "Encountered target step with unknown type");
+	}
+
 	if (target->base_state)
 		state_ungrab(target->base_state);
 
@@ -44,6 +51,7 @@ target_destructor(void *target_)
 	free(target->deps);
 	free(target->seq_deps);
 	free(target->clear_bufs);
+	free(target->steps);
 	object_ungrab(target->camera);
 	free(target);
 }
@@ -96,6 +104,21 @@ target_ungrab(target_t *target)
 	refcount_ungrab(&target->refcount);
 }
 EXPORT(target_ungrab);
+
+/**
+ * Add a draw op to our list of steps.
+ **/
+void
+target_draw(target_t *target, draw_op_t *op)
+{
+	target->steps = vec_expand(target->steps, target->num_steps);
+
+	target->steps[target->num_steps].type = TARGET_STEP_DRAW;
+	target->steps[target->num_steps].draw_op = op;
+
+	draw_op_grab(op);
+}
+EXPORT(target_draw);
 
 /**
  * Set a colorbuf to be cleared by this target after its dependencies are
@@ -167,6 +190,18 @@ target_add_state(target_t *target, state_t *state)
 EXPORT(target_add_state);
 
 /**
+ * Perform one step of a target.
+ **/
+static void
+target_do_step(target_step_t *step)
+{
+	if (step->type == TARGET_STEP_DRAW)
+		draw_op_exec(step->draw_op);
+	else
+		errx(1, "Encountered target step with unknown type");
+}
+
+/**
  * Hit all targets in a list. Assume their non-sequential
  * dependencies are satisfied.
  **/
@@ -186,6 +221,9 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 
 		if (targets[i]->base_state)
 			state_push(targets[i]->base_state);
+
+		for (k = 0; k < targets[i]->num_steps; k++)
+			target_do_step(&targets[i]->steps[k]);
 
 		for (j = 0; j < targets[i]->num_states; j++) {
 			draw_op_t *op = draw_op_create(targets[i]->states[j]->root,
