@@ -42,6 +42,8 @@ target_destructor(void *target_)
 
 	free(target->states);
 	free(target->deps);
+	free(target->seq_deps);
+	free(target->clear_bufs);
 	object_ungrab(target->camera);
 	free(target);
 }
