@@ -4,6 +4,7 @@ nobase_include_HEADERS = \
 	luftballons/object.h	\
 	luftballons/quat.h	\
 	luftballons/shader.h	\
+	luftballons/draw_op.h	\
 	luftballons/state.h	\
 	luftballons/target.h	\
 	luftballons/texmap.h	\

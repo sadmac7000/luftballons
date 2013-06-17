@@ -17,6 +17,7 @@
 
 #ifndef DRAW_QUEUE_H
 #define DRAW_QUEUE_H
+#include <luftballons/draw_op.h>
 
 #include "object.h"
 #include "util.h"
@@ -43,10 +44,10 @@ typedef struct draw_op {
 	refcounter_t refcount;
 } draw_op_t;
 
-draw_op_t *draw_op_create(object_t *object, object_t *camera, state_t *state);
-void draw_op_grab(draw_op_t *op);
-void draw_op_ungrab(draw_op_t *op);
-void draw_op_exec(draw_op_t *op);
+API_DECLARE(draw_op_create);
+API_DECLARE(draw_op_grab);
+API_DECLARE(draw_op_ungrab);
+API_DECLARE(draw_op_exec);
 
 #ifdef __cplusplus
 }

@@ -27,7 +27,7 @@ size_t num_pools;
 /**
  * Destroy a draw operation.
  **/
-void
+static void
 draw_op_destructor(void *op_)
 {
 	draw_op_t *op = op_;
@@ -64,6 +64,7 @@ draw_op_create(object_t *object, object_t *camera, state_t *state)
 
 	return ret;
 }
+EXPORT(draw_op_create);
 
 /**
  * Grab a Operation.
@@ -73,6 +74,7 @@ draw_op_grab(draw_op_t *op)
 {
 	refcount_grab(&op->refcount);
 }
+EXPORT(draw_op_grab);
 
 /**
  * Ungrab a Operation.
@@ -82,6 +84,7 @@ draw_op_ungrab(draw_op_t *op)
 {
 	refcount_ungrab(&op->refcount);
 }
+EXPORT(draw_op_ungrab);
 
 /**
  * Add a mesh to our array of bufpools.
@@ -215,3 +218,4 @@ draw_op_exec(draw_op_t *op)
 
 	free(flat);
 }
+EXPORT(draw_op_exec);
