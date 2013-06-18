@@ -15,11 +15,14 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include <stdarg.h>
+
 #include "draw_op.h"
 #include "matrix.h"
 #include "bufpool.h"
 #include "mesh.h"
 #include "shader.h"
+#include "state.h"
 
 bufpool_t **pools;
 size_t num_pools;
@@ -52,12 +55,12 @@ draw_op_create(object_t *object, object_t *camera, state_t *state)
 	object_grab(object);
 	object_grab(camera);
 
-	if (state)
-		state_grab(state);
-
 	ret->object = object;
 	ret->camera = camera;
 	ret->state = state;
+
+	if (state)
+		state_grab(state);
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, draw_op_destructor, ret);
@@ -65,6 +68,113 @@ draw_op_create(object_t *object, object_t *camera, state_t *state)
 	return ret;
 }
 EXPORT(draw_op_create);
+
+/**
+ * Create a state object for this draw operation. Can be called more than once
+ * with no ill effect.
+ **/
+static void
+draw_op_init_state(draw_op_t *op)
+{
+	if (! op->state)
+		op->state = state_create(NULL);
+}
+
+/**
+ * Set shader to use during this draw operation.
+ **/
+void
+draw_op_set_shader(draw_op_t *op, shader_t *shader)
+{
+	draw_op_init_state(op);
+	state_set_shader(op->state, shader);
+}
+EXPORT(draw_op_set_shader);
+
+/**
+ * Set the blend mode to use during this draw operation.
+ **/
+void
+draw_op_set_blend(draw_op_t *op, state_blend_mode_t mode)
+{
+	draw_op_init_state(op);
+	state_set_blend(op->state, mode);
+}
+EXPORT(draw_op_set_blend);
+
+/**
+ * List flags that must be set during this draw operation.
+ **/
+void
+draw_op_set_flags(draw_op_t *op, uint64_t flags)
+{
+	draw_op_init_state(op);
+	state_set_flags(op->state, flags);
+}
+EXPORT(draw_op_set_flags);
+
+/**
+ * List flags that must be unset during this draw operations.
+ **/
+void
+draw_op_clear_flags(draw_op_t *op, uint64_t flags)
+{
+	draw_op_init_state(op);
+	state_clear_flags(op->state, flags);
+}
+EXPORT(draw_op_clear_flags);
+
+/**
+ * Set flags that we don't care about the state of during this draw operation.
+ **/
+void
+draw_op_ignore_flags(draw_op_t *op, uint64_t flags)
+{
+	draw_op_init_state(op);
+	state_ignore_flags(op->state, flags);
+}
+EXPORT(draw_op_ignore_flags);
+
+/**
+ * Set a color buffer to use during this draw operation.
+ **/
+void
+draw_op_set_colorbuf(draw_op_t *op, colorbuf_t *colorbuf)
+{
+	draw_op_init_state(op);
+	state_set_colorbuf(op->state, colorbuf);
+}
+EXPORT(draw_op_set_colorbuf);
+
+/**
+ * Set a uniform to be passed to the shader during this draw operation.
+ **/
+void
+draw_op_set_uniform(draw_op_t *op, uniform_type_t type, ...)
+{
+	va_list ap;
+	uniform_t *uniform;
+
+	va_start(ap, type);
+	uniform = uniform_vcreate(type, ap);
+	va_end(ap);
+
+	draw_op_init_state(op);
+	state_set_uniform(op->state, LUFT_UNIFORM_CLONE, uniform);
+	uniform_ungrab(uniform);
+}
+EXPORT(draw_op_set_uniform);
+
+/**
+ * Set material to draw during this draw operation.
+ **/
+void
+draw_op_set_material(draw_op_t *op, int mat_id)
+{
+	draw_op_init_state(op);
+	state_set_material(op->state, mat_id);
+}
+EXPORT(draw_op_set_material);
 
 /**
  * Grab a Operation.
