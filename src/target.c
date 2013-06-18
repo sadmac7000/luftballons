@@ -115,6 +115,7 @@ target_draw(target_t *target, draw_op_t *op)
 
 	target->steps[target->num_steps].type = TARGET_STEP_DRAW;
 	target->steps[target->num_steps].draw_op = op;
+	target->num_steps++;
 
 	draw_op_grab(op);
 }
