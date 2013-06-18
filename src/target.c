@@ -28,9 +28,6 @@ target_destructor(void *target_)
 	target_t *target = target_;
 	size_t i;
 
-	for (i = 0; i < target->num_states; i++)
-		state_ungrab(target->states[i]);
-
 	for (i = 0; i < target->num_steps; i++) {
 		if (target->steps[i].type == TARGET_STEP_DRAW)
 			draw_op_ungrab(target->steps[i].draw_op);
@@ -45,26 +42,20 @@ target_destructor(void *target_)
 	if (target->base_state)
 		state_ungrab(target->base_state);
 
-	free(target->states);
 	free(target->steps);
-	object_ungrab(target->camera);
 	free(target);
 }
 
 /**
  * Create a new target.
  *
- * camera: The camera to use while hitting this target.
  * base: The base state for this target.
  * repeat: Repeat count for this target.
  **/
 target_t *
-target_create(object_t *camera, state_t *base, size_t repeat)
+target_create(state_t *base, size_t repeat)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
-
-	ret->camera = camera;
-	object_grab(camera);
 
 	ret->base_state = base;
 
@@ -153,13 +144,15 @@ EXPORT(target_clear);
  * Add a state that is passed through in order to hit a target.
  **/
 void
-target_add_state(target_t *target, state_t *state)
+target_draw_state(target_t *target, state_t *state,
+		  object_t *camera, object_t *root)
 {
-	target->states = vec_expand(target->states, target->num_states);
-	target->states[target->num_states++] = state;
-	state_grab(state);
+	draw_op_t *op = draw_op_create(root, camera, state);
+
+	target_draw(target, op);
+	draw_op_ungrab(op);
 }
-EXPORT(target_add_state);
+EXPORT(target_draw_state);
 
 /**
  * Perform one step of a target.
@@ -184,21 +177,12 @@ static void
 target_hit_once(target_t *target)
 {
 	size_t i;
-	draw_op_t *op;
-	state_t *state;
 
 	if (target->base_state)
 		state_push(target->base_state);
 
 	for (i = 0; i < target->num_steps; i++)
 		target_do_step(&target->steps[i]);
-
-	for (i = 0; i < target->num_states; i++) {
-		state = target->states[i];
-		op = draw_op_create(state->root, target->camera, state);
-		draw_op_exec(op);
-		draw_op_ungrab(op);
-	}
 
 	if (target->base_state)
 		state_pop(target->base_state);

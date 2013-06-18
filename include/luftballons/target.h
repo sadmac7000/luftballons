@@ -29,11 +29,11 @@ typedef struct target luft_target_t;
 extern "C" {
 #endif
 
-luft_target_t *luft_target_create(luft_object_t *camera, luft_state_t *base,
-				  size_t repeat);
+luft_target_t *luft_target_create(luft_state_t *base, size_t repeat);
 void luft_target_grab(luft_target_t *target);
 void luft_target_ungrab(luft_target_t *target);
-void luft_target_add_state(luft_target_t *target, luft_state_t *state);
+void luft_target_draw_state(luft_target_t *target, luft_state_t *state,
+			    luft_object_t *camera, luft_object_t *root);
 void luft_target_clear(luft_target_t *target, luft_colorbuf_t *buf);
 void luft_target_draw(luft_target_t *target, luft_draw_op_t *op);
 void luft_target_hit(luft_target_t *target);

@@ -101,9 +101,6 @@ state_clone(state_t *in)
 
 	memcpy(state, in, sizeof(state_t));
 
-	if (state->root)
-		object_grab(state->root);
-
 	if (state->colorbuf)
 		colorbuf_grab(state->colorbuf);
 
@@ -277,11 +274,6 @@ state_underlay(state_t *state, state_t *other)
 	if (!state->shader && other->shader) {
 		state->shader = other->shader;
 		shader_grab(other->shader);
-	}
-
-	if (!state->root && other->root) {
-		state->root = other->root;
-		object_grab(other->root);
 	}
 
 	if (state->blend_mode == STATE_BLEND_DONTCARE)
@@ -526,28 +518,6 @@ state_material_active(int mat_id)
 
 	return current_state->mat_id == mat_id;
 }
-
-/**
- * Set the object to draw in this state.
- **/
-void
-state_set_object(state_t *state, object_t *object)
-{
-	int needed_it;
-
-	state_protect(state, &needed_it);
-
-	if (state->root)
-		object_ungrab(state->root);
-
-	if (object)
-		object_grab(object);
-
-	state->root = object;
-
-	state_unprotect(state, needed_it);
-}
-EXPORT(state_set_object);
 
 /**
  * Set the blending mode for this state.

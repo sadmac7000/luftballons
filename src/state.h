@@ -46,7 +46,6 @@ typedef luft_state_blend_mode_t state_blend_mode_t;
  * num_uniforms, uniforms: Vector of uniforms to install.
  * shader: Shader to load in this state.
  * mat_id: The material we draw.
- * root: Root of objects we will draw in this state.
  * refcount: Reference counter.
  **/
 typedef struct state {
@@ -57,7 +56,6 @@ typedef struct state {
 	uniform_t **uniforms;
 	shader_t *shader;
 	int mat_id;
-	object_t *root;
 	state_blend_mode_t blend_mode;
 	refcounter_t refcount;
 } state_t;
@@ -78,7 +76,6 @@ API_DECLARE(state_set_colorbuf);
 API_DECLARE(state_set_uniform);
 API_DECLARE(state_set_material);
 API_DECLARE(state_max_colorbufs);
-API_DECLARE(state_set_object);
 API_DECLARE(state_set_blend);
 
 int state_material_active(int mat_id);
