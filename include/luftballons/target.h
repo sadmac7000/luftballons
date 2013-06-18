@@ -35,7 +35,7 @@ void luft_target_grab(luft_target_t *target);
 void luft_target_ungrab(luft_target_t *target);
 void luft_target_add_dep(luft_target_t *target, luft_target_t *dep);
 void luft_target_add_state(luft_target_t *target, luft_state_t *state);
-void luft_target_clear_buf(luft_target_t *target, luft_colorbuf_t *buf);
+void luft_target_clear(luft_target_t *target, luft_colorbuf_t *buf);
 void luft_target_draw(luft_target_t *target, luft_draw_op_t *op);
 void luft_target_hit(luft_target_t *target);
 void luft_target_hit_other(luft_target_t *target, luft_target_t *other);

@@ -32,14 +32,14 @@ target_destructor(void *target_)
 		state_ungrab(target->states[i]);
 	for (i = 0; i < target->num_deps; i++)
 		target_ungrab(target->deps[i]);
-	for (i = 0; i < target->num_clear_bufs; i++)
-		colorbuf_ungrab(target->clear_bufs[i]);
 
 	for (i = 0; i < target->num_steps; i++) {
 		if (target->steps[i].type == TARGET_STEP_DRAW)
 			draw_op_ungrab(target->steps[i].draw_op);
 		else if (target->steps[i].type == TARGET_STEP_TARGET)
 			target_ungrab(target->steps[i].target);
+		else if (target->steps[i].type == TARGET_STEP_CLEAR)
+			colorbuf_ungrab(target->steps[i].cbuf);
 		else
 			errx(1, "Encountered target step with unknown type");
 	}
@@ -49,7 +49,6 @@ target_destructor(void *target_)
 
 	free(target->states);
 	free(target->deps);
-	free(target->clear_bufs);
 	free(target->steps);
 	object_ungrab(target->camera);
 	free(target);
@@ -141,15 +140,17 @@ EXPORT(target_hit_other);
  * satisfied, but before it runs its draw operations.
  **/
 void
-target_clear_buf(target_t *target, colorbuf_t *buf)
+target_clear(target_t *target, colorbuf_t *buf)
 {
-	target->clear_bufs = vec_expand(target->clear_bufs,
-					target->num_clear_bufs);
+	target->steps = vec_expand(target->steps, target->num_steps);
 
-	target->clear_bufs[target->num_clear_bufs++] = buf;
+	target->steps[target->num_steps].type = TARGET_STEP_CLEAR;
+	target->steps[target->num_steps].cbuf = buf;
+	target->num_steps++;
+
 	colorbuf_grab(buf);
 }
-EXPORT(target_clear_buf);
+EXPORT(target_clear);
 
 /**
  * Return whether a target is in an array of targets.
@@ -199,8 +200,10 @@ target_do_step(target_step_t *step)
 {
 	if (step->type == TARGET_STEP_DRAW)
 		draw_op_exec(step->draw_op);
-	if (step->type == TARGET_STEP_TARGET)
+	else if (step->type == TARGET_STEP_TARGET)
 		target_hit(step->target);
+	else if (step->type == TARGET_STEP_CLEAR)
+		colorbuf_clear(step->cbuf);
 	else
 		errx(1, "Encountered target step with unknown type");
 }
@@ -217,9 +220,6 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 	size_t k;
 
 	for (i = 0; i < num_targets; i++) {
-		for (k = 0; k < targets[i]->num_clear_bufs; k++)
-			colorbuf_clear(targets[i]->clear_bufs[k]);
-
 		if (targets[i]->base_state)
 			state_push(targets[i]->base_state);
 

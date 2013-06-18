@@ -33,6 +33,7 @@
 typedef enum target_step_type {
 	TARGET_STEP_DRAW,
 	TARGET_STEP_TARGET,
+	TARGET_STEP_CLEAR,
 } target_step_type_t;
 
 /**
@@ -44,6 +45,7 @@ typedef struct target_step {
 	union {
 		draw_op_t *draw_op;
 		struct target *target;
+		colorbuf_t *cbuf;
 	};
 } target_step_t;
 
@@ -53,7 +55,6 @@ typedef struct target_step {
  * deps, num_deps: Dependency list for a target.
  * base_state: State to push before the individual states.
  * states, num_states: States we need to pass through to hit this target.
- * clear_bufs, num_clear_bufs: Colorbufs to clear before running.
  * camera: Camera to draw from.
  * repeat: Times to repeat this target's deps.
  * refcount: Reference counter.
@@ -69,9 +70,6 @@ typedef struct target {
 
 	target_step_t *steps;
 	size_t num_steps;
-
-	colorbuf_t **clear_bufs;
-	size_t num_clear_bufs;
 
 	object_t *camera;
 
@@ -89,7 +87,7 @@ API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
 API_DECLARE(target_add_dep);
 API_DECLARE(target_add_state);
-API_DECLARE(target_clear_buf);
+API_DECLARE(target_clear);
 API_DECLARE(target_draw);
 API_DECLARE(target_hit);
 API_DECLARE(target_hit_other);
