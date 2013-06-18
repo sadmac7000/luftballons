@@ -32,15 +32,18 @@
  **/
 typedef enum target_step_type {
 	TARGET_STEP_DRAW,
+	TARGET_STEP_TARGET,
 } target_step_type_t;
 
 /**
  * A step to take in drawing this target.
  **/
+struct target;
 typedef struct target_step {
 	target_step_type_t type;
 	union {
 		draw_op_t *draw_op;
+		struct target *target;
 	};
 } target_step_t;
 
@@ -48,7 +51,6 @@ typedef struct target_step {
  * A rendering goal.
  *
  * deps, num_deps: Dependency list for a target.
- * seq_deps, num_seq_deps: Sequential dependency list for a target.
  * base_state: State to push before the individual states.
  * states, num_states: States we need to pass through to hit this target.
  * clear_bufs, num_clear_bufs: Colorbufs to clear before running.
@@ -59,9 +61,6 @@ typedef struct target_step {
 typedef struct target {
 	struct target **deps;
 	size_t num_deps;
-
-	struct target **seq_deps;
-	size_t num_seq_deps;
 
 	state_t *base_state;
 
@@ -89,11 +88,11 @@ API_DECLARE(target_create);
 API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
 API_DECLARE(target_add_dep);
-API_DECLARE(target_add_seq_dep);
 API_DECLARE(target_add_state);
 API_DECLARE(target_clear_buf);
 API_DECLARE(target_draw);
 API_DECLARE(target_hit);
+API_DECLARE(target_hit_other);
 
 #ifdef __cplusplus
 }

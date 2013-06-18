@@ -599,10 +599,10 @@ main(int argc, char **argv)
 	luft_state_ungrab(output_state);
 
 	output_target = luft_target_create(camera, NULL, 1);
-	luft_target_add_seq_dep(output_target, output_target_1);
-	luft_target_add_seq_dep(output_target, output_target_2);
-	luft_target_add_seq_dep(output_target, output_target_3);
-	luft_target_add_seq_dep(output_target, output_target_2);
+	luft_target_hit_other(output_target, output_target_1);
+	luft_target_hit_other(output_target, output_target_2);
+	luft_target_hit_other(output_target, output_target_3);
+	luft_target_hit_other(output_target, output_target_2);
 
 	glutMainLoop();
 	return 0;

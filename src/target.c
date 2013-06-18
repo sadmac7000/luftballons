@@ -32,14 +32,14 @@ target_destructor(void *target_)
 		state_ungrab(target->states[i]);
 	for (i = 0; i < target->num_deps; i++)
 		target_ungrab(target->deps[i]);
-	for (i = 0; i < target->num_seq_deps; i++)
-		target_ungrab(target->seq_deps[i]);
 	for (i = 0; i < target->num_clear_bufs; i++)
 		colorbuf_ungrab(target->clear_bufs[i]);
 
 	for (i = 0; i < target->num_steps; i++) {
 		if (target->steps[i].type == TARGET_STEP_DRAW)
 			draw_op_ungrab(target->steps[i].draw_op);
+		else if (target->steps[i].type == TARGET_STEP_TARGET)
+			target_ungrab(target->steps[i].target);
 		else
 			errx(1, "Encountered target step with unknown type");
 	}
@@ -49,7 +49,6 @@ target_destructor(void *target_)
 
 	free(target->states);
 	free(target->deps);
-	free(target->seq_deps);
 	free(target->clear_bufs);
 	free(target->steps);
 	object_ungrab(target->camera);
@@ -122,6 +121,22 @@ target_draw(target_t *target, draw_op_t *op)
 EXPORT(target_draw);
 
 /**
+ * Add another target to our list of steps.
+ **/
+void
+target_hit_other(target_t *target, target_t *other)
+{
+	target->steps = vec_expand(target->steps, target->num_steps);
+
+	target->steps[target->num_steps].type = TARGET_STEP_TARGET;
+	target->steps[target->num_steps].target = other;
+	target->num_steps++;
+
+	target_grab(other);
+}
+EXPORT(target_hit_other);
+
+/**
  * Set a colorbuf to be cleared by this target after its dependencies are
  * satisfied, but before it runs its draw operations.
  **/
@@ -165,20 +180,6 @@ target_add_dep(target_t *target, target_t *dep)
 EXPORT(target_add_dep);
 
 /**
- * Add a sequential dependency to a target. Sequential dependencies have their
- * subdependencies solved independently in their own space, and are always run
- * in exactly the order added.
- **/
-void
-target_add_seq_dep(target_t *target, target_t *dep)
-{
-	target_grab(dep);
-	target->seq_deps = vec_expand(target->seq_deps, target->num_seq_deps);
-	target->seq_deps[target->num_seq_deps++] = dep;
-}
-EXPORT(target_add_seq_dep);
-
-/**
  * Add a state that is passed through in order to hit a target.
  **/
 void
@@ -198,6 +199,8 @@ target_do_step(target_step_t *step)
 {
 	if (step->type == TARGET_STEP_DRAW)
 		draw_op_exec(step->draw_op);
+	if (step->type == TARGET_STEP_TARGET)
+		target_hit(step->target);
 	else
 		errx(1, "Encountered target step with unknown type");
 }
@@ -214,9 +217,6 @@ target_hit_all_nodep(target_t **targets, size_t num_targets)
 	size_t k;
 
 	for (i = 0; i < num_targets; i++) {
-		for (k = 0; k < targets[i]->num_seq_deps; k++)
-			target_hit(targets[i]->seq_deps[k]);
-
 		for (k = 0; k < targets[i]->num_clear_bufs; k++)
 			colorbuf_clear(targets[i]->clear_bufs[k]);
 
