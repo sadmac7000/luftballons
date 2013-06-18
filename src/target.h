@@ -52,17 +52,14 @@ typedef struct target_step {
 /**
  * A rendering goal.
  *
- * deps, num_deps: Dependency list for a target.
  * base_state: State to push before the individual states.
  * states, num_states: States we need to pass through to hit this target.
+ * steps, num_steps: Steps to perform to complete this target.
  * camera: Camera to draw from.
- * repeat: Times to repeat this target's deps.
+ * repeat: Times to repeat this target's steps.
  * refcount: Reference counter.
  **/
 typedef struct target {
-	struct target **deps;
-	size_t num_deps;
-
 	state_t *base_state;
 
 	state_t **states;
@@ -85,7 +82,6 @@ extern "C" {
 API_DECLARE(target_create);
 API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
-API_DECLARE(target_add_dep);
 API_DECLARE(target_add_state);
 API_DECLARE(target_clear);
 API_DECLARE(target_draw);

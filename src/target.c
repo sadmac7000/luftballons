@@ -30,8 +30,6 @@ target_destructor(void *target_)
 
 	for (i = 0; i < target->num_states; i++)
 		state_ungrab(target->states[i]);
-	for (i = 0; i < target->num_deps; i++)
-		target_ungrab(target->deps[i]);
 
 	for (i = 0; i < target->num_steps; i++) {
 		if (target->steps[i].type == TARGET_STEP_DRAW)
@@ -48,7 +46,6 @@ target_destructor(void *target_)
 		state_ungrab(target->base_state);
 
 	free(target->states);
-	free(target->deps);
 	free(target->steps);
 	object_ungrab(target->camera);
 	free(target);
@@ -153,34 +150,6 @@ target_clear(target_t *target, colorbuf_t *buf)
 EXPORT(target_clear);
 
 /**
- * Return whether a target is in an array of targets.
- **/
-static int
-target_in_list(target_t *target, target_t **list, size_t len)
-{
-	while (len--)
-		if (list[len] == target)
-			return 1;
-	return 0;
-}
-
-/**
- * Add a dependency to a target.
- **/
-void
-target_add_dep(target_t *target, target_t *dep)
-{
-	if (target_in_list(dep, target->deps, target->num_deps))
-		errx(1, "A target cannot depend on a target twice");
-
-	target_grab(dep);
-
-	target->deps = vec_expand(target->deps, target->num_deps);
-	target->deps[target->num_deps++] = dep;
-}
-EXPORT(target_add_dep);
-
-/**
  * Add a state that is passed through in order to hit a target.
  **/
 void
@@ -209,112 +178,30 @@ target_do_step(target_step_t *step)
 }
 
 /**
- * Hit all targets in a list. Assume their non-sequential
- * dependencies are satisfied.
- **/
-static void
-target_hit_all_nodep(target_t **targets, size_t num_targets)
-{
-	size_t i;
-	size_t j;
-	size_t k;
-
-	for (i = 0; i < num_targets; i++) {
-		if (targets[i]->base_state)
-			state_push(targets[i]->base_state);
-
-		for (k = 0; k < targets[i]->num_steps; k++)
-			target_do_step(&targets[i]->steps[k]);
-
-		for (j = 0; j < targets[i]->num_states; j++) {
-			draw_op_t *op = draw_op_create(targets[i]->states[j]->root,
-						       targets[i]->camera,
-						       targets[i]->states[j]);
-			if (! targets[i]->states[j]->root)
-				return;
-
-			draw_op_exec(op);
-			draw_op_ungrab(op);
-		}
-
-		if (targets[i]->base_state)
-			state_pop(targets[i]->base_state);
-	}
-}
-
-/**
- * Hit all targets in a queue of interdependent targets, in order.
- **/
-static void
-target_drain_queue(target_t **queue, size_t queue_len)
-{
-	target_t **ready = NULL;
-	size_t num_ready = 0;
-	size_t i;
-	size_t j;
-
-	while (queue_len) {
-		for (i = 0; i < queue_len; i++) {
-			for (j = 0; j < queue[i]->num_deps; j++)
-				if (target_in_list(queue[i]->deps[j], queue,
-						   queue_len))
-					break;
-
-			if (j < queue[i]->num_deps)
-				continue;
-
-			ready = vec_expand(ready, num_ready);
-			ready[num_ready++] = queue[i];
-		}
-
-		target_hit_all_nodep(ready, num_ready);
-
-		j = 0;
-		for (i = 0; i < queue_len; i++) {
-			queue[j] = queue[i];
-
-			if (! target_in_list(queue[j], ready, num_ready))
-				j++;
-		}
-
-		queue_len = j;
-		num_ready = 0;
-	}
-}
-
-/**
  * Hit this target exactly once.
  **/
 static void
 target_hit_once(target_t *target)
 {
-	target_t **queue = NULL;
-	size_t queue_len = 1;
 	size_t i;
-	size_t j;
+	draw_op_t *op;
+	state_t *state;
 
-	queue = vec_expand(queue, 0);
-	queue[0] = target;
+	if (target->base_state)
+		state_push(target->base_state);
 
-	/* Ok, I try to stick to simple arrays instead of interesting data
-	 * structures on account of most data sets are small and the low-level
-	 * performance is more significant than the time complexity, but
-	 * this... there's a distinct chance we've become ridiculous here.
-	 * So... FIXME.
-	 */
-	for (i = 0; i < queue_len; i++) {
-		for (j = 0; j < queue[i]->num_deps; j++) {
-			if (target_in_list(queue[i]->deps[j], queue,
-					   queue_len))
-				break;
+	for (i = 0; i < target->num_steps; i++)
+		target_do_step(&target->steps[i]);
 
-			queue = vec_expand(queue, queue_len);
-			queue[queue_len++] = queue[i]->deps[j];
-		}
+	for (i = 0; i < target->num_states; i++) {
+		state = target->states[i];
+		op = draw_op_create(state->root, target->camera, state);
+		draw_op_exec(op);
+		draw_op_ungrab(op);
 	}
 
-	target_drain_queue(queue, queue_len);
-	free(queue);
+	if (target->base_state)
+		state_pop(target->base_state);
 }
 
 /**
