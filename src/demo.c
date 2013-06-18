@@ -428,9 +428,9 @@ main(int argc, char **argv)
 	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
 	cube_state = luft_state_create(vcolor_shader);
-	luft_state_set_flags(cube_state, LUFT_STATE_DEPTH_TEST |
-			     LUFT_STATE_BF_CULL);
-	luft_state_set_blend(cube_state, LUFT_STATE_BLEND_NONE);
+	luft_state_set_flags(cube_state, LUFT_DEPTH_TEST |
+			     LUFT_BF_CULL);
+	luft_state_set_blend(cube_state, LUFT_BLEND_NONE);
 	luft_state_set_material(cube_state, 0);
 
 	canopy_state = luft_state_clone(cube_state);
@@ -441,18 +441,18 @@ main(int argc, char **argv)
 	luft_state_set_material(plane_state, 2);
 
 	gather_state = luft_state_create(gather_shader);
-	luft_state_set_flags(gather_state, LUFT_STATE_BF_CULL);
-	luft_state_clear_flags(gather_state, LUFT_STATE_DEPTH_TEST);
-	luft_state_set_blend(gather_state, LUFT_STATE_BLEND_ADDITIVE);
+	luft_state_set_flags(gather_state, LUFT_BF_CULL);
+	luft_state_clear_flags(gather_state, LUFT_DEPTH_TEST);
+	luft_state_set_blend(gather_state, LUFT_BLEND_ADDITIVE);
 	luft_state_set_material(gather_state, 3);
 	luft_state_set_colorbuf(gather_state, gather_cbuf);
 
 	luft_colorbuf_ungrab(gather_cbuf);
 
 	output_state = luft_state_create(output_shader);
-	luft_state_set_flags(output_state, LUFT_STATE_BF_CULL);
-	luft_state_clear_flags(output_state, LUFT_STATE_DEPTH_TEST);
-	luft_state_set_blend(output_state, LUFT_STATE_BLEND_REVERSE_ALPHA);
+	luft_state_set_flags(output_state, LUFT_BF_CULL);
+	luft_state_clear_flags(output_state, LUFT_DEPTH_TEST);
+	luft_state_set_blend(output_state, LUFT_BLEND_REVERSE_ALPHA);
 	luft_state_set_material(output_state, 0);
 
 	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);

@@ -24,17 +24,17 @@
 #include <luftballons/object.h>
 
 /* Enable depth testing in this state */
-#define LUFT_STATE_DEPTH_TEST		0x1
+#define LUFT_DEPTH_TEST		0x1
 /* Enable backface culling in this state */
-#define LUFT_STATE_BF_CULL		0x2
+#define LUFT_BF_CULL		0x2
 
 typedef enum {
-	LUFT_STATE_BLEND_DONTCARE,
-	LUFT_STATE_BLEND_NONE,
-	LUFT_STATE_BLEND_ALPHA,
-	LUFT_STATE_BLEND_REVERSE_ALPHA,
-	LUFT_STATE_BLEND_ADDITIVE,
-} luft_state_blend_mode_t;
+	LUFT_BLEND_DONTCARE,
+	LUFT_BLEND_NONE,
+	LUFT_BLEND_ALPHA,
+	LUFT_BLEND_REVERSE_ALPHA,
+	LUFT_BLEND_ADDITIVE,
+} luft_blend_mode_t;
 
 typedef struct state luft_state_t;
 
@@ -45,7 +45,7 @@ extern "C" {
 luft_state_t *luft_state_create(luft_shader_t *shader);
 void luft_state_set_shader(luft_state_t *state, luft_shader_t *shader);
 luft_state_t *luft_state_clone(luft_state_t *in);
-void luft_state_set_blend(luft_state_t *state, luft_state_blend_mode_t mode);
+void luft_state_set_blend(luft_state_t *state, luft_blend_mode_t mode);
 void luft_state_grab(luft_state_t *state);
 void luft_state_ungrab(luft_state_t *state);
 void luft_state_set_flags(luft_state_t *state, uint64_t flags);

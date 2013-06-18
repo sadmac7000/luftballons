@@ -26,16 +26,16 @@
 #include "object.h"
 
 /* Enable depth testing in this state */
-#define STATE_DEPTH_TEST	LUFT_STATE_DEPTH_TEST
+#define STATE_DEPTH_TEST	LUFT_DEPTH_TEST
 /* Enable backface culling in this state */
-#define STATE_BF_CULL		LUFT_STATE_BF_CULL
+#define STATE_BF_CULL		LUFT_BF_CULL
 
-typedef luft_state_blend_mode_t state_blend_mode_t;
-#define STATE_BLEND_DONTCARE		LUFT_STATE_BLEND_DONTCARE
-#define STATE_BLEND_NONE		LUFT_STATE_BLEND_NONE
-#define STATE_BLEND_ALPHA		LUFT_STATE_BLEND_ALPHA
-#define STATE_BLEND_REVERSE_ALPHA	LUFT_STATE_BLEND_REVERSE_ALPHA
-#define STATE_BLEND_ADDITIVE		LUFT_STATE_BLEND_ADDITIVE
+typedef luft_blend_mode_t state_blend_mode_t;
+#define STATE_BLEND_DONTCARE		LUFT_BLEND_DONTCARE
+#define STATE_BLEND_NONE		LUFT_BLEND_NONE
+#define STATE_BLEND_ALPHA		LUFT_BLEND_ALPHA
+#define STATE_BLEND_REVERSE_ALPHA	LUFT_BLEND_REVERSE_ALPHA
+#define STATE_BLEND_ADDITIVE		LUFT_BLEND_ADDITIVE
 
 /**
  * A bin of current misc. OpenGL state.
