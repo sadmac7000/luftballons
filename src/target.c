@@ -22,7 +22,7 @@
 /**
  * The destructor for a target_t
  **/
-void
+static void
 target_destructor(void *target_)
 {
 	target_t *target = target_;
