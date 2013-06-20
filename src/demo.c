@@ -394,6 +394,7 @@ main(int argc, char **argv)
 	luft_target_t *draw_target_1;
 	luft_target_t *draw_target_2;
 	luft_target_t *draw_target_3;
+	luft_target_t *draw_target_do;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
@@ -533,44 +534,43 @@ main(int argc, char **argv)
 	luft_state_set_colorbuf(draw_base_state_2, cbuf_b);
 	luft_state_set_colorbuf(draw_base_state_3, cbuf_a);
 
+	draw_target_do = luft_target_create(NULL, 1);
+	luft_target_clear(draw_target_do, gather_cbuf);
+	luft_target_draw_state(draw_target_do, cube_state, camera, root);
+	luft_target_draw_state(draw_target_do, canopy_state, camera, root);
+	luft_target_draw_state(draw_target_do, plane_state, camera, root);
+
 	draw_target_1 = luft_target_create(draw_base_state_1, 1);
 	luft_target_clear(draw_target_1, cbuf_a);
-	luft_target_draw_state(draw_target_1, cube_state, camera, root);
-	luft_target_draw_state(draw_target_1, canopy_state, camera, root);
-	luft_target_draw_state(draw_target_1, plane_state, camera, root);
+	luft_target_hit_other(draw_target_1, draw_target_do);
 
 	draw_target_2 = luft_target_create(draw_base_state_2, 1);
 	luft_target_clear(draw_target_2, cbuf_b);
-	luft_target_draw_state(draw_target_2, cube_state, camera, root);
-	luft_target_draw_state(draw_target_2, canopy_state, camera, root);
-	luft_target_draw_state(draw_target_2, plane_state, camera, root);
+	luft_target_hit_other(draw_target_2, draw_target_do);
 
 	draw_target_3 = luft_target_create(draw_base_state_3, 1);
 	luft_target_clear(draw_target_3, cbuf_a);
-	luft_target_draw_state(draw_target_3, cube_state, camera, root);
-	luft_target_draw_state(draw_target_3, canopy_state, camera, root);
-	luft_target_draw_state(draw_target_3, plane_state, camera, root);
+	luft_target_hit_other(draw_target_3, draw_target_do);
+
+	luft_target_ungrab(draw_target_do);
 
 	luft_state_ungrab(cube_state);
 	luft_state_ungrab(canopy_state);
 	luft_state_ungrab(plane_state);
 
 	gather_target_1 = luft_target_create(NULL, 1);
-	luft_target_clear(gather_target_1, gather_cbuf);
 	luft_target_hit_other(gather_target_1, draw_target_1);
 	luft_target_draw_state(gather_target_1, gather_state, camera, root);
 	luft_target_draw_state(gather_target_1, output_state, camera,
 			       output_light);
 
 	gather_target_2 = luft_target_create(NULL, 1);
-	luft_target_clear(gather_target_2, gather_cbuf);
 	luft_target_hit_other(gather_target_2, draw_target_2);
 	luft_target_draw_state(gather_target_2, gather_state, camera, root);
 	luft_target_draw_state(gather_target_2, output_state, camera,
 			       output_light);
 
 	gather_target_3 = luft_target_create(NULL, 1);
-	luft_target_clear(gather_target_3, gather_cbuf);
 	luft_target_hit_other(gather_target_3, draw_target_3);
 	luft_target_draw_state(gather_target_3, gather_state, camera, root);
 	luft_target_draw_state(gather_target_3, output_state, camera,
