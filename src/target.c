@@ -15,9 +15,12 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
+#include <stdarg.h>
+
 #include "target.h"
 #include "util.h"
 #include "draw_op.h"
+#include "uniform.h"
 
 /**
  * The destructor for a target_t
@@ -201,3 +204,109 @@ target_hit(target_t *target)
 		target_hit_once(target);
 }
 EXPORT(target_hit);
+
+/**
+ * Ensure this target has a base state.
+ **/
+static void
+target_init_state(target_t *target)
+{
+	if (! target->base_state)
+		target->base_state = state_create(NULL);
+}
+
+/**
+ * Set a shader to use for this target when not overriden.
+ **/
+void
+target_set_shader(target_t *target, shader_t *shader)
+{
+	target_init_state(target);
+	state_set_shader(target->base_state, shader);
+}
+EXPORT(target_set_shader);
+
+/**
+ * Set a blend mode for this target.
+ **/
+void
+target_set_blend(target_t *target, state_blend_mode_t mode)
+{
+	target_init_state(target);
+	state_set_blend(target->base_state, mode);
+}
+EXPORT(target_set_blend);
+
+/**
+ * Set flags this target would like to be enabled.
+ **/
+void
+target_set_flags(target_t *target, uint64_t flags)
+{
+	target_init_state(target);
+	state_set_flags(target->base_state, flags);
+}
+EXPORT(target_set_flags);
+
+/**
+ * Set flags this target would like disabled.
+ **/
+void
+target_clear_flags(target_t *target, uint64_t flags)
+{
+	target_init_state(target);
+	state_clear_flags(target->base_state, flags);
+}
+EXPORT(target_clear_flags);
+
+/**
+ * Set flags this target doesn't care about.
+ **/
+void
+target_ignore_flags(target_t *target, uint64_t flags)
+{
+	target_init_state(target);
+	state_ignore_flags(target->base_state, flags);
+}
+EXPORT(target_ignore_flags);
+
+/**
+ * Set the colorbuf for this target.
+ **/
+void
+target_set_colorbuf(target_t *target, colorbuf_t *colorbuf)
+{
+	target_init_state(target);
+	state_set_colorbuf(target->base_state, colorbuf);
+}
+EXPORT(target_set_colorbuf);
+
+/**
+ * Set a uniform for this target.
+ **/
+void
+target_set_uniform(target_t *target, uniform_type_t type, ...)
+{
+	va_list ap;
+	uniform_t *uniform;
+
+	va_start(ap, type);
+	uniform = uniform_vcreate(type, ap);
+	va_end(ap);
+
+	target_init_state(target);
+	state_set_uniform(target->base_state, LUFT_UNIFORM_CLONE, uniform);
+	uniform_ungrab(uniform);
+}
+EXPORT(target_set_uniform);
+
+/**
+ * Set the material to draw for this target.
+ **/
+void
+target_set_material(target_t *target, int mat_id)
+{
+	target_init_state(target);
+	state_set_material(target->base_state, mat_id);
+}
+EXPORT(target_set_material);

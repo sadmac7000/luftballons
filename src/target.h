@@ -25,6 +25,7 @@
 #include "util.h"
 #include "colorbuf.h"
 #include "draw_op.h"
+#include "shader.h"
 
 
 /**
@@ -80,6 +81,14 @@ API_DECLARE(target_clear);
 API_DECLARE(target_draw);
 API_DECLARE(target_hit);
 API_DECLARE(target_hit_other);
+API_DECLARE(target_set_shader);
+API_DECLARE(target_set_blend);
+API_DECLARE(target_set_flags);
+API_DECLARE(target_clear_flags);
+API_DECLARE(target_ignore_flags);
+API_DECLARE(target_set_colorbuf);
+API_DECLARE(target_set_uniform);
+API_DECLARE(target_set_material);
 
 #ifdef __cplusplus
 }

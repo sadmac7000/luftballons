@@ -22,6 +22,7 @@
 #include <luftballons/object.h>
 #include <luftballons/colorbuf.h>
 #include <luftballons/draw_op.h>
+#include <luftballons/shader.h>
 
 typedef struct target luft_target_t;
 
@@ -38,7 +39,15 @@ void luft_target_clear(luft_target_t *target, luft_colorbuf_t *buf);
 void luft_target_draw(luft_target_t *target, luft_draw_op_t *op);
 void luft_target_hit(luft_target_t *target);
 void luft_target_hit_other(luft_target_t *target, luft_target_t *other);
-
+void luft_target_set_shader(luft_target_t *target, luft_shader_t *shader);
+void luft_target_set_blend(luft_target_t *target, luft_blend_mode_t mode);
+void luft_target_set_flags(luft_target_t *target, uint64_t flags);
+void luft_target_clear_flags(luft_target_t *target, uint64_t flags);
+void luft_target_ignore_flags(luft_target_t *target, uint64_t flags);
+void luft_target_set_colorbuf(luft_target_t *target, luft_colorbuf_t *colorbuf);
+void luft_target_set_uniform(luft_target_t *target, luft_uniform_type_t type,
+			      ...);
+void luft_target_set_material(luft_target_t *target, int mat_id);
 #ifdef __cplusplus
 }
 #endif
