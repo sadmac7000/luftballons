@@ -30,7 +30,7 @@ typedef struct target luft_target_t;
 extern "C" {
 #endif
 
-luft_target_t *luft_target_create(luft_state_t *base, size_t repeat);
+luft_target_t *luft_target_create(size_t repeat);
 void luft_target_grab(luft_target_t *target);
 void luft_target_ungrab(luft_target_t *target);
 void luft_target_draw_state(luft_target_t *target, luft_state_t *state,

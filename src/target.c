@@ -52,18 +52,12 @@ target_destructor(void *target_)
 /**
  * Create a new target.
  *
- * base: The base state for this target.
  * repeat: Repeat count for this target.
  **/
 target_t *
-target_create(state_t *base, size_t repeat)
+target_create(size_t repeat)
 {
 	target_t *ret = xcalloc(1, sizeof(target_t));
-
-	ret->base_state = base;
-
-	if (base)
-		state_grab(base);
 
 	ret->repeat = repeat;
 
