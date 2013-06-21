@@ -56,18 +56,15 @@ luft_texmap_t *position_texmap;
 luft_texmap_t *depth_texmap_a;
 luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
-luft_target_t *gather_target_1;
-luft_target_t *gather_target_2;
-luft_target_t *gather_target_3;
 luft_target_t *output_target;
 luft_state_t *cube_state;
 luft_state_t *plane_state;
 luft_state_t *canopy_state;
 luft_state_t *gather_state;
 luft_state_t *output_state;
-luft_state_t *draw_base_state_1;
-luft_state_t *draw_base_state_2;
-luft_state_t *draw_base_state_3;
+luft_target_t *draw_target_1;
+luft_target_t *draw_target_2;
+luft_target_t *draw_target_3;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -132,9 +129,9 @@ handle_reshape(void)
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
-	luft_state_set_uniform(draw_base_state_2, LUFT_UNIFORM_TEXMAP,
+	luft_target_set_uniform(draw_target_2, LUFT_UNIFORM_TEXMAP,
 			       "last_depth", depth_texmap_a);
-	luft_state_set_uniform(draw_base_state_3, LUFT_UNIFORM_TEXMAP,
+	luft_target_set_uniform(draw_target_3, LUFT_UNIFORM_TEXMAP,
 			       "last_depth", depth_texmap_b);
 
 	luft_texmap_ungrab(normal_texmap);
@@ -391,10 +388,10 @@ main(int argc, char **argv)
 	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
-	luft_target_t *draw_target_1;
-	luft_target_t *draw_target_2;
-	luft_target_t *draw_target_3;
 	luft_target_t *draw_target_do;
+	luft_target_t *gather_target_1;
+	luft_target_t *gather_target_2;
+	luft_target_t *gather_target_3;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
@@ -519,36 +516,33 @@ main(int argc, char **argv)
 	luft_camera_set_aspect(camera, aspect);
 	luft_quat_init(&cam_rot, 0,1,0,0);
 
-	draw_base_state_1 = luft_state_create(NULL);
-	draw_base_state_2 = luft_state_create(NULL);
-	draw_base_state_3 = luft_state_create(NULL);
-
-	luft_state_set_uniform(draw_base_state_1,
-			       LUFT_UNIFORM_UINT, "last_depth_valid", 0);
-	luft_state_set_uniform(draw_base_state_2,
-			       LUFT_UNIFORM_UINT, "last_depth_valid", 1);
-	luft_state_set_uniform(draw_base_state_3,
-			       LUFT_UNIFORM_UINT, "last_depth_valid", 1);
-
-	luft_state_set_colorbuf(draw_base_state_1, cbuf_a);
-	luft_state_set_colorbuf(draw_base_state_2, cbuf_b);
-	luft_state_set_colorbuf(draw_base_state_3, cbuf_a);
-
 	draw_target_do = luft_target_create(NULL, 1);
 	luft_target_clear(draw_target_do, gather_cbuf);
 	luft_target_draw_state(draw_target_do, cube_state, camera, root);
 	luft_target_draw_state(draw_target_do, canopy_state, camera, root);
 	luft_target_draw_state(draw_target_do, plane_state, camera, root);
 
-	draw_target_1 = luft_target_create(draw_base_state_1, 1);
+	draw_target_1 = luft_target_create(NULL, 1);
+	luft_target_set_uniform(draw_target_1, LUFT_UNIFORM_UINT,
+				"last_depth_valid", 0);
+	luft_target_set_colorbuf(draw_target_1, cbuf_a);
+
 	luft_target_clear(draw_target_1, cbuf_a);
 	luft_target_hit_other(draw_target_1, draw_target_do);
 
-	draw_target_2 = luft_target_create(draw_base_state_2, 1);
+	draw_target_2 = luft_target_create(NULL, 1);
+	luft_target_set_uniform(draw_target_2, LUFT_UNIFORM_UINT,
+				"last_depth_valid", 1);
+	luft_target_set_colorbuf(draw_target_2, cbuf_b);
+
 	luft_target_clear(draw_target_2, cbuf_b);
 	luft_target_hit_other(draw_target_2, draw_target_do);
 
-	draw_target_3 = luft_target_create(draw_base_state_3, 1);
+	draw_target_3 = luft_target_create(NULL, 1);
+	luft_target_set_uniform(draw_target_3, LUFT_UNIFORM_UINT,
+				"last_depth_valid", 1);
+	luft_target_set_colorbuf(draw_target_3, cbuf_a);
+
 	luft_target_clear(draw_target_3, cbuf_a);
 	luft_target_hit_other(draw_target_3, draw_target_do);
 
