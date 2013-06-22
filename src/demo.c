@@ -57,15 +57,10 @@ luft_texmap_t *depth_texmap_a;
 luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
 luft_target_t *output_target;
-luft_state_t *cube_state;
 luft_draw_op_t *cube_op;
-luft_state_t *plane_state;
 luft_draw_op_t *plane_op;
-luft_state_t *canopy_state;
 luft_draw_op_t *canopy_op;
-luft_state_t *gather_state;
 luft_draw_op_t *gather_op;
-luft_state_t *output_state;
 luft_draw_op_t *output_op;
 luft_target_t *draw_target_1;
 luft_target_t *draw_target_2;
@@ -143,17 +138,17 @@ handle_reshape(void)
 	luft_texmap_ungrab(position_texmap);
 	luft_texmap_ungrab(diffuse_texmap);
 
-	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
-			       "normal_buf", normal_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_UNIFORM_TEXMAP,
+				 "normal_buf", normal_texmap);
 
-	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
-			       "position_buf", position_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_UNIFORM_TEXMAP,
+				 "position_buf", position_texmap);
 
-	luft_state_set_uniform(gather_state, LUFT_UNIFORM_TEXMAP,
-			       "diffuse_buf", diffuse_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_UNIFORM_TEXMAP,
+				 "diffuse_buf", diffuse_texmap);
 
-	luft_state_set_uniform(output_state, LUFT_UNIFORM_TEXMAP,
-			       "in_buf", gather_texmap);
+	luft_draw_op_set_uniform(output_op, LUFT_UNIFORM_TEXMAP,
+				 "in_buf", gather_texmap);
 }
 
 float
@@ -437,39 +432,42 @@ main(int argc, char **argv)
 	gather_shader = luft_shader_create("vertex_quad.glsl", "fragment_lighting.glsl");
 	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
-	cube_state = luft_state_create(vcolor_shader);
-	cube_op = luft_draw_op_create(root, camera, cube_state);
+	cube_op = luft_draw_op_create(root, camera, NULL);
+	luft_draw_op_set_shader(cube_op, vcolor_shader);
+	luft_draw_op_set_flags(cube_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
+	luft_draw_op_set_blend(cube_op, LUFT_BLEND_NONE);
+	luft_draw_op_set_material(cube_op, 0);
 
-	luft_state_set_flags(cube_state, LUFT_DEPTH_TEST |
-			     LUFT_BF_CULL);
-	luft_state_set_blend(cube_state, LUFT_BLEND_NONE);
-	luft_state_set_material(cube_state, 0);
+	canopy_op = luft_draw_op_create(root, camera, NULL);
+	luft_draw_op_set_flags(canopy_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
+	luft_draw_op_set_blend(canopy_op, LUFT_BLEND_NONE);
+	luft_draw_op_set_material(canopy_op, 0);
+	luft_draw_op_set_shader(canopy_op, textured_shader);
+	luft_draw_op_set_material(canopy_op, 1);
 
-	canopy_state = luft_state_clone(cube_state);
-	canopy_op = luft_draw_op_create(root, camera, canopy_state);
-	luft_state_set_shader(canopy_state, textured_shader);
-	luft_state_set_material(canopy_state, 1);
+	plane_op = luft_draw_op_create(root, camera, NULL);
+	luft_draw_op_set_flags(plane_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
+	luft_draw_op_set_blend(plane_op, LUFT_BLEND_NONE);
+	luft_draw_op_set_material(plane_op, 0);
+	luft_draw_op_set_shader(plane_op, textured_shader);
+	luft_draw_op_set_material(plane_op, 2);
 
-	plane_state = luft_state_clone(canopy_state);
-	plane_op = luft_draw_op_create(root, camera, plane_state);
-	luft_state_set_material(plane_state, 2);
-
-	gather_state = luft_state_create(gather_shader);
-	gather_op = luft_draw_op_create(root, camera, gather_state);
-	luft_state_set_flags(gather_state, LUFT_BF_CULL);
-	luft_state_clear_flags(gather_state, LUFT_DEPTH_TEST);
-	luft_state_set_blend(gather_state, LUFT_BLEND_ADDITIVE);
-	luft_state_set_material(gather_state, 3);
-	luft_state_set_colorbuf(gather_state, gather_cbuf);
+	gather_op = luft_draw_op_create(root, camera, NULL);
+	luft_draw_op_set_shader(gather_op, gather_shader);
+	luft_draw_op_set_flags(gather_op, LUFT_BF_CULL);
+	luft_draw_op_clear_flags(gather_op, LUFT_DEPTH_TEST);
+	luft_draw_op_set_blend(gather_op, LUFT_BLEND_ADDITIVE);
+	luft_draw_op_set_material(gather_op, 3);
+	luft_draw_op_set_colorbuf(gather_op, gather_cbuf);
 
 	luft_colorbuf_ungrab(gather_cbuf);
 
-	output_state = luft_state_create(output_shader);
-	output_op = luft_draw_op_create(output_light, camera, output_state);
-	luft_state_set_flags(output_state, LUFT_BF_CULL);
-	luft_state_clear_flags(output_state, LUFT_DEPTH_TEST);
-	luft_state_set_blend(output_state, LUFT_BLEND_REVERSE_ALPHA);
-	luft_state_set_material(output_state, 0);
+	output_op = luft_draw_op_create(output_light, camera, NULL);
+	luft_draw_op_set_shader(output_op, output_shader);
+	luft_draw_op_set_flags(output_op, LUFT_BF_CULL);
+	luft_draw_op_clear_flags(output_op, LUFT_DEPTH_TEST);
+	luft_draw_op_set_blend(output_op, LUFT_BLEND_REVERSE_ALPHA);
+	luft_draw_op_set_material(output_op, 0);
 
 	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 	plane_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
@@ -480,8 +478,8 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(canopy_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(canopy_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	luft_state_set_uniform(canopy_state, LUFT_UNIFORM_TEXMAP,
-			       "diffusemap", canopy_map);
+	luft_draw_op_set_uniform(canopy_op, LUFT_UNIFORM_TEXMAP,
+				 "diffusemap", canopy_map);
 	luft_texmap_ungrab(canopy_map);
 
 	luft_texmap_load_image(plane_map, "../ref_models/P51_Mustang.tif", 0);
@@ -490,8 +488,8 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(plane_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(plane_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	luft_state_set_uniform(plane_state, LUFT_UNIFORM_TEXMAP,
-			       "diffusemap", plane_map);
+	luft_draw_op_set_uniform(plane_op, LUFT_UNIFORM_TEXMAP,
+				 "diffusemap", plane_map);
 	luft_texmap_ungrab(plane_map);
 
 	cube_center = luft_object_create(root);
@@ -559,10 +557,6 @@ main(int argc, char **argv)
 
 	luft_target_ungrab(draw_target_do);
 
-	luft_state_ungrab(cube_state);
-	luft_state_ungrab(canopy_state);
-	luft_state_ungrab(plane_state);
-
 	gather_target_1 = luft_target_create(1);
 	luft_target_hit_other(gather_target_1, draw_target_1);
 	luft_target_draw(gather_target_1, gather_op);
@@ -578,16 +572,12 @@ main(int argc, char **argv)
 	luft_target_draw(gather_target_3, gather_op);
 	luft_target_draw(gather_target_3, output_op);
 
-	luft_state_ungrab(gather_state);
-
 	output_target = luft_target_create(1);
 	luft_target_clear(output_target, NULL);
 	luft_target_hit_other(output_target, gather_target_1);
 	luft_target_hit_other(output_target, gather_target_2);
 	luft_target_hit_other(output_target, gather_target_3);
 	luft_target_hit_other(output_target, gather_target_2);
-
-	luft_state_ungrab(output_state);
 
 	glutMainLoop();
 	return 0;
