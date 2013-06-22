@@ -76,7 +76,6 @@ extern "C" {
 API_DECLARE(target_create);
 API_DECLARE(target_grab);
 API_DECLARE(target_ungrab);
-API_DECLARE(target_draw_state);
 API_DECLARE(target_clear);
 API_DECLARE(target_draw);
 API_DECLARE(target_hit);

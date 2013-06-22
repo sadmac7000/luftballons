@@ -138,20 +138,6 @@ target_clear(target_t *target, colorbuf_t *buf)
 EXPORT(target_clear);
 
 /**
- * Add a state that is passed through in order to hit a target.
- **/
-void
-target_draw_state(target_t *target, state_t *state,
-		  object_t *camera, object_t *root)
-{
-	draw_op_t *op = draw_op_create(root, camera, state);
-
-	target_draw(target, op);
-	draw_op_ungrab(op);
-}
-EXPORT(target_draw_state);
-
-/**
  * Perform one step of a target.
  **/
 static void

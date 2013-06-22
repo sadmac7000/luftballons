@@ -58,10 +58,15 @@ luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
 luft_target_t *output_target;
 luft_state_t *cube_state;
+luft_draw_op_t *cube_op;
 luft_state_t *plane_state;
+luft_draw_op_t *plane_op;
 luft_state_t *canopy_state;
+luft_draw_op_t *canopy_op;
 luft_state_t *gather_state;
+luft_draw_op_t *gather_op;
 luft_state_t *output_state;
+luft_draw_op_t *output_op;
 luft_target_t *draw_target_1;
 luft_target_t *draw_target_2;
 luft_target_t *draw_target_3;
@@ -399,6 +404,16 @@ main(int argc, char **argv)
 	float light_offset_2[4] = { 0.0, 2.0, 0.0, 1.0 };
 
 	init_glut(argc, argv, clear_color);
+	root = luft_object_create(NULL);
+
+	camera = luft_object_create(root);
+	luft_object_make_camera(camera, 45, .01, 3000.0);
+	luft_camera_set_aspect(camera, aspect);
+	luft_quat_init(&cam_rot, 0,1,0,0);
+
+	output_light = luft_object_create(NULL);
+	luft_object_make_light(output_light, light_color_2);
+	luft_object_set_material(output_light, 0);
 
 	cbuf_a = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
 				      LUFT_COLORBUF_CLEAR_DEPTH |
@@ -423,19 +438,24 @@ main(int argc, char **argv)
 	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
 	cube_state = luft_state_create(vcolor_shader);
+	cube_op = luft_draw_op_create(root, camera, cube_state);
+
 	luft_state_set_flags(cube_state, LUFT_DEPTH_TEST |
 			     LUFT_BF_CULL);
 	luft_state_set_blend(cube_state, LUFT_BLEND_NONE);
 	luft_state_set_material(cube_state, 0);
 
 	canopy_state = luft_state_clone(cube_state);
+	canopy_op = luft_draw_op_create(root, camera, canopy_state);
 	luft_state_set_shader(canopy_state, textured_shader);
 	luft_state_set_material(canopy_state, 1);
 
 	plane_state = luft_state_clone(canopy_state);
+	plane_op = luft_draw_op_create(root, camera, plane_state);
 	luft_state_set_material(plane_state, 2);
 
 	gather_state = luft_state_create(gather_shader);
+	gather_op = luft_draw_op_create(root, camera, gather_state);
 	luft_state_set_flags(gather_state, LUFT_BF_CULL);
 	luft_state_clear_flags(gather_state, LUFT_DEPTH_TEST);
 	luft_state_set_blend(gather_state, LUFT_BLEND_ADDITIVE);
@@ -445,6 +465,7 @@ main(int argc, char **argv)
 	luft_colorbuf_ungrab(gather_cbuf);
 
 	output_state = luft_state_create(output_shader);
+	output_op = luft_draw_op_create(output_light, camera, output_state);
 	luft_state_set_flags(output_state, LUFT_BF_CULL);
 	luft_state_clear_flags(output_state, LUFT_DEPTH_TEST);
 	luft_state_set_blend(output_state, LUFT_BLEND_REVERSE_ALPHA);
@@ -473,12 +494,7 @@ main(int argc, char **argv)
 			       "diffusemap", plane_map);
 	luft_texmap_ungrab(plane_map);
 
-	root = luft_object_create(NULL);
 	cube_center = luft_object_create(root);
-
-	output_light = luft_object_create(NULL);
-	luft_object_make_light(output_light, light_color_2);
-	luft_object_set_material(output_light, 0);
 
 	items = luft_dae_load("../ref_models/vcolor_cube_small.dae",
 			      &dae_mesh_count);
@@ -511,16 +527,11 @@ main(int argc, char **argv)
 	luft_object_move(light_2, light_offset_2);
 	luft_object_set_material(light_2, 3);
 
-	camera = luft_object_create(root);
-	luft_object_make_camera(camera, 45, .01, 3000.0);
-	luft_camera_set_aspect(camera, aspect);
-	luft_quat_init(&cam_rot, 0,1,0,0);
-
 	draw_target_do = luft_target_create(1);
 	luft_target_clear(draw_target_do, gather_cbuf);
-	luft_target_draw_state(draw_target_do, cube_state, camera, root);
-	luft_target_draw_state(draw_target_do, canopy_state, camera, root);
-	luft_target_draw_state(draw_target_do, plane_state, camera, root);
+	luft_target_draw(draw_target_do, cube_op);
+	luft_target_draw(draw_target_do, canopy_op);
+	luft_target_draw(draw_target_do, plane_op);
 
 	draw_target_1 = luft_target_create(1);
 	luft_target_set_uniform(draw_target_1, LUFT_UNIFORM_UINT,
@@ -554,21 +565,18 @@ main(int argc, char **argv)
 
 	gather_target_1 = luft_target_create(1);
 	luft_target_hit_other(gather_target_1, draw_target_1);
-	luft_target_draw_state(gather_target_1, gather_state, camera, root);
-	luft_target_draw_state(gather_target_1, output_state, camera,
-			       output_light);
+	luft_target_draw(gather_target_1, gather_op);
+	luft_target_draw(gather_target_1, output_op);
 
 	gather_target_2 = luft_target_create(1);
 	luft_target_hit_other(gather_target_2, draw_target_2);
-	luft_target_draw_state(gather_target_2, gather_state, camera, root);
-	luft_target_draw_state(gather_target_2, output_state, camera,
-			       output_light);
+	luft_target_draw(gather_target_2, gather_op);
+	luft_target_draw(gather_target_2, output_op);
 
 	gather_target_3 = luft_target_create(1);
 	luft_target_hit_other(gather_target_3, draw_target_3);
-	luft_target_draw_state(gather_target_3, gather_state, camera, root);
-	luft_target_draw_state(gather_target_3, output_state, camera,
-			       output_light);
+	luft_target_draw(gather_target_3, gather_op);
+	luft_target_draw(gather_target_3, output_op);
 
 	luft_state_ungrab(gather_state);
 
