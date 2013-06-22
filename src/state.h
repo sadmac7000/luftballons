@@ -64,23 +64,24 @@ typedef struct state {
 extern "C" {
 #endif
 
-API_DECLARE(state_create);
-API_DECLARE(state_set_shader);
-API_DECLARE(state_clone);
-API_DECLARE(state_grab);
-API_DECLARE(state_ungrab);
-API_DECLARE(state_set_flags);
-API_DECLARE(state_clear_flags);
-API_DECLARE(state_ignore_flags);
-API_DECLARE(state_set_colorbuf);
-API_DECLARE(state_set_uniform);
-API_DECLARE(state_set_material);
-API_DECLARE(state_max_colorbufs);
-API_DECLARE(state_set_blend);
-
 int state_material_active(int mat_id);
 void state_push(state_t *state);
 void state_pop(state_t *state);
+state_t *state_create(shader_t *shader);
+void state_set_shader(state_t *state, shader_t *shader);
+state_t *state_clone(state_t *in);
+void state_set_blend(state_t *state, state_blend_mode_t mode);
+void state_grab(state_t *state);
+void state_ungrab(state_t *state);
+void state_set_flags(state_t *state, uint64_t flags);
+void state_clear_flags(state_t *state, uint64_t flags);
+void state_ignore_flags(state_t *state, uint64_t flags);
+void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
+void state_set_uniform(state_t *state, uniform_type_t type,
+			    ...);
+void state_set_material(state_t *state, int mat_id);
+size_t state_max_colorbufs(void);
+
 
 #ifdef __cplusplus
 }

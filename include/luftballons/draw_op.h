@@ -20,6 +20,9 @@
 
 #include <luftballons/object.h>
 #include <luftballons/state.h>
+#include <luftballons/shader.h>
+#include <luftballons/uniform.h>
+#include <luftballons/colorbuf.h>
 
 typedef struct draw_op luft_draw_op_t;
 
@@ -28,8 +31,7 @@ extern "C" {
 #endif
 
 luft_draw_op_t *luft_draw_op_create(luft_object_t *object,
-				    luft_object_t *camera,
-				    luft_state_t *state);
+				    luft_object_t *camera);
 void luft_draw_op_set_shader(luft_draw_op_t *op, luft_shader_t *shader);
 void luft_draw_op_set_blend(luft_draw_op_t *op, luft_blend_mode_t mode);
 void luft_draw_op_set_flags(luft_draw_op_t *op, uint64_t flags);

@@ -34,7 +34,6 @@
 #include <luftballons/uniform.h>
 #include <luftballons/texmap.h>
 #include <luftballons/colorbuf.h>
-#include <luftballons/state.h>
 #include <luftballons/quat.h>
 #include <luftballons/matrix.h>
 #include <luftballons/object.h>
@@ -432,27 +431,27 @@ main(int argc, char **argv)
 	gather_shader = luft_shader_create("vertex_quad.glsl", "fragment_lighting.glsl");
 	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
-	cube_op = luft_draw_op_create(root, camera, NULL);
+	cube_op = luft_draw_op_create(root, camera);
 	luft_draw_op_set_shader(cube_op, vcolor_shader);
 	luft_draw_op_set_flags(cube_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
 	luft_draw_op_set_blend(cube_op, LUFT_BLEND_NONE);
 	luft_draw_op_set_material(cube_op, 0);
 
-	canopy_op = luft_draw_op_create(root, camera, NULL);
+	canopy_op = luft_draw_op_create(root, camera);
 	luft_draw_op_set_flags(canopy_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
 	luft_draw_op_set_blend(canopy_op, LUFT_BLEND_NONE);
 	luft_draw_op_set_material(canopy_op, 0);
 	luft_draw_op_set_shader(canopy_op, textured_shader);
 	luft_draw_op_set_material(canopy_op, 1);
 
-	plane_op = luft_draw_op_create(root, camera, NULL);
+	plane_op = luft_draw_op_create(root, camera);
 	luft_draw_op_set_flags(plane_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
 	luft_draw_op_set_blend(plane_op, LUFT_BLEND_NONE);
 	luft_draw_op_set_material(plane_op, 0);
 	luft_draw_op_set_shader(plane_op, textured_shader);
 	luft_draw_op_set_material(plane_op, 2);
 
-	gather_op = luft_draw_op_create(root, camera, NULL);
+	gather_op = luft_draw_op_create(root, camera);
 	luft_draw_op_set_shader(gather_op, gather_shader);
 	luft_draw_op_set_flags(gather_op, LUFT_BF_CULL);
 	luft_draw_op_clear_flags(gather_op, LUFT_DEPTH_TEST);
@@ -462,7 +461,7 @@ main(int argc, char **argv)
 
 	luft_colorbuf_ungrab(gather_cbuf);
 
-	output_op = luft_draw_op_create(output_light, camera, NULL);
+	output_op = luft_draw_op_create(output_light, camera);
 	luft_draw_op_set_shader(output_op, output_shader);
 	luft_draw_op_set_flags(output_op, LUFT_BF_CULL);
 	luft_draw_op_clear_flags(output_op, LUFT_DEPTH_TEST);

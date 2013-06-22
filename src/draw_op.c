@@ -48,7 +48,7 @@ draw_op_destructor(void *op_)
  * Create a new draw operation.
  **/
 draw_op_t *
-draw_op_create(object_t *object, object_t *camera, state_t *state)
+draw_op_create(object_t *object, object_t *camera)
 {
 	draw_op_t *ret = xcalloc(1, sizeof(draw_op_t));
 
@@ -57,10 +57,6 @@ draw_op_create(object_t *object, object_t *camera, state_t *state)
 
 	ret->object = object;
 	ret->camera = camera;
-	ret->state = state;
-
-	if (state)
-		state_grab(state);
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, draw_op_destructor, ret);

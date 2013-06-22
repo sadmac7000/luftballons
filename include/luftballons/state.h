@@ -18,11 +18,6 @@
 #ifndef LUFTBALLONS_STATE_H
 #define LUFTBALLONS_STATE_H
 
-#include <luftballons/texmap.h>
-#include <luftballons/shader.h>
-#include <luftballons/colorbuf.h>
-#include <luftballons/object.h>
-
 /* Enable depth testing in this state */
 #define LUFT_DEPTH_TEST		0x1
 /* Enable backface culling in this state */
@@ -36,26 +31,9 @@ typedef enum {
 	LUFT_BLEND_ADDITIVE,
 } luft_blend_mode_t;
 
-typedef struct state luft_state_t;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-luft_state_t *luft_state_create(luft_shader_t *shader);
-void luft_state_set_shader(luft_state_t *state, luft_shader_t *shader);
-luft_state_t *luft_state_clone(luft_state_t *in);
-void luft_state_set_blend(luft_state_t *state, luft_blend_mode_t mode);
-void luft_state_grab(luft_state_t *state);
-void luft_state_ungrab(luft_state_t *state);
-void luft_state_set_flags(luft_state_t *state, uint64_t flags);
-void luft_state_clear_flags(luft_state_t *state, uint64_t flags);
-void luft_state_ignore_flags(luft_state_t *state, uint64_t flags);
-void luft_state_set_colorbuf(luft_state_t *state, luft_colorbuf_t *colorbuf);
-void luft_state_set_uniform(luft_state_t *state, luft_uniform_type_t type,
-			    ...);
-void luft_state_set_material(luft_state_t *state, int mat_id);
-size_t luft_state_max_colorbufs(void);
 
 #ifdef __cplusplus
 }

@@ -72,7 +72,6 @@ state_create(shader_t *shader)
 
 	return state;
 }
-EXPORT(state_create);
 
 /**
  * Set a state object's shader.
@@ -88,7 +87,6 @@ state_set_shader(state_t *state, shader_t *shader)
 
 	state->shader = shader;
 }
-EXPORT(state_set_shader);
 
 /**
  * Create a new state with the same properties as an existing state.
@@ -112,7 +110,6 @@ state_clone(state_t *in)
 
 	return state;
 }
-EXPORT(state_clone);
 
 /**
  * Grab a state object.
@@ -122,7 +119,6 @@ state_grab(state_t *state)
 {
 	refcount_grab(&state->refcount);
 }
-EXPORT(state_grab);
 
 /**
  * Ungrab a state object.
@@ -132,7 +128,6 @@ state_ungrab(state_t *state)
 {
 	refcount_ungrab(&state->refcount);
 }
-EXPORT(state_ungrab);
 
 /**
  * Set up depth testing as this state states it should be.
@@ -406,7 +401,6 @@ state_set_flags(state_t *state, uint64_t flags)
 
 	state_unprotect(state, needed_it);
 }
-EXPORT(state_set_flags);
 
 /**
  * Clear the given flags in the given state.
@@ -423,7 +417,6 @@ state_clear_flags(state_t *state, uint64_t flags)
 
 	state_unprotect(state, needed_it);
 }
-EXPORT(state_clear_flags);
 
 /**
  * Indicate that in the given state, the given flags may hold any value.
@@ -439,7 +432,6 @@ state_ignore_flags(state_t *state, uint64_t flags)
 
 	state_unprotect(state, needed_it);
 }
-EXPORT(state_ignore_flags);
 
 /**
  * Set the output color buffer. Set NULL to use the default framebuffer.
@@ -459,7 +451,6 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
 
 	state_unprotect(state, needed_it);
 }
-EXPORT(state_set_colorbuf);
 
 /**
  * Set a uniform that is applied when this state is entered.
@@ -492,7 +483,6 @@ state_set_uniform(state_t *state, uniform_type_t type, ...)
 	if (state == current_state)
 		shader_set_uniform(state->shader, uniform);
 }
-EXPORT(state_set_uniform);
 
 /**
  * Set state material ID.
@@ -502,7 +492,6 @@ state_set_material(state_t *state, int mat_id)
 {
 	state->mat_id = mat_id;
 }
-EXPORT(state_set_material);
 
 /**
  * Determine if a given material is active in the current state.
@@ -533,4 +522,3 @@ state_set_blend(state_t *state, state_blend_mode_t mode)
 
 	state_unprotect(state, needed_it);
 }
-EXPORT(state_set_blend);

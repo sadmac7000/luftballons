@@ -18,11 +18,11 @@
 #ifndef LUFTBALLONS_TARGET_H
 #define LUFTBALLONS_TARGET_H
 
-#include <luftballons/state.h>
 #include <luftballons/object.h>
 #include <luftballons/colorbuf.h>
 #include <luftballons/draw_op.h>
 #include <luftballons/shader.h>
+#include <luftballons/state.h>
 
 typedef struct target luft_target_t;
 
