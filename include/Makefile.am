@@ -5,7 +5,6 @@ nobase_include_HEADERS = \
 	luftballons/quat.h	\
 	luftballons/shader.h	\
 	luftballons/draw_op.h	\
-	luftballons/state.h	\
 	luftballons/target.h	\
 	luftballons/texmap.h	\
 	luftballons/uniform.h

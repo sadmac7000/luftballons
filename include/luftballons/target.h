@@ -22,7 +22,6 @@
 #include <luftballons/colorbuf.h>
 #include <luftballons/draw_op.h>
 #include <luftballons/shader.h>
-#include <luftballons/state.h>
 
 typedef struct target luft_target_t;
 

@@ -17,7 +17,7 @@
 
 #ifndef STATE_H
 #define STATE_H
-#include <luftballons/state.h>
+#include <luftballons/draw_op.h>
 
 #include "texmap.h"
 #include "shader.h"

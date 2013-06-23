@@ -19,10 +19,22 @@
 #define LUFTBALLONS_DRAW_OP_H
 
 #include <luftballons/object.h>
-#include <luftballons/state.h>
 #include <luftballons/shader.h>
 #include <luftballons/uniform.h>
 #include <luftballons/colorbuf.h>
+
+/* Enable depth testing in this state */
+#define LUFT_DEPTH_TEST		0x1
+/* Enable backface culling in this state */
+#define LUFT_BF_CULL		0x2
+
+typedef enum {
+	LUFT_BLEND_DONTCARE,
+	LUFT_BLEND_NONE,
+	LUFT_BLEND_ALPHA,
+	LUFT_BLEND_REVERSE_ALPHA,
+	LUFT_BLEND_ADDITIVE,
+} luft_blend_mode_t;
 
 typedef struct draw_op luft_draw_op_t;
 
