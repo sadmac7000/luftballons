@@ -37,7 +37,7 @@
 #include <luftballons/quat.h>
 #include <luftballons/matrix.h>
 #include <luftballons/object.h>
-#include <luftballons/target.h>
+#include <luftballons/draw_proc.h>
 #include <luftballons/dae_load.h>
 
 luft_object_t *cube;
@@ -55,15 +55,15 @@ luft_texmap_t *position_texmap;
 luft_texmap_t *depth_texmap_a;
 luft_texmap_t *depth_texmap_b;
 luft_texmap_t *gather_texmap;
-luft_target_t *output_target;
+luft_draw_proc_t *output_draw_proc;
 luft_draw_op_t *cube_op;
 luft_draw_op_t *plane_op;
 luft_draw_op_t *canopy_op;
 luft_draw_op_t *gather_op;
 luft_draw_op_t *output_op;
-luft_target_t *draw_target_1;
-luft_target_t *draw_target_2;
-luft_target_t *draw_target_3;
+luft_draw_proc_t *draw_proc_1;
+luft_draw_proc_t *draw_proc_2;
+luft_draw_proc_t *draw_proc_3;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -128,9 +128,9 @@ handle_reshape(void)
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
-	luft_target_set_uniform(draw_target_2, LUFT_UNIFORM_TEXMAP,
+	luft_draw_proc_set_uniform(draw_proc_2, LUFT_UNIFORM_TEXMAP,
 			       "last_depth", depth_texmap_a);
-	luft_target_set_uniform(draw_target_3, LUFT_UNIFORM_TEXMAP,
+	luft_draw_proc_set_uniform(draw_proc_3, LUFT_UNIFORM_TEXMAP,
 			       "last_depth", depth_texmap_b);
 
 	luft_texmap_ungrab(normal_texmap);
@@ -252,7 +252,7 @@ render(void)
 	luft_object_set_rotation(cube_center, &center_rot);
 	luft_object_set_translation(cube, offset);
 
-	luft_target_hit(output_target);
+	luft_draw_proc_hit(output_draw_proc);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -387,10 +387,10 @@ main(int argc, char **argv)
 	luft_shader_t *output_shader;
 	luft_object_t *light;
 	luft_object_t *light_2;
-	luft_target_t *draw_target_do;
-	luft_target_t *gather_target_1;
-	luft_target_t *gather_target_2;
-	luft_target_t *gather_target_3;
+	luft_draw_proc_t *draw_proc_do;
+	luft_draw_proc_t *gather_draw_proc_1;
+	luft_draw_proc_t *gather_draw_proc_2;
+	luft_draw_proc_t *gather_draw_proc_3;
 	float clear_color[4] = { 0, 0, 0, 0 };
 	float light_color[3] = { 0.0, 0.0, 1.0 };
 	float light_offset[4] = { 2.0, 0.0, 0.0, 1.0 };
@@ -524,59 +524,59 @@ main(int argc, char **argv)
 	luft_object_move(light_2, light_offset_2);
 	luft_object_set_material(light_2, 3);
 
-	draw_target_do = luft_target_create(1);
-	luft_target_clear(draw_target_do, gather_cbuf);
-	luft_target_draw(draw_target_do, cube_op);
-	luft_target_draw(draw_target_do, canopy_op);
-	luft_target_draw(draw_target_do, plane_op);
+	draw_proc_do = luft_draw_proc_create(1);
+	luft_draw_proc_clear(draw_proc_do, gather_cbuf);
+	luft_draw_proc_draw(draw_proc_do, cube_op);
+	luft_draw_proc_draw(draw_proc_do, canopy_op);
+	luft_draw_proc_draw(draw_proc_do, plane_op);
 
-	draw_target_1 = luft_target_create(1);
-	luft_target_set_uniform(draw_target_1, LUFT_UNIFORM_UINT,
+	draw_proc_1 = luft_draw_proc_create(1);
+	luft_draw_proc_set_uniform(draw_proc_1, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 0);
-	luft_target_set_colorbuf(draw_target_1, cbuf_a);
+	luft_draw_proc_set_colorbuf(draw_proc_1, cbuf_a);
 
-	luft_target_clear(draw_target_1, cbuf_a);
-	luft_target_hit_other(draw_target_1, draw_target_do);
+	luft_draw_proc_clear(draw_proc_1, cbuf_a);
+	luft_draw_proc_hit_other(draw_proc_1, draw_proc_do);
 
-	draw_target_2 = luft_target_create(1);
-	luft_target_set_uniform(draw_target_2, LUFT_UNIFORM_UINT,
+	draw_proc_2 = luft_draw_proc_create(1);
+	luft_draw_proc_set_uniform(draw_proc_2, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 1);
-	luft_target_set_colorbuf(draw_target_2, cbuf_b);
+	luft_draw_proc_set_colorbuf(draw_proc_2, cbuf_b);
 
-	luft_target_clear(draw_target_2, cbuf_b);
-	luft_target_hit_other(draw_target_2, draw_target_do);
+	luft_draw_proc_clear(draw_proc_2, cbuf_b);
+	luft_draw_proc_hit_other(draw_proc_2, draw_proc_do);
 
-	draw_target_3 = luft_target_create(1);
-	luft_target_set_uniform(draw_target_3, LUFT_UNIFORM_UINT,
+	draw_proc_3 = luft_draw_proc_create(1);
+	luft_draw_proc_set_uniform(draw_proc_3, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 1);
-	luft_target_set_colorbuf(draw_target_3, cbuf_a);
+	luft_draw_proc_set_colorbuf(draw_proc_3, cbuf_a);
 
-	luft_target_clear(draw_target_3, cbuf_a);
-	luft_target_hit_other(draw_target_3, draw_target_do);
+	luft_draw_proc_clear(draw_proc_3, cbuf_a);
+	luft_draw_proc_hit_other(draw_proc_3, draw_proc_do);
 
-	luft_target_ungrab(draw_target_do);
+	luft_draw_proc_ungrab(draw_proc_do);
 
-	gather_target_1 = luft_target_create(1);
-	luft_target_hit_other(gather_target_1, draw_target_1);
-	luft_target_draw(gather_target_1, gather_op);
-	luft_target_draw(gather_target_1, output_op);
+	gather_draw_proc_1 = luft_draw_proc_create(1);
+	luft_draw_proc_hit_other(gather_draw_proc_1, draw_proc_1);
+	luft_draw_proc_draw(gather_draw_proc_1, gather_op);
+	luft_draw_proc_draw(gather_draw_proc_1, output_op);
 
-	gather_target_2 = luft_target_create(1);
-	luft_target_hit_other(gather_target_2, draw_target_2);
-	luft_target_draw(gather_target_2, gather_op);
-	luft_target_draw(gather_target_2, output_op);
+	gather_draw_proc_2 = luft_draw_proc_create(1);
+	luft_draw_proc_hit_other(gather_draw_proc_2, draw_proc_2);
+	luft_draw_proc_draw(gather_draw_proc_2, gather_op);
+	luft_draw_proc_draw(gather_draw_proc_2, output_op);
 
-	gather_target_3 = luft_target_create(1);
-	luft_target_hit_other(gather_target_3, draw_target_3);
-	luft_target_draw(gather_target_3, gather_op);
-	luft_target_draw(gather_target_3, output_op);
+	gather_draw_proc_3 = luft_draw_proc_create(1);
+	luft_draw_proc_hit_other(gather_draw_proc_3, draw_proc_3);
+	luft_draw_proc_draw(gather_draw_proc_3, gather_op);
+	luft_draw_proc_draw(gather_draw_proc_3, output_op);
 
-	output_target = luft_target_create(1);
-	luft_target_clear(output_target, NULL);
-	luft_target_hit_other(output_target, gather_target_1);
-	luft_target_hit_other(output_target, gather_target_2);
-	luft_target_hit_other(output_target, gather_target_3);
-	luft_target_hit_other(output_target, gather_target_2);
+	output_draw_proc = luft_draw_proc_create(1);
+	luft_draw_proc_clear(output_draw_proc, NULL);
+	luft_draw_proc_hit_other(output_draw_proc, gather_draw_proc_1);
+	luft_draw_proc_hit_other(output_draw_proc, gather_draw_proc_2);
+	luft_draw_proc_hit_other(output_draw_proc, gather_draw_proc_3);
+	luft_draw_proc_hit_other(output_draw_proc, gather_draw_proc_2);
 
 	glutMainLoop();
 	return 0;

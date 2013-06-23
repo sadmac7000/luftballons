@@ -17,7 +17,7 @@
 
 #ifndef TARGET_H
 #define TARGET_H
-#include <luftballons/target.h>
+#include <luftballons/draw_proc.h>
 
 #include "state.h"
 #include "object.h"
@@ -29,65 +29,65 @@
 
 
 /**
- * Types of actions taken in a given target step.
+ * Types of actions taken in a given draw_proc step.
  **/
-typedef enum target_step_type {
+typedef enum draw_proc_step_type {
 	TARGET_STEP_DRAW,
 	TARGET_STEP_TARGET,
 	TARGET_STEP_CLEAR,
-} target_step_type_t;
+} draw_proc_step_type_t;
 
 /**
- * A step to take in drawing this target.
+ * A step to take in drawing this draw_proc.
  **/
-struct target;
-typedef struct target_step {
-	target_step_type_t type;
+struct draw_proc;
+typedef struct draw_proc_step {
+	draw_proc_step_type_t type;
 	union {
 		draw_op_t *draw_op;
-		struct target *target;
+		struct draw_proc *draw_proc;
 		colorbuf_t *cbuf;
 	};
-} target_step_t;
+} draw_proc_step_t;
 
 /**
  * A rendering goal.
  *
  * base_state: State to push before the individual states.
- * steps, num_steps: Steps to perform to complete this target.
- * repeat: Times to repeat this target's steps.
+ * steps, num_steps: Steps to perform to complete this draw_proc.
+ * repeat: Times to repeat this draw_proc's steps.
  * refcount: Reference counter.
  **/
-typedef struct target {
+typedef struct draw_proc {
 	state_t *base_state;
 
-	target_step_t *steps;
+	draw_proc_step_t *steps;
 	size_t num_steps;
 
 	size_t repeat;
 
 	refcounter_t refcount;
-} target_t;
+} draw_proc_t;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-API_DECLARE(target_create);
-API_DECLARE(target_grab);
-API_DECLARE(target_ungrab);
-API_DECLARE(target_clear);
-API_DECLARE(target_draw);
-API_DECLARE(target_hit);
-API_DECLARE(target_hit_other);
-API_DECLARE(target_set_shader);
-API_DECLARE(target_set_blend);
-API_DECLARE(target_set_flags);
-API_DECLARE(target_clear_flags);
-API_DECLARE(target_ignore_flags);
-API_DECLARE(target_set_colorbuf);
-API_DECLARE(target_set_uniform);
-API_DECLARE(target_set_material);
+API_DECLARE(draw_proc_create);
+API_DECLARE(draw_proc_grab);
+API_DECLARE(draw_proc_ungrab);
+API_DECLARE(draw_proc_clear);
+API_DECLARE(draw_proc_draw);
+API_DECLARE(draw_proc_hit);
+API_DECLARE(draw_proc_hit_other);
+API_DECLARE(draw_proc_set_shader);
+API_DECLARE(draw_proc_set_blend);
+API_DECLARE(draw_proc_set_flags);
+API_DECLARE(draw_proc_clear_flags);
+API_DECLARE(draw_proc_ignore_flags);
+API_DECLARE(draw_proc_set_colorbuf);
+API_DECLARE(draw_proc_set_uniform);
+API_DECLARE(draw_proc_set_material);
 
 #ifdef __cplusplus
 }
