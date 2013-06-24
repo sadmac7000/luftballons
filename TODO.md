@@ -22,4 +22,3 @@
 * Sound.
 * Scriptability.
 * Networking.
-* Rework target API.
