@@ -66,6 +66,27 @@ draw_op_create(object_t *object, object_t *camera)
 EXPORT(draw_op_create);
 
 /**
+ * Create a copy of an existing draw operation.
+ **/
+draw_op_t *
+draw_op_clone(draw_op_t *op)
+{
+	draw_op_t *ret = xmemdup(op, sizeof(draw_op_t));
+
+	object_grab(ret->object);
+	object_grab(ret->camera);
+
+	if (ret->state)
+		ret->state = state_clone(ret->state);
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, draw_op_destructor, ret);
+
+	return ret;
+}
+EXPORT(draw_op_clone);
+
+/**
  * Create a state object for this draw operation. Can be called more than once
  * with no ill effect.
  **/

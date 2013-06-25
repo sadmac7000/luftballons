@@ -432,23 +432,18 @@ main(int argc, char **argv)
 	output_shader = luft_shader_create("vertex_quad.glsl", "fragment_copy.glsl");
 
 	cube_op = luft_draw_op_create(root, camera);
-	luft_draw_op_set_shader(cube_op, vcolor_shader);
 	luft_draw_op_set_flags(cube_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
 	luft_draw_op_set_blend(cube_op, LUFT_BLEND_NONE);
 	luft_draw_op_set_material(cube_op, 0);
 
-	canopy_op = luft_draw_op_create(root, camera);
-	luft_draw_op_set_flags(canopy_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
-	luft_draw_op_set_blend(canopy_op, LUFT_BLEND_NONE);
-	luft_draw_op_set_material(canopy_op, 0);
-	luft_draw_op_set_shader(canopy_op, textured_shader);
-	luft_draw_op_set_material(canopy_op, 1);
+	canopy_op = luft_draw_op_clone(cube_op);
 
-	plane_op = luft_draw_op_create(root, camera);
-	luft_draw_op_set_flags(plane_op, LUFT_DEPTH_TEST | LUFT_BF_CULL);
-	luft_draw_op_set_blend(plane_op, LUFT_BLEND_NONE);
-	luft_draw_op_set_material(plane_op, 0);
-	luft_draw_op_set_shader(plane_op, textured_shader);
+	luft_draw_op_set_shader(canopy_op, textured_shader);
+	luft_draw_op_set_shader(cube_op, vcolor_shader);
+
+	plane_op = luft_draw_op_clone(canopy_op);
+
+	luft_draw_op_set_material(canopy_op, 1);
 	luft_draw_op_set_material(plane_op, 2);
 
 	gather_op = luft_draw_op_create(root, camera);

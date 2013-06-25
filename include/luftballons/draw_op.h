@@ -44,6 +44,7 @@ extern "C" {
 
 luft_draw_op_t *luft_draw_op_create(luft_object_t *object,
 				    luft_object_t *camera);
+luft_draw_op_t *luft_draw_op_clone(luft_draw_op_t *op);
 void luft_draw_op_set_shader(luft_draw_op_t *op, luft_shader_t *shader);
 void luft_draw_op_set_blend(luft_draw_op_t *op, luft_blend_mode_t mode);
 void luft_draw_op_set_flags(luft_draw_op_t *op, uint64_t flags);

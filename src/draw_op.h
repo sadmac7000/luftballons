@@ -45,6 +45,7 @@ typedef struct draw_op {
 } draw_op_t;
 
 API_DECLARE(draw_op_create);
+API_DECLARE(draw_op_clone);
 API_DECLARE(draw_op_grab);
 API_DECLARE(draw_op_ungrab);
 API_DECLARE(draw_op_exec);
