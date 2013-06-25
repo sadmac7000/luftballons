@@ -15,8 +15,8 @@
  * along with Luftballons.  If not, see <http://www.gnu.org/licenses/>.
  **/
 
-#ifndef TARGET_H
-#define TARGET_H
+#ifndef DRAW_PROC_H
+#define DRAW_PROC_H
 #include <luftballons/draw_proc.h>
 
 #include "state.h"
@@ -32,9 +32,9 @@
  * Types of actions taken in a given draw_proc step.
  **/
 typedef enum draw_proc_step_type {
-	TARGET_STEP_DRAW,
-	TARGET_STEP_TARGET,
-	TARGET_STEP_CLEAR,
+	DRAW_PROC_STEP_DRAW,
+	DRAW_PROC_STEP_PROC,
+	DRAW_PROC_STEP_CLEAR,
 } draw_proc_step_type_t;
 
 /**
@@ -94,4 +94,4 @@ API_DECLARE(draw_proc_set_material);
 }
 #endif
 
-#endif /* TARGET_H */
+#endif /* DRAW_PROC_H */

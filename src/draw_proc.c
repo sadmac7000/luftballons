@@ -32,11 +32,11 @@ draw_proc_destructor(void *draw_proc_)
 	size_t i;
 
 	for (i = 0; i < draw_proc->num_steps; i++) {
-		if (draw_proc->steps[i].type == TARGET_STEP_DRAW)
+		if (draw_proc->steps[i].type == DRAW_PROC_STEP_DRAW)
 			draw_op_ungrab(draw_proc->steps[i].draw_op);
-		else if (draw_proc->steps[i].type == TARGET_STEP_TARGET)
+		else if (draw_proc->steps[i].type == DRAW_PROC_STEP_PROC)
 			draw_proc_ungrab(draw_proc->steps[i].draw_proc);
-		else if (draw_proc->steps[i].type == TARGET_STEP_CLEAR)
+		else if (draw_proc->steps[i].type == DRAW_PROC_STEP_CLEAR)
 			colorbuf_ungrab(draw_proc->steps[i].cbuf);
 		else
 			errx(1, "Encountered draw_proc step with unknown type");
@@ -85,11 +85,11 @@ draw_proc_clone(draw_proc_t *draw_proc)
 	       ret->num_steps * sizeof(draw_proc_step_t));
 
 	for (i = 0; i < ret->num_steps; i++) {
-		if (ret->steps[i].type == TARGET_STEP_DRAW)
+		if (ret->steps[i].type == DRAW_PROC_STEP_DRAW)
 			draw_op_grab(ret->steps[i].draw_op);
-		else if (ret->steps[i].type == TARGET_STEP_TARGET)
+		else if (ret->steps[i].type == DRAW_PROC_STEP_PROC)
 			draw_proc_grab(ret->steps[i].draw_proc);
-		else if (ret->steps[i].type == TARGET_STEP_CLEAR)
+		else if (ret->steps[i].type == DRAW_PROC_STEP_CLEAR)
 			colorbuf_grab(ret->steps[i].cbuf);
 		else
 			errx(1, "Draw procedure steps must "
@@ -131,7 +131,7 @@ draw_proc_draw(draw_proc_t *draw_proc, draw_op_t *op)
 {
 	draw_proc->steps = vec_expand(draw_proc->steps, draw_proc->num_steps);
 
-	draw_proc->steps[draw_proc->num_steps].type = TARGET_STEP_DRAW;
+	draw_proc->steps[draw_proc->num_steps].type = DRAW_PROC_STEP_DRAW;
 	draw_proc->steps[draw_proc->num_steps].draw_op = op;
 	draw_proc->num_steps++;
 
@@ -147,7 +147,7 @@ draw_proc_hit_other(draw_proc_t *draw_proc, draw_proc_t *other)
 {
 	draw_proc->steps = vec_expand(draw_proc->steps, draw_proc->num_steps);
 
-	draw_proc->steps[draw_proc->num_steps].type = TARGET_STEP_TARGET;
+	draw_proc->steps[draw_proc->num_steps].type = DRAW_PROC_STEP_PROC;
 	draw_proc->steps[draw_proc->num_steps].draw_proc = other;
 	draw_proc->num_steps++;
 
@@ -164,7 +164,7 @@ draw_proc_clear(draw_proc_t *draw_proc, colorbuf_t *buf)
 {
 	draw_proc->steps = vec_expand(draw_proc->steps, draw_proc->num_steps);
 
-	draw_proc->steps[draw_proc->num_steps].type = TARGET_STEP_CLEAR;
+	draw_proc->steps[draw_proc->num_steps].type = DRAW_PROC_STEP_CLEAR;
 	draw_proc->steps[draw_proc->num_steps].cbuf = buf;
 	draw_proc->num_steps++;
 
@@ -178,11 +178,11 @@ EXPORT(draw_proc_clear);
 static void
 draw_proc_do_step(draw_proc_step_t *step)
 {
-	if (step->type == TARGET_STEP_DRAW)
+	if (step->type == DRAW_PROC_STEP_DRAW)
 		draw_op_exec(step->draw_op);
-	else if (step->type == TARGET_STEP_TARGET)
+	else if (step->type == DRAW_PROC_STEP_PROC)
 		draw_proc_hit(step->draw_proc);
-	else if (step->type == TARGET_STEP_CLEAR)
+	else if (step->type == DRAW_PROC_STEP_CLEAR)
 		colorbuf_clear(step->cbuf);
 	else
 		errx(1, "Encountered draw_proc step with unknown type");
