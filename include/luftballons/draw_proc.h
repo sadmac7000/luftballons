@@ -30,6 +30,7 @@ extern "C" {
 #endif
 
 luft_draw_proc_t *luft_draw_proc_create(size_t repeat);
+luft_draw_proc_t *luft_draw_proc_clone(luft_draw_proc_t *draw_proc);
 void luft_draw_proc_grab(luft_draw_proc_t *draw_proc);
 void luft_draw_proc_ungrab(luft_draw_proc_t *draw_proc);
 void luft_draw_proc_clear(luft_draw_proc_t *draw_proc, luft_colorbuf_t *buf);

@@ -74,6 +74,7 @@ extern "C" {
 #endif
 
 API_DECLARE(draw_proc_create);
+API_DECLARE(draw_proc_clone);
 API_DECLARE(draw_proc_grab);
 API_DECLARE(draw_proc_ungrab);
 API_DECLARE(draw_proc_clear);

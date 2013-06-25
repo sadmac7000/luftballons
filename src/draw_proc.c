@@ -50,9 +50,9 @@ draw_proc_destructor(void *draw_proc_)
 }
 
 /**
- * Create a new draw_proc.
+ * Create a new draw procedure.
  *
- * repeat: Repeat count for this draw_proc.
+ * repeat: Times to repeat the operations in this procedure.
  **/
 draw_proc_t *
 draw_proc_create(size_t repeat)
@@ -67,6 +67,41 @@ draw_proc_create(size_t repeat)
 	return ret;
 }
 EXPORT(draw_proc_create);
+
+/**
+ * Clone an existing draw procedure.
+ **/
+draw_proc_t *
+draw_proc_clone(draw_proc_t *draw_proc)
+{
+	draw_proc_t *ret = xmemdup(draw_proc, sizeof(draw_proc_t));
+	size_t i;
+
+	if (ret->base_state)
+		ret->base_state = state_clone(ret->base_state);
+
+	ret->steps = vec_expand((draw_proc_step_t *)NULL, ret->num_steps);
+	memcpy(ret->steps, draw_proc->steps,
+	       ret->num_steps * sizeof(draw_proc_step_t));
+
+	for (i = 0; i < ret->num_steps; i++) {
+		if (ret->steps[i].type == TARGET_STEP_DRAW)
+			draw_op_grab(ret->steps[i].draw_op);
+		else if (ret->steps[i].type == TARGET_STEP_TARGET)
+			draw_proc_grab(ret->steps[i].draw_proc);
+		else if (ret->steps[i].type == TARGET_STEP_CLEAR)
+			colorbuf_grab(ret->steps[i].cbuf);
+		else
+			errx(1, "Draw procedure steps must "
+			     "have recognized types");
+	}
+
+	refcount_init(&ret->refcount);
+	refcount_add_destructor(&ret->refcount, draw_proc_destructor, ret);
+
+	return ret;
+}
+EXPORT(draw_proc_clone);
 
 /**
  * Grab a draw_proc.
