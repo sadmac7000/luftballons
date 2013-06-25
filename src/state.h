@@ -67,7 +67,7 @@ extern "C" {
 int state_material_active(int mat_id);
 void state_push(state_t *state);
 void state_pop(state_t *state);
-state_t *state_create(shader_t *shader);
+state_t *state_create(void);
 void state_set_shader(state_t *state, shader_t *shader);
 state_t *state_clone(state_t *in);
 void state_set_blend(state_t *state, state_blend_mode_t mode);

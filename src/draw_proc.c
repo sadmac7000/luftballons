@@ -227,7 +227,7 @@ static void
 draw_proc_init_state(draw_proc_t *draw_proc)
 {
 	if (! draw_proc->base_state)
-		draw_proc->base_state = state_create(NULL);
+		draw_proc->base_state = state_create();
 }
 
 /**

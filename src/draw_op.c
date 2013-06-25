@@ -94,7 +94,7 @@ static void
 draw_op_init_state(draw_op_t *op)
 {
 	if (! op->state)
-		op->state = state_create(NULL);
+		op->state = state_create();
 }
 
 /**

@@ -59,11 +59,10 @@ state_destructor(void *data)
  * Create a new state object.
  **/
 state_t *
-state_create(shader_t *shader)
+state_create(void)
 {
 	state_t *state = xcalloc(1, sizeof(state_t));
 
-	state_set_shader(state, shader);
 	state->mat_id = -1;
 	state->blend_mode = STATE_BLEND_DONTCARE;
 
@@ -303,7 +302,7 @@ state_stack_aggregate(void)
 		return;
 	}
 
-	state = state_create(NULL);
+	state = state_create();
 
 	for (i = state_stack_size; i; i--)
 		state_underlay(state, state_stack[i - 1]);
