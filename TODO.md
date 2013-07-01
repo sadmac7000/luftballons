@@ -10,6 +10,8 @@
 * Materials system. Basically this is a way to extend pipelines in a templated
   manner, so automatically adding states to different targets based on
   parameters.
+* Port documentation to doxygen or some equivalent, or make a doc tool that can
+  parse it as-is.
 
 ## Hardest ##
 * Unit tests
