@@ -35,8 +35,8 @@ void luft_draw_proc_grab(luft_draw_proc_t *draw_proc);
 void luft_draw_proc_ungrab(luft_draw_proc_t *draw_proc);
 void luft_draw_proc_clear(luft_draw_proc_t *draw_proc, luft_colorbuf_t *buf);
 void luft_draw_proc_draw(luft_draw_proc_t *draw_proc, luft_draw_op_t *op);
-void luft_draw_proc_hit(luft_draw_proc_t *draw_proc);
-void luft_draw_proc_hit_other(luft_draw_proc_t *draw_proc,
+void luft_draw_proc_run(luft_draw_proc_t *draw_proc);
+void luft_draw_proc_run_other(luft_draw_proc_t *draw_proc,
 			      luft_draw_proc_t *other);
 void luft_draw_proc_set_shader(luft_draw_proc_t *draw_proc,
 			       luft_shader_t *shader);

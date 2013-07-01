@@ -143,7 +143,7 @@ EXPORT(draw_proc_draw);
  * Add another draw_proc to our list of steps.
  **/
 void
-draw_proc_hit_other(draw_proc_t *draw_proc, draw_proc_t *other)
+draw_proc_run_other(draw_proc_t *draw_proc, draw_proc_t *other)
 {
 	draw_proc->steps = vec_expand(draw_proc->steps, draw_proc->num_steps);
 
@@ -153,7 +153,7 @@ draw_proc_hit_other(draw_proc_t *draw_proc, draw_proc_t *other)
 
 	draw_proc_grab(other);
 }
-EXPORT(draw_proc_hit_other);
+EXPORT(draw_proc_run_other);
 
 /**
  * Set a colorbuf to be cleared by this draw_proc after its dependencies are
@@ -181,7 +181,7 @@ draw_proc_do_step(draw_proc_step_t *step)
 	if (step->type == DRAW_PROC_STEP_DRAW)
 		draw_op_exec(step->draw_op);
 	else if (step->type == DRAW_PROC_STEP_PROC)
-		draw_proc_hit(step->draw_proc);
+		draw_proc_run(step->draw_proc);
 	else if (step->type == DRAW_PROC_STEP_CLEAR)
 		colorbuf_clear(step->cbuf);
 	else
@@ -189,10 +189,10 @@ draw_proc_do_step(draw_proc_step_t *step)
 }
 
 /**
- * Hit this draw_proc exactly once.
+ * Run this draw_proc exactly once.
  **/
 static void
-draw_proc_hit_once(draw_proc_t *draw_proc)
+draw_proc_run_once(draw_proc_t *draw_proc)
 {
 	size_t i;
 
@@ -207,18 +207,18 @@ draw_proc_hit_once(draw_proc_t *draw_proc)
 }
 
 /**
- * Hit this draw_proc
+ * Run this draw_proc
  **/
 void
-draw_proc_hit(draw_proc_t *draw_proc)
+draw_proc_run(draw_proc_t *draw_proc)
 {
 	size_t count = draw_proc->repeat;
 	size_t i;
 
 	for (i = 0; i < count; i++)
-		draw_proc_hit_once(draw_proc);
+		draw_proc_run_once(draw_proc);
 }
-EXPORT(draw_proc_hit);
+EXPORT(draw_proc_run);
 
 /**
  * Ensure this draw_proc has a base state.
