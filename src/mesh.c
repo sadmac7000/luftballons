@@ -62,7 +62,7 @@ mesh_create(size_t verts, const void *vert_data,
 	memcpy(ret->vert_data, vert_data, data_size);
 	ret->verts = verts;
 
-	ret->elem_data = xmalloc(data_size);
+	ret->elem_data = xmalloc(2 * elems);
 	memcpy(ret->elem_data, elem_data, 2 * elems);
 	ret->elems = elems;
 
