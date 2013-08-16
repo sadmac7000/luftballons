@@ -92,6 +92,8 @@ texmap_destructor(void *texmap_)
 	if (units && units[texmap->texture_unit] == texmap)
 		units[texmap->texture_unit] = NULL;
 
+	free(texmap->initialized);
+
 	glDeleteSamplers(1, &texmap->sampler);
 	glDeleteTextures(1, &texmap->map);
 	free(texmap);
@@ -109,7 +111,7 @@ texmap_t *
 texmap_create(size_t base_level, size_t max_level, unsigned int flags)
 {
 	texmap_t *map = xmalloc(sizeof(texmap_t));
-	size_t num_mips = max_level - base_level;
+	size_t num_mips = max_level - base_level + 1;
 	size_t num_bit_words = (num_mips + 63) / 64;
 
 	if (max_level < base_level)
