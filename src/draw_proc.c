@@ -80,7 +80,7 @@ draw_proc_clone(draw_proc_t *draw_proc)
 	if (ret->base_state)
 		ret->base_state = state_clone(ret->base_state);
 
-	ret->steps = vec_expand((draw_proc_step_t *)NULL, ret->num_steps);
+	ret->steps = vec_alloc(draw_proc_step_t, ret->num_steps);
 	memcpy(ret->steps, draw_proc->steps,
 	       ret->num_steps * sizeof(draw_proc_step_t));
 

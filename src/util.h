@@ -247,6 +247,7 @@ do_vec_contract(void *vec, size_t items, size_t item_sz)
 
 #define vec_expand(x, y) do_vec_expand((x), (y), sizeof(*(x)))
 #define vec_contract(x, y) do_vec_contract((x), (y), sizeof(*(x)))
+#define vec_alloc(x, y) vec_expand((x*)NULL, y)
 
 /**
  * Check whether an OpenGL error has occurred and die if it has.
