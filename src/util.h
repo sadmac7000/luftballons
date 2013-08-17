@@ -248,6 +248,12 @@ do_vec_contract(void *vec, size_t items, size_t item_sz)
 #define vec_expand(x, y) do_vec_expand((x), (y), sizeof(*(x)))
 #define vec_contract(x, y) do_vec_contract((x), (y), sizeof(*(x)))
 #define vec_alloc(x, y) vec_expand((x*)NULL, y)
+#define vec_dup(x, y) ({					\
+	typeof(y) sz_ = (y);					\
+	typeof(x) mine_ = vec_expand((typeof(x))NULL, sz_);	\
+	memcpy(mine_, (x), sizeof(*(x)) * sz_);			\
+	mine_;							\
+})
 
 /**
  * Check whether an OpenGL error has occurred and die if it has.
