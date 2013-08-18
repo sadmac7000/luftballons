@@ -63,6 +63,10 @@ luft_draw_op_t *output_op;
 luft_draw_proc_t *draw_proc_1;
 luft_draw_proc_t *draw_proc_2;
 luft_draw_proc_t *draw_proc_3;
+luft_material_t plane_mat;
+luft_material_t canopy_mat;
+luft_material_t cube_mat;
+luft_material_t light_mat;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -127,26 +131,32 @@ handle_reshape(void)
 
 	luft_colorbuf_set_buf(gather_cbuf, 0, gather_texmap);
 
-	luft_draw_proc_set_uniform(draw_proc_2, -1,  LUFT_UNIFORM_TEXMAP,
-			       "last_depth", depth_texmap_a);
-	luft_draw_proc_set_uniform(draw_proc_3, -1, LUFT_UNIFORM_TEXMAP,
-			       "last_depth", depth_texmap_b);
+	luft_draw_proc_set_uniform(draw_proc_2, LUFT_NO_MATERIAL,
+				   LUFT_UNIFORM_TEXMAP, "last_depth",
+				   depth_texmap_a);
+	luft_draw_proc_set_uniform(draw_proc_3, LUFT_NO_MATERIAL,
+				   LUFT_UNIFORM_TEXMAP, "last_depth",
+				   depth_texmap_b);
 
 	luft_texmap_ungrab(normal_texmap);
 	luft_texmap_ungrab(position_texmap);
 	luft_texmap_ungrab(diffuse_texmap);
 
-	luft_draw_op_set_uniform(gather_op, -1, LUFT_UNIFORM_TEXMAP,
-				 "normal_buf", normal_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_NO_MATERIAL,
+				 LUFT_UNIFORM_TEXMAP, "normal_buf",
+				 normal_texmap);
 
-	luft_draw_op_set_uniform(gather_op, -1, LUFT_UNIFORM_TEXMAP,
-				 "position_buf", position_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_NO_MATERIAL,
+				 LUFT_UNIFORM_TEXMAP, "position_buf",
+				 position_texmap);
 
-	luft_draw_op_set_uniform(gather_op, -1, LUFT_UNIFORM_TEXMAP,
-				 "diffuse_buf", diffuse_texmap);
+	luft_draw_op_set_uniform(gather_op, LUFT_NO_MATERIAL,
+				 LUFT_UNIFORM_TEXMAP, "diffuse_buf",
+				 diffuse_texmap);
 
-	luft_draw_op_set_uniform(output_op, -1, LUFT_UNIFORM_TEXMAP,
-				 "in_buf", gather_texmap);
+	luft_draw_op_set_uniform(output_op, LUFT_NO_MATERIAL,
+				 LUFT_UNIFORM_TEXMAP, "in_buf",
+				 gather_texmap);
 }
 
 float
@@ -334,11 +344,11 @@ assign_material(luft_object_t *object)
 
 		if (luft_object_get_type(object) == LUFT_OBJ_MESH) {
 			if (! strncmp(name, "canopy", 6))
-				luft_object_set_material(object, 1);
+				luft_object_set_material(object, canopy_mat);
 			else
-				luft_object_set_material(object, 2);
+				luft_object_set_material(object, plane_mat);
 		} else if (luft_object_get_type(object) == LUFT_OBJ_LIGHT) {
-			luft_object_set_material(object, 3);
+			luft_object_set_material(object, light_mat);
 		}
 	}
 
@@ -399,6 +409,11 @@ main(int argc, char **argv)
 	init_glut(argc, argv, clear_color);
 	root = luft_object_create(NULL);
 
+	plane_mat = luft_material_alloc();
+	cube_mat = luft_material_alloc();
+	canopy_mat = luft_material_alloc();
+	light_mat = luft_material_alloc();
+
 	camera = luft_object_create(root);
 	luft_object_make_camera(camera, 45, .01, 3000.0);
 	luft_camera_set_aspect(camera, aspect);
@@ -406,7 +421,7 @@ main(int argc, char **argv)
 
 	output_light = luft_object_create(NULL);
 	luft_object_make_light(output_light, light_color_2);
-	luft_object_set_material(output_light, 0);
+	luft_object_set_material(output_light, light_mat);
 
 	cbuf_a = luft_colorbuf_create(LUFT_COLORBUF_CLEAR |
 				      LUFT_COLORBUF_CLEAR_DEPTH |
@@ -438,14 +453,14 @@ main(int argc, char **argv)
 
 	luft_draw_op_set_shader(plane_op, textured_shader);
 	luft_draw_op_set_shader(cube_op, vcolor_shader);
-	luft_draw_op_activate_material(cube_op, 0);
+	luft_draw_op_activate_material(cube_op, cube_mat);
 
 	gather_op = luft_draw_op_create(root, camera);
 	luft_draw_op_set_shader(gather_op, gather_shader);
 	luft_draw_op_set_flags(gather_op, LUFT_BF_CULL);
 	luft_draw_op_clear_flags(gather_op, LUFT_DEPTH_TEST);
 	luft_draw_op_set_blend(gather_op, LUFT_BLEND_ADDITIVE);
-	luft_draw_op_activate_material(gather_op, 3);
+	luft_draw_op_activate_material(gather_op, light_mat);
 	luft_draw_op_set_colorbuf(gather_op, gather_cbuf);
 
 	luft_colorbuf_ungrab(gather_cbuf);
@@ -455,7 +470,7 @@ main(int argc, char **argv)
 	luft_draw_op_set_flags(output_op, LUFT_BF_CULL);
 	luft_draw_op_clear_flags(output_op, LUFT_DEPTH_TEST);
 	luft_draw_op_set_blend(output_op, LUFT_BLEND_REVERSE_ALPHA);
-	luft_draw_op_activate_material(output_op, 0);
+	luft_draw_op_activate_material(output_op, light_mat);
 
 	canopy_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
 	plane_map = luft_texmap_create(0, 0, LUFT_TEXMAP_COMPRESSED);
@@ -466,7 +481,7 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(canopy_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(canopy_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	luft_draw_op_set_uniform(plane_op, 1, LUFT_UNIFORM_TEXMAP,
+	luft_draw_op_set_uniform(plane_op, canopy_mat, LUFT_UNIFORM_TEXMAP,
 				 "diffusemap", canopy_map);
 	luft_texmap_ungrab(canopy_map);
 
@@ -476,7 +491,7 @@ main(int argc, char **argv)
 	luft_texmap_set_mag(plane_map, LUFT_TEXMAP_INTERP_NEAREST);
 	luft_texmap_set_wrap(plane_map, LUFT_TEXMAP_WRAP_S, LUFT_TEXMAP_WRAP_CLAMP);
 
-	luft_draw_op_set_uniform(plane_op, 2, LUFT_UNIFORM_TEXMAP,
+	luft_draw_op_set_uniform(plane_op, plane_mat, LUFT_UNIFORM_TEXMAP,
 				 "diffusemap", plane_map);
 	luft_texmap_ungrab(plane_map);
 
@@ -506,12 +521,12 @@ main(int argc, char **argv)
 	light = luft_object_create(root);
 	luft_object_make_light(light, light_color);
 	luft_object_move(light, light_offset);
-	luft_object_set_material(light, 3);
+	luft_object_set_material(light, light_mat);
 
 	light_2 = luft_object_create(root);
 	luft_object_make_light(light_2, light_color_2);
 	luft_object_move(light_2, light_offset_2);
-	luft_object_set_material(light_2, 3);
+	luft_object_set_material(light_2, light_mat);
 
 	draw_proc_do = luft_draw_proc_create(1);
 	luft_draw_proc_clear(draw_proc_do, gather_cbuf);
@@ -519,7 +534,7 @@ main(int argc, char **argv)
 	luft_draw_proc_draw(draw_proc_do, plane_op);
 
 	draw_proc_1 = luft_draw_proc_create(1);
-	luft_draw_proc_set_uniform(draw_proc_1, -1, LUFT_UNIFORM_UINT,
+	luft_draw_proc_set_uniform(draw_proc_1, LUFT_NO_MATERIAL, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 0);
 	luft_draw_proc_set_colorbuf(draw_proc_1, cbuf_a);
 
@@ -527,7 +542,7 @@ main(int argc, char **argv)
 	luft_draw_proc_run_other(draw_proc_1, draw_proc_do);
 
 	draw_proc_2 = luft_draw_proc_create(1);
-	luft_draw_proc_set_uniform(draw_proc_2, -1, LUFT_UNIFORM_UINT,
+	luft_draw_proc_set_uniform(draw_proc_2, LUFT_NO_MATERIAL, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 1);
 	luft_draw_proc_set_colorbuf(draw_proc_2, cbuf_b);
 
@@ -535,7 +550,7 @@ main(int argc, char **argv)
 	luft_draw_proc_run_other(draw_proc_2, draw_proc_do);
 
 	draw_proc_3 = luft_draw_proc_create(1);
-	luft_draw_proc_set_uniform(draw_proc_3, -1, LUFT_UNIFORM_UINT,
+	luft_draw_proc_set_uniform(draw_proc_3, LUFT_NO_MATERIAL, LUFT_UNIFORM_UINT,
 				"last_depth_valid", 1);
 	luft_draw_proc_set_colorbuf(draw_proc_3, cbuf_a);
 

@@ -294,7 +294,7 @@ object_create(object_t *parent)
 	ret->parent = NULL;
 	ret->type = OBJ_NODE;
 	ret->name = NULL;
-	ret->mat_id = 0;
+	ret->mat = NO_MATERIAL;
 	ret->transform_cache = NULL;
 	ret->private_transform = NULL;
 
@@ -680,9 +680,9 @@ EXPORT(object_reparent);
  * Set an object's material.
  **/
 void
-object_set_material(object_t *object, int mat_id)
+object_set_material(object_t *object, material_t mat)
 {
-	object->mat_id = mat_id;
+	object->mat = mat;
 }
 EXPORT(object_set_material);
 

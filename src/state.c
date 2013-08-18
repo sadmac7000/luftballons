@@ -41,13 +41,14 @@ static size_t state_stack_size = 0;
 struct material {
 	uniform_t **uniforms;
 	size_t num_uniforms;
-	int mat_id;
+	material_t mat;
 };
 
 /**
  * The current material
  **/
-int current_material = -1;
+static material_t current_material = SIZE_T_MAX;
+/* static material_t current_material = NO_MATERIAL; // TODO: Bitch at GCC */
 
 /**
  * Destroy a material struct.
@@ -236,15 +237,15 @@ state_apply_blend_mode(state_t *state, state_blend_mode_t old)
  * Remove a material from this state.
  **/
 void
-state_material_eliminate(state_t *state, int mat_id)
+state_material_eliminate(state_t *state, material_t mat)
 {
 	size_t i;
 
-	if (mat_id < 0)
-		errx(1, "Material IDs must be >= 0");
+	if (! material_is_allocd(mat))
+		errx(1, "Only valid allocated materials can be eliminated");
 
 	for (i = 0; i < state->num_materials; i++)
-		if (state->materials[i].mat_id == mat_id)
+		if (state->materials[i].mat == mat)
 			break;
 
 	if (i == state->num_materials)
@@ -260,11 +261,11 @@ state_material_eliminate(state_t *state, int mat_id)
  * Set the material for this state.
  **/
 static void
-state_do_material_activate(int mat_id)
+state_do_material_activate(material_t mat)
 {
 	size_t i, j;
 
-	current_material = mat_id;
+	current_material = mat;
 
 	if (! current_state)
 		return;
@@ -273,8 +274,8 @@ state_do_material_activate(int mat_id)
 		return;
 
 	for (i = 0; i < current_state->num_materials; i++) {
-		if (current_state->materials[i].mat_id != current_material &&
-		    current_state->materials[i].mat_id != -1)
+		if (current_state->materials[i].mat != current_material &&
+		    current_state->materials[i].mat != NO_MATERIAL)
 			continue;
 
 		for (j = 0; j < current_state->materials[i].num_uniforms; j++)
@@ -288,12 +289,12 @@ state_do_material_activate(int mat_id)
  * Set the material for this state if it isn't already set.
  **/
 void
-state_material_activate(int mat_id)
+state_material_activate(material_t mat)
 {
-	if (current_material == mat_id)
+	if (current_material == mat)
 		return;
 
-	state_do_material_activate(mat_id);
+	state_do_material_activate(mat);
 }
 
 /**
@@ -373,8 +374,8 @@ state_underlay_materials(state_t *state, state_t *other)
 
 	for (i = 0; i < other->num_materials; i++) {
 		for (j = 0; j < state->num_materials; j++)
-			if (state->materials[j].mat_id ==
-			    other->materials[i].mat_id)
+			if (state->materials[j].mat ==
+			    other->materials[i].mat)
 				break;
 
 		if (j != state->num_materials) {
@@ -461,13 +462,13 @@ state_stack_aggregate(void)
  * Push a state on to the stack. Optionally provide a new material ID to use.
  *
  * state: State to push on the stack.
- * mat_id: New material ID to use, or -1.
+ * mat: New material ID to use, or NO_MATERIAL.
  **/
 void
-state_push(state_t *state, int mat_id)
+state_push(state_t *state, material_t mat)
 {
-	if (mat_id >= 0)
-		current_material = mat_id;
+	if (mat != NO_MATERIAL)
+		current_material = mat;
 
 	state_stack = vec_expand(state_stack, state_stack_size);
 
@@ -482,15 +483,15 @@ state_push(state_t *state, int mat_id)
  *
  * state: If the state popped isn't equal to this value, and this value isn't
  *        NULL, raise an error
- * mat_id: New material ID to use, or -1.
+ * mat: New material ID to use, or NO_MATERIAL.
  **/
 void
-state_pop(state_t *state, int mat_id)
+state_pop(state_t *state, material_t mat)
 {
 	state_t *popped;
 
-	if (mat_id >= 0)
-		current_material = mat_id;
+	if (mat != NO_MATERIAL)
+		current_material = mat;
 
 	if (! state_stack_size) {
 		if (state)
@@ -612,15 +613,16 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
  * Set a uniform that is applied when this state is entered.
  **/
 void
-state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
+state_set_uniform(state_t *state, material_t mat, uniform_type_t type, ...)
 {
 	size_t i;
 	uniform_t *uniform;
 	struct material *material;
 	va_list ap;
 
-	if (mat_id < -1)
-		errx(1, "Material IDs must be >= -1");
+	if (mat != NO_MATERIAL && ! material_is_allocd(mat))
+		errx(1, "Must set uniforms for NO_MATERIAL"
+		     " or a valid material");
 
 	va_start(ap, type);
 
@@ -629,7 +631,7 @@ state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
 	va_end(ap);
 
 	for (i = 0; i < state->num_materials; i++)
-		if (state->materials[i].mat_id == mat_id)
+		if (state->materials[i].mat == mat)
 			break;
 
 	if (i == state->num_materials) {
@@ -638,7 +640,7 @@ state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
 		state->num_materials++;
 		state->materials[i].uniforms = NULL;
 		state->materials[i].num_uniforms = 0;
-		state->materials[i].mat_id = mat_id;
+		state->materials[i].mat = mat;
 	}
 
 	material = &state->materials[i];
@@ -656,7 +658,7 @@ state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
 					material->num_uniforms);
 	material->uniforms[material->num_uniforms++] = uniform;
 
-	if (state == current_state && mat_id == current_material)
+	if (state == current_state && mat == current_material)
 		shader_set_uniform(state->shader, uniform);
 }
 
@@ -664,9 +666,9 @@ state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
  * Determine if a given material is active in the current state.
  **/
 int
-state_material_active(int mat_id)
+state_material_active(material_t mat)
 {
-	return current_material == mat_id;
+	return current_material == mat;
 }
 
 /**

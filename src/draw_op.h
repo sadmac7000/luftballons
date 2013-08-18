@@ -23,6 +23,7 @@
 #include "util.h"
 #include "state.h"
 #include "refcount.h"
+#include "material.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,7 +43,7 @@ typedef struct draw_op {
 	object_t *camera;
 	state_t *state;
 
-	int *materials;
+	material_t *materials;
 	size_t num_materials;
 
 	refcounter_t refcount;

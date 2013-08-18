@@ -195,13 +195,13 @@ draw_proc_run_once(draw_proc_t *draw_proc)
 	size_t i;
 
 	if (draw_proc->base_state)
-		state_push(draw_proc->base_state, -1);
+		state_push(draw_proc->base_state, NO_MATERIAL);
 
 	for (i = 0; i < draw_proc->num_steps; i++)
 		draw_proc_do_step(&draw_proc->steps[i]);
 
 	if (draw_proc->base_state)
-		state_pop(draw_proc->base_state, -1);
+		state_pop(draw_proc->base_state, NO_MATERIAL);
 }
 
 /**
@@ -295,11 +295,11 @@ draw_proc_set_colorbuf(draw_proc_t *draw_proc, colorbuf_t *colorbuf)
 EXPORT(draw_proc_set_colorbuf);
 
 /**
- * Set a uniform for this draw_proc. If mat_id is not -1, then the uniform
- * applies only to objects with the given material.
+ * Set a uniform for this draw_proc. If mat is not NO_MATERIAL, then the
+ * uniform applies only to objects with the given material.
  **/
 void
-draw_proc_set_uniform(draw_proc_t *draw_proc, int mat_id,
+draw_proc_set_uniform(draw_proc_t *draw_proc, material_t mat,
 		      uniform_type_t type, ...)
 {
 	va_list ap;
@@ -310,7 +310,7 @@ draw_proc_set_uniform(draw_proc_t *draw_proc, int mat_id,
 	va_end(ap);
 
 	draw_proc_init_state(draw_proc);
-	state_set_uniform(draw_proc->base_state, mat_id, LUFT_UNIFORM_CLONE,
+	state_set_uniform(draw_proc->base_state, mat, LUFT_UNIFORM_CLONE,
 			  uniform);
 	uniform_ungrab(uniform);
 }

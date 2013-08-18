@@ -19,6 +19,7 @@
 #define LUFTBALLONS_OBJECT_H
 
 #include <luftballons/quat.h>
+#include <luftballons/material.h>
 
 #include <stdlib.h>
 
@@ -68,7 +69,7 @@ void luft_object_reparent(luft_object_t *object, luft_object_t *parent);
 void luft_object_apply_pretransform(luft_object_t *object, float matrix[16]);
 void luft_object_get_total_transform(luft_object_t *object, float mat[16]);
 luft_object_t *luft_object_lookup(luft_object_t *object, const char *name);
-void luft_object_set_material(luft_object_t *object, int mat_id);
+void luft_object_set_material(luft_object_t *object, luft_material_t mat);
 void luft_object_set_draw_distance_local(luft_object_t *object, float dist);
 void luft_object_set_draw_distance_children(luft_object_t *object, float dist);
 void luft_object_set_draw_distance(luft_object_t *object, float dist);

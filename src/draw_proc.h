@@ -26,6 +26,7 @@
 #include "colorbuf.h"
 #include "draw_op.h"
 #include "shader.h"
+#include "material.h"
 
 
 /**

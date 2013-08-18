@@ -23,6 +23,7 @@
 #include "quat.h"
 #include "util.h"
 #include "refcount.h"
+#include "material.h"
 
 #define object_type_t luft_object_type_t
 #define pre_skip_children(x) luft_pre_skip_children(x)
@@ -37,7 +38,7 @@
  * that.
  *
  * parent: The parent of this object. Object inherits transforms from its parent
- * mat_id: A material ID.
+ * mat: A material ID.
  * name: A name for this object.
  * rot: Amount to rotate this object.
  * trans: Amount to translate this object.
@@ -56,7 +57,7 @@
  **/
 typedef struct object {
 	struct object *parent;
-	int mat_id;
+	material_t mat;
 	char *name;
 	quat_t rot;
 	float trans[3];

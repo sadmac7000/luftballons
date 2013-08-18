@@ -22,6 +22,7 @@
 #include <luftballons/colorbuf.h>
 #include <luftballons/draw_op.h>
 #include <luftballons/shader.h>
+#include <luftballons/material.h>
 
 typedef struct draw_proc luft_draw_proc_t;
 
@@ -47,7 +48,8 @@ void luft_draw_proc_clear_flags(luft_draw_proc_t *draw_proc, uint64_t flags);
 void luft_draw_proc_ignore_flags(luft_draw_proc_t *draw_proc, uint64_t flags);
 void luft_draw_proc_set_colorbuf(luft_draw_proc_t *draw_proc,
 				 luft_colorbuf_t *colorbuf);
-void luft_draw_proc_set_uniform(luft_draw_proc_t *draw_proc, int mat_id,
+void luft_draw_proc_set_uniform(luft_draw_proc_t *draw_proc,
+				luft_material_t mat,
 				luft_uniform_type_t type, ...);
 #ifdef __cplusplus
 }

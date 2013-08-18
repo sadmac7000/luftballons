@@ -24,6 +24,7 @@
 #include "refcount.h"
 #include "colorbuf.h"
 #include "object.h"
+#include "material.h"
 
 /* Enable depth testing in this state */
 #define STATE_DEPTH_TEST	LUFT_DEPTH_TEST
@@ -65,12 +66,12 @@ typedef struct state {
 extern "C" {
 #endif
 
-int state_material_active(int mat_id);
+int state_material_active(material_t mat);
 void state_print_current(void);
-void state_material_activate(int mat_id);
-void state_material_eliminate(state_t *state, int mat_id);
-void state_push(state_t *state, int mat_id);
-void state_pop(state_t *state, int mat_id);
+void state_material_activate(material_t mat);
+void state_material_eliminate(state_t *state, material_t mat);
+void state_push(state_t *state, material_t mat);
+void state_pop(state_t *state, material_t mat);
 state_t *state_create(void);
 void state_set_shader(state_t *state, shader_t *shader);
 state_t *state_clone(state_t *in);
@@ -81,7 +82,7 @@ void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
 void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
-void state_set_uniform(state_t *state, int mat_id, uniform_type_t type,
+void state_set_uniform(state_t *state, material_t mat, uniform_type_t type,
 			    ...);
 size_t state_max_colorbufs(void);
 

@@ -167,22 +167,22 @@ EXPORT(draw_op_set_colorbuf);
  * Tell the draw operation that we will draw the given material.
  **/
 void
-draw_op_activate_material(draw_op_t *draw_op, int mat_id)
+draw_op_activate_material(draw_op_t *draw_op, material_t mat)
 {
 	size_t i;
 
-	if (mat_id < 0)
-		errx(1, "Material IDs must be >= 0");
+	if (! material_is_allocd(mat))
+		errx(1, "Only a valid allocated material may be activated");
 
 	for (i = 0; i < draw_op->num_materials &&
-	     draw_op->materials[i] < mat_id; i++);
+	     draw_op->materials[i] < mat; i++);
 
 	if (i < draw_op->num_materials &&
-	    draw_op->materials[i] == mat_id)
+	    draw_op->materials[i] == mat)
 		return;
 
 	draw_op->materials = vec_add(draw_op->materials,
-				     draw_op->num_materials, i, mat_id);
+				     draw_op->num_materials, i, mat);
 	draw_op->num_materials++;
 }
 EXPORT(draw_op_activate_material);
@@ -191,15 +191,15 @@ EXPORT(draw_op_activate_material);
  * Tell the draw operation not to draw the given material.
  **/
 void
-draw_op_deactivate_material(draw_op_t *draw_op, int mat_id)
+draw_op_deactivate_material(draw_op_t *draw_op, material_t mat)
 {
 	size_t i;
 
-	if (mat_id < 0)
-		errx(1, "Material IDs must be >= 0");
+	if (! material_is_allocd(mat))
+		errx(1, "Only a valid allocated material may be deactivated");
 
 	for (i = 0; i < draw_op->num_materials; i++)
-		if (draw_op->materials[i] == mat_id)
+		if (draw_op->materials[i] == mat)
 			break;
 
 	if (draw_op->num_materials == i)
@@ -209,31 +209,31 @@ draw_op_deactivate_material(draw_op_t *draw_op, int mat_id)
 				     draw_op->num_materials, i);
 	draw_op->num_materials--;
 
-	state_material_eliminate(draw_op->state, mat_id);
+	state_material_eliminate(draw_op->state, mat);
 }
 EXPORT(draw_op_deactivate_material);
 
 /**
  * Set a uniform to be passed to the shader during this draw operation. If
- * mat_id is not -1, then this uniform only applies to the given material.
+ * mat is NO_MATERIAL, then this uniform only applies to the given material.
  * Also, this call will act as an implicit call to draw_op_activate_material in
  * that case.
  **/
 void
-draw_op_set_uniform(draw_op_t *op, int mat_id, uniform_type_t type, ...)
+draw_op_set_uniform(draw_op_t *op, material_t mat, uniform_type_t type, ...)
 {
 	va_list ap;
 	uniform_t *uniform;
 
-	if (mat_id >= 0)
-		draw_op_activate_material(op, mat_id);
+	if (mat != NO_MATERIAL)
+		draw_op_activate_material(op, mat);
 
 	va_start(ap, type);
 	uniform = uniform_vcreate(type, ap);
 	va_end(ap);
 
 	draw_op_init_state(op);
-	state_set_uniform(op->state, mat_id, LUFT_UNIFORM_CLONE, uniform);
+	state_set_uniform(op->state, mat, LUFT_UNIFORM_CLONE, uniform);
 	uniform_ungrab(uniform);
 }
 EXPORT(draw_op_set_uniform);
@@ -295,7 +295,7 @@ draw_op_do_draw(object_t *object, float cspace[16],
 	float trans[16];
 	float fl[16];
 
-	if (! state_material_active(object->mat_id))
+	if (! state_material_active(object->mat))
 		return 1;
 
 	if (object->type == OBJ_NODE)
@@ -343,7 +343,8 @@ draw_op_sort_objects_by_material(object_t **list, size_t size)
 		return;
 
 	for (i = 0, j = 1; i < size; i++) {
-		for (; j < size && list[j]->mat_id >= list[i]->mat_id; j++);
+		for (; j < size && list[j]->mat >= list[i]->mat;
+		     j++);
 
 		if (j == size) {
 			draw_op_sort_objects_by_material(list, i);
@@ -409,11 +410,11 @@ draw_op_exec(draw_op_t *op)
 
 
 			while (k < op->num_materials &&
-			       op->materials[k] < flat[j]->mat_id)
+			       op->materials[k] < flat[j]->mat)
 				k++;
 
 			if (k == op->num_materials ||
-			    op->materials[k] > flat[j]->mat_id)
+			    op->materials[k] > flat[j]->mat)
 				continue;
 
 			if (op->state && ! pushed) {
@@ -432,7 +433,7 @@ draw_op_exec(draw_op_t *op)
 	}
 
 	if (pushed)
-		state_pop(op->state, -1);
+		state_pop(op->state, NO_MATERIAL);
 
 	object_ungrab(quad);
 

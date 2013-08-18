@@ -31,6 +31,7 @@ libluftdraw_la_SOURCES = \
 	refcount.c	\
 	colorbuf.c	\
 	draw_proc.c	\
+	material.c	\
 	state.c
 
 if HAVE_COLLADA

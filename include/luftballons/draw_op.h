@@ -22,6 +22,7 @@
 #include <luftballons/shader.h>
 #include <luftballons/uniform.h>
 #include <luftballons/colorbuf.h>
+#include <luftballons/material.h>
 
 /* Enable depth testing in this state */
 #define LUFT_DEPTH_TEST		0x1
@@ -51,9 +52,11 @@ void luft_draw_op_set_flags(luft_draw_op_t *op, uint64_t flags);
 void luft_draw_op_clear_flags(luft_draw_op_t *op, uint64_t flags);
 void luft_draw_op_ignore_flags(luft_draw_op_t *op, uint64_t flags);
 void luft_draw_op_set_colorbuf(luft_draw_op_t *op, luft_colorbuf_t *colorbuf);
-void luft_draw_op_activate_material(luft_draw_op_t *draw_op, int mat_id);
-void luft_draw_op_deactivate_material(luft_draw_op_t *draw_op, int mat_id);
-void luft_draw_op_set_uniform(luft_draw_op_t *op, int mat_id,
+void luft_draw_op_activate_material(luft_draw_op_t *draw_op,
+				    luft_material_t mat);
+void luft_draw_op_deactivate_material(luft_draw_op_t *draw_op,
+				      luft_material_t mat);
+void luft_draw_op_set_uniform(luft_draw_op_t *op, luft_material_t mat,
 			      luft_uniform_type_t type, ...);
 void luft_draw_op_grab(luft_draw_op_t *op);
 void luft_draw_op_ungrab(luft_draw_op_t *op);
