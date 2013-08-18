@@ -181,13 +181,9 @@ draw_op_activate_material(draw_op_t *draw_op, int mat_id)
 	    draw_op->materials[i] == mat_id)
 		return;
 
-	draw_op->materials = vec_expand(draw_op->materials,
-					draw_op->num_materials);
-
-	memmove(&draw_op->materials[i + 1], &draw_op->materials[i],
-		(draw_op->num_materials++ - i) * sizeof(int));
-
-	draw_op->materials[i] = mat_id;
+	draw_op->materials = vec_add(draw_op->materials,
+				     draw_op->num_materials, i, mat_id);
+	draw_op->num_materials++;
 }
 EXPORT(draw_op_activate_material);
 
@@ -209,8 +205,9 @@ draw_op_deactivate_material(draw_op_t *draw_op, int mat_id)
 	if (draw_op->num_materials == i)
 		return;
 
-	memmove(&draw_op->materials[i], &draw_op->materials[i + 1],
-		(--draw_op->num_materials - i) * sizeof(int));
+	draw_op->materials = vec_del(draw_op->materials,
+				     draw_op->num_materials, i);
+	draw_op->num_materials--;
 
 	state_material_eliminate(draw_op->state, mat_id);
 }

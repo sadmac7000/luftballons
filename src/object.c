@@ -650,10 +650,8 @@ object_unparent(object_t *object)
 	if (i == parent->child_count)
 		err(1, "Broken parent link for object");
 
-	memcpy(&parent->children[i], &parent->children[i + 1],
-	       (parent->child_count - i) * sizeof(object_t *));
-
-	parent->children = vec_contract(parent->children, parent->child_count);
+	parent->children = vec_del(parent->children, parent->child_count, i);
+	parent->child_count--;
 	object_ungrab(object);
 }
 

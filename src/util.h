@@ -254,6 +254,26 @@ do_vec_contract(void *vec, size_t items, size_t item_sz)
 	memcpy(mine_, (x), sizeof(*(x)) * sz_);			\
 	mine_;							\
 })
+#define vec_add(x, y, z, w) ({				\
+	typeof(x) vec_ = (x);				\
+	typeof(y) sz_ = (y);				\
+	size_t idx_ = (z);				\
+							\
+	vec_ = vec_expand(vec_, sz_);			\
+	memmove(&vec_[idx_+1], &vec_[idx_],		\
+		(sz_ - idx_) * sizeof(*vec_));		\
+	vec_[idx_] = (w);				\
+	vec_;						\
+})
+#define vec_del(x, y, z) ({				\
+	typeof(x) vec_ = (x);				\
+	typeof(y) sz_ = (y);				\
+	size_t idx_ = (z);				\
+							\
+	memmove(&vec_[idx_], &vec_[idx_+1],		\
+		(sz_ - 1 - idx_) * sizeof(*vec_));	\
+	vec_contract(vec_, sz_);			\
+})
 
 /**
  * Check whether an OpenGL error has occurred and die if it has.

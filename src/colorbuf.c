@@ -189,11 +189,10 @@ colorbuf_set_buf(colorbuf_t *buf, size_t idx, texmap_t *texmap)
 	buf->colorbufs[i] = texmap;
 
 	if (! texmap) {
-		memcpy(&buf->colorbufs[i], &buf->colorbufs[i + 1],
-		       (buf->num_colorbufs - 1 - i) * sizeof(texmap_t *));
-		memcpy(&buf->colorbuf_attach_pos[i],
-		       &buf->colorbuf_attach_pos[i + 1],
-		       (buf->num_colorbufs - 1 - i) * sizeof(size_t *));
+		buf->colorbufs = vec_del(buf->colorbufs,
+					 buf->num_colorbufs, i);
+		buf->colorbuf_attach_pos = vec_del(buf->colorbuf_attach_pos,
+						   buf->num_colorbufs, i);
 		buf->num_colorbufs--;
 	}
 

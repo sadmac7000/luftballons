@@ -252,8 +252,8 @@ state_material_eliminate(state_t *state, int mat_id)
 
 	state_destroy_material(&state->materials[i]);
 
-	memcpy(&state->materials[i], &state->materials[i + 1],
-	       (--state->num_materials - i) * sizeof(struct material));
+	state->materials = vec_del(state->materials, state->num_materials, i);
+	state->num_materials--;
 }
 
 /**
@@ -383,10 +383,10 @@ state_underlay_materials(state_t *state, state_t *other)
 			continue;
 		}
 
-		state->materials = vec_expand(state->materials,
-					      state->num_materials);
-		memcpy(&state->materials[state->num_materials++],
-		       &other->materials[i], sizeof(struct material));
+		state->materials = vec_add(state->materials,
+					   state->num_materials, j,
+					   other->materials[i]);
+		state->num_materials++;
 
 		state_material_clone(&state->materials[j]);
 	}
