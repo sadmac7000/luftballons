@@ -48,8 +48,8 @@ struct material;
  * flags: Flags indicating properties of this draw state.
  * care_about: Which flags we actually care about the state of.
  * colorbuf: Color buffer to render to.
- * num_uniforms, uniforms: Vector of uniforms to install.
  * shader: Shader to load in this state.
+ * material_gen: Material backlog generation.
  * material, num_materials: The materials we draw.
  * refcount: Reference counter.
  **/
@@ -58,6 +58,7 @@ typedef struct state {
 	uint64_t care_about;
 	colorbuf_t *colorbuf;
 	shader_t *shader;
+	size_t material_gen;
 	struct material *materials;
 	size_t num_materials;
 	state_blend_mode_t blend_mode;

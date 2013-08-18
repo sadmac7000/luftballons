@@ -40,6 +40,8 @@ draw_op_destructor(void *op_)
 	object_ungrab(op->object);
 	object_ungrab(op->camera);
 
+	material_backlog_unsubscribe(op->material_gen);
+
 	if (op->state)
 		state_ungrab(op->state);
 
@@ -59,6 +61,7 @@ draw_op_create(object_t *object, object_t *camera)
 
 	ret->object = object;
 	ret->camera = camera;
+	ret->material_gen = material_backlog_subscribe();
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, draw_op_destructor, ret);
@@ -68,12 +71,57 @@ draw_op_create(object_t *object, object_t *camera)
 EXPORT(draw_op_create);
 
 /**
+ * Tell the draw operation not to draw the given material. Don't check if the
+ * material is allocated first
+ **/
+static void
+draw_op_do_deactivate_material(draw_op_t *draw_op, material_t mat)
+{
+	size_t i;
+
+	for (i = 0; i < draw_op->num_materials; i++)
+		if (draw_op->materials[i] == mat)
+			break;
+
+	if (draw_op->num_materials == i)
+		return;
+
+	draw_op->materials = vec_del(draw_op->materials,
+				     draw_op->num_materials, i);
+	draw_op->num_materials--;
+
+	state_material_eliminate(draw_op->state, mat);
+}
+
+/**
+ * Sync this draw op's materials with the backlog of deleted materials.
+ **/
+static void
+draw_op_sync_mat_backlog(draw_op_t *op)
+{
+	material_t *backlog;
+	size_t num_backlog;
+	size_t i;
+
+	op->material_gen = material_backlog_sync(op->material_gen, &backlog,
+						 &num_backlog);
+
+	for (i = 0; i < num_backlog; i++)
+		draw_op_do_deactivate_material(op, backlog[i]);
+
+	free(backlog);
+}
+
+/**
  * Create a copy of an existing draw operation.
  **/
 draw_op_t *
 draw_op_clone(draw_op_t *op)
 {
 	draw_op_t *ret = xmemdup(op, sizeof(draw_op_t));
+
+	draw_op_sync_mat_backlog(op);
+	ret->material_gen = material_backlog_subscribe();
 
 	object_grab(ret->object);
 	object_grab(ret->camera);
@@ -173,6 +221,8 @@ draw_op_activate_material(draw_op_t *draw_op, material_t mat)
 {
 	size_t i;
 
+	draw_op_sync_mat_backlog(draw_op);
+
 	if (! material_is_allocd(mat))
 		errx(1, "Only a valid allocated material may be activated");
 
@@ -195,23 +245,10 @@ EXPORT(draw_op_activate_material);
 void
 draw_op_deactivate_material(draw_op_t *draw_op, material_t mat)
 {
-	size_t i;
-
 	if (! material_is_allocd(mat))
 		errx(1, "Only a valid allocated material may be deactivated");
 
-	for (i = 0; i < draw_op->num_materials; i++)
-		if (draw_op->materials[i] == mat)
-			break;
-
-	if (draw_op->num_materials == i)
-		return;
-
-	draw_op->materials = vec_del(draw_op->materials,
-				     draw_op->num_materials, i);
-	draw_op->num_materials--;
-
-	state_material_eliminate(draw_op->state, mat);
+	draw_op_do_deactivate_material(draw_op, mat);
 }
 EXPORT(draw_op_deactivate_material);
 
@@ -226,6 +263,8 @@ draw_op_set_uniform(draw_op_t *op, material_t mat, uniform_type_t type, ...)
 {
 	va_list ap;
 	uniform_t *uniform;
+
+	draw_op_sync_mat_backlog(op);
 
 	if (mat != NO_MATERIAL)
 		draw_op_activate_material(op, mat);
@@ -382,6 +421,7 @@ draw_op_exec(draw_op_t *op)
 	object_t *quad = object_get_fs_quad();
 	object_t *object = op->object;
 
+	draw_op_sync_mat_backlog(op);
 	camera_from_world(op->camera, cspace);
 	camera_to_clip(op->camera, clip);
 

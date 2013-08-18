@@ -30,6 +30,11 @@ typedef luft_material_t material_t;
 extern "C" {
 #endif
 
+size_t material_backlog_subscribe(void);
+void material_backlog_unsubscribe(size_t gen_id);
+size_t material_backlog_sync(size_t gen_id, material_t **releases,
+			     size_t *num_releases);
+
 API_DECLARE(material_alloc);
 API_DECLARE(material_destroy);
 API_DECLARE(material_is_allocd);

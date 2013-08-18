@@ -81,6 +81,7 @@ state_destructor(void *data)
 	if (state->colorbuf)
 		colorbuf_ungrab(state->colorbuf);
 
+	material_backlog_unsubscribe(state->material_gen);
 
 	free(state->materials);
 	free(state);
@@ -97,6 +98,7 @@ state_create(void)
 	state->blend_mode = STATE_BLEND_DONTCARE;
 	state->num_materials = 0;
 	state->materials = NULL;
+	state->material_gen = material_backlog_subscribe();
 
 	refcount_init(&state->refcount);
 	refcount_add_destructor(&state->refcount, state_destructor, state);
@@ -117,6 +119,46 @@ state_set_shader(state_t *state, shader_t *shader)
 		shader_grab(shader);
 
 	state->shader = shader;
+}
+
+/**
+ * Remove a material from this state. Don't check if it is valid first.
+ **/
+static void
+state_do_material_eliminate(state_t *state, material_t mat)
+{
+	size_t i;
+
+	for (i = 0; i < state->num_materials; i++)
+		if (state->materials[i].mat == mat)
+			break;
+
+	if (i == state->num_materials)
+		return;
+
+	state_destroy_material(&state->materials[i]);
+
+	state->materials = vec_del(state->materials, state->num_materials, i);
+	state->num_materials--;
+}
+
+/**
+ * Sync this state's materials with the backlog of deleted materials.
+ **/
+static void
+state_sync_mat_backlog(state_t *state)
+{
+	material_t *backlog;
+	size_t num_backlog;
+	size_t i;
+
+	state->material_gen = material_backlog_sync(state->material_gen, &backlog,
+						    &num_backlog);
+
+	for (i = 0; i < num_backlog; i++)
+		state_do_material_eliminate(state, backlog[i]);
+
+	free(backlog);
 }
 
 /**
@@ -144,6 +186,9 @@ state_clone(state_t *in)
 	size_t i;
 
 	memcpy(state, in, sizeof(state_t));
+
+	state_sync_mat_backlog(in);
+	state->material_gen = material_backlog_subscribe();
 
 	if (state->colorbuf)
 		colorbuf_grab(state->colorbuf);
@@ -241,22 +286,10 @@ state_apply_blend_mode(state_t *state, state_blend_mode_t old)
 void
 state_material_eliminate(state_t *state, material_t mat)
 {
-	size_t i;
-
 	if (! material_is_allocd(mat))
 		errx(1, "Only valid allocated materials can be eliminated");
 
-	for (i = 0; i < state->num_materials; i++)
-		if (state->materials[i].mat == mat)
-			break;
-
-	if (i == state->num_materials)
-		return;
-
-	state_destroy_material(&state->materials[i]);
-
-	state->materials = vec_del(state->materials, state->num_materials, i);
-	state->num_materials--;
+	state_do_material_eliminate(state, mat);
 }
 
 /**
@@ -271,6 +304,8 @@ state_do_material_activate(material_t mat)
 
 	if (! current_state)
 		return;
+
+	state_sync_mat_backlog(current_state);
 
 	if (! current_state->shader)
 		return;
@@ -310,6 +345,8 @@ state_enter(state_t *state)
 
 	if (current_state == state)
 		return;
+
+	state_sync_mat_backlog(state);
 
 	state_grab(state);
 
@@ -405,6 +442,8 @@ state_underlay(state_t *state, state_t *other)
 	uint64_t set;
 	uint64_t clear;
 
+	state_sync_mat_backlog(other);
+
 	set = other->flags;
 	clear = ~other->flags;
 
@@ -472,6 +511,8 @@ state_push(state_t *state, material_t mat)
 	if (mat != NO_MATERIAL)
 		current_material = mat;
 
+	state_sync_mat_backlog(state);
+
 	state_stack = vec_expand(state_stack, state_stack_size);
 
 	state_stack[state_stack_size++] = state;
@@ -494,6 +535,8 @@ state_pop(state_t *state, material_t mat)
 
 	if (mat != NO_MATERIAL)
 		current_material = mat;
+
+	state_sync_mat_backlog(state);
 
 	if (! state_stack_size) {
 		if (state)
@@ -621,6 +664,8 @@ state_set_uniform(state_t *state, material_t mat, uniform_type_t type, ...)
 	uniform_t *uniform;
 	struct material *material;
 	va_list ap;
+
+	state_sync_mat_backlog(state);
 
 	if (mat != NO_MATERIAL && ! material_is_allocd(mat))
 		errx(1, "Must set uniforms for NO_MATERIAL"

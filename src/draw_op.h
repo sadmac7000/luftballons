@@ -37,6 +37,7 @@ extern "C" {
  * object: Object root to draw.
  * camera: Camera to draw from.
  * state: State to enter while drawing.
+ * material_gen: Material backlog generation.
  * materials, num_materials: What materials to draw.
  * refcount: Reference count for this object.
  **/
@@ -45,6 +46,7 @@ typedef struct draw_op {
 	object_t *camera;
 	state_t *state;
 
+	size_t material_gen;
 	material_t *materials;
 	size_t num_materials;
 
