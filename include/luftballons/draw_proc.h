@@ -47,9 +47,8 @@ void luft_draw_proc_clear_flags(luft_draw_proc_t *draw_proc, uint64_t flags);
 void luft_draw_proc_ignore_flags(luft_draw_proc_t *draw_proc, uint64_t flags);
 void luft_draw_proc_set_colorbuf(luft_draw_proc_t *draw_proc,
 				 luft_colorbuf_t *colorbuf);
-void luft_draw_proc_set_uniform(luft_draw_proc_t *draw_proc,
+void luft_draw_proc_set_uniform(luft_draw_proc_t *draw_proc, int mat_id,
 				luft_uniform_type_t type, ...);
-void luft_draw_proc_set_material(luft_draw_proc_t *draw_proc, int mat_id);
 #ifdef __cplusplus
 }
 #endif

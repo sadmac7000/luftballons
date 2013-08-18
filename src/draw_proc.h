@@ -88,7 +88,6 @@ API_DECLARE(draw_proc_clear_flags);
 API_DECLARE(draw_proc_ignore_flags);
 API_DECLARE(draw_proc_set_colorbuf);
 API_DECLARE(draw_proc_set_uniform);
-API_DECLARE(draw_proc_set_material);
 
 #ifdef __cplusplus
 }

@@ -27,13 +27,41 @@
 /**
  * The current state.
  **/
-state_t *current_state = NULL;
+static state_t *current_state = NULL;
 
 /**
  * The current state stack.
  **/
-state_t **state_stack;
-size_t state_stack_size = 0;
+static state_t **state_stack;
+static size_t state_stack_size = 0;
+
+/**
+ * Individual material properties.
+ **/
+struct material {
+	uniform_t **uniforms;
+	size_t num_uniforms;
+	int mat_id;
+};
+
+/**
+ * The current material
+ **/
+int current_material = -1;
+
+/**
+ * Destroy a material struct.
+ **/
+static void
+state_destroy_material(struct material *material)
+{
+	size_t i;
+
+	for (i = 0; i < material->num_uniforms; i++)
+		uniform_ungrab(material->uniforms[i]);
+
+	free(material->uniforms);
+}
 
 /**
  * Destroy a state object. Don't defer until the state is no longer active.
@@ -44,14 +72,14 @@ state_destructor(void *data)
 	size_t i;
 	state_t *state = data;
 
-	for (i = 0; i < state->num_uniforms; i++)
-		uniform_ungrab(state->uniforms[i]);
+	for (i = 0; i < state->num_materials; i++)
+		state_destroy_material(&state->materials[i]);
 
 	if (state->colorbuf)
 		colorbuf_ungrab(state->colorbuf);
 
 
-	free(state->uniforms);
+	free(state->materials);
 	free(state);
 }
 
@@ -63,8 +91,9 @@ state_create(void)
 {
 	state_t *state = xcalloc(1, sizeof(state_t));
 
-	state->mat_id = -1;
 	state->blend_mode = STATE_BLEND_DONTCARE;
+	state->num_materials = 0;
+	state->materials = NULL;
 
 	refcount_init(&state->refcount);
 	refcount_add_destructor(&state->refcount, state_destructor, state);
@@ -88,6 +117,21 @@ state_set_shader(state_t *state, shader_t *shader)
 }
 
 /**
+ * Clone a material struct.
+ **/
+static void
+state_material_clone(struct material *material)
+{
+	size_t i;
+
+	material->uniforms = vec_dup(material->uniforms,
+				     material->num_uniforms);
+
+	for (i = 0; i < material->num_uniforms; i++)
+		uniform_grab(material->uniforms[i]);
+}
+
+/**
  * Create a new state with the same properties as an existing state.
  **/
 state_t *
@@ -101,15 +145,16 @@ state_clone(state_t *in)
 	if (state->colorbuf)
 		colorbuf_grab(state->colorbuf);
 
-	for (i = 0; i < state->num_uniforms; i++)
-		uniform_grab(state->uniforms[i]);
+	state->materials = vec_dup(in->materials, in->num_materials);
+
+	for (i = 0; i < state->num_materials; i++)
+		state_material_clone(&state->materials[i]);
 
 	refcount_init(&state->refcount);
 	refcount_add_destructor(&state->refcount, state_destructor, state);
 
 	return state;
 }
-
 /**
  * Grab a state object.
  **/
@@ -187,6 +232,69 @@ state_apply_blend_mode(state_t *state, state_blend_mode_t old)
 		glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
 }
 
+/**
+ * Remove a material from this state.
+ **/
+void
+state_material_eliminate(state_t *state, int mat_id)
+{
+	size_t i;
+
+	if (mat_id < 0)
+		errx(1, "Material IDs must be >= 0");
+
+	for (i = 0; i < state->num_materials; i++)
+		if (state->materials[i].mat_id == mat_id)
+			break;
+
+	if (i == state->num_materials)
+		return;
+
+	state_destroy_material(&state->materials[i]);
+
+	memcpy(&state->materials[i], &state->materials[i + 1],
+	       (--state->num_materials - i) * sizeof(struct material));
+}
+
+/**
+ * Set the material for this state.
+ **/
+static void
+state_do_material_activate(int mat_id)
+{
+	size_t i, j;
+
+	current_material = mat_id;
+
+	if (! current_state)
+		return;
+
+	if (! current_state->shader)
+		return;
+
+	for (i = 0; i < current_state->num_materials; i++) {
+		if (current_state->materials[i].mat_id != current_material &&
+		    current_state->materials[i].mat_id != -1)
+			continue;
+
+		for (j = 0; j < current_state->materials[i].num_uniforms; j++)
+			shader_set_uniform(current_state->shader,
+					   current_state->materials[i]
+					   .uniforms[j]);
+	}
+}
+
+/**
+ * Set the material for this state if it isn't already set.
+ **/
+void
+state_material_activate(int mat_id)
+{
+	if (current_material == mat_id)
+		return;
+
+	state_do_material_activate(mat_id);
+}
 
 /**
  * Enter the given state.
@@ -195,7 +303,6 @@ static void
 state_enter(state_t *state)
 {
 	uint64_t change_flags = state->care_about;
-	size_t i;
 	state_blend_mode_t old = STATE_BLEND_DONTCARE;
 
 	if (current_state == state)
@@ -203,12 +310,8 @@ state_enter(state_t *state)
 
 	state_grab(state);
 
-	if (state->shader) {
+	if (state->shader)
 		shader_activate(state->shader);
-
-		for (i = 0; i < state->num_uniforms; i++)
-			shader_set_uniform(state->shader, state->uniforms[i]);
-	}
 
 	if (current_state) {
 		change_flags = current_state->flags ^ state->flags;
@@ -230,6 +333,63 @@ state_enter(state_t *state)
 		state_ungrab(current_state);
 
 	current_state = state;
+
+	state_do_material_activate(current_material);
+}
+
+/**
+ * Add all uniforms to orig that are in other and don't collide.
+ **/
+static void
+state_material_underlay_in(struct material *orig, struct material *other)
+{
+	size_t i, j;
+
+	for (i = 0; i < other->num_uniforms; i++) {
+		for (j = 0; j < orig->num_uniforms; j++)
+			if (! strcmp(orig->uniforms[j]->name,
+				     other->uniforms[i]->name))
+				break;
+
+		if (j != orig->num_uniforms)
+			continue;
+
+		orig->uniforms = vec_expand(orig->uniforms,
+					    orig->num_uniforms);
+
+		orig->uniforms[orig->num_uniforms++] = other->uniforms[i];
+		uniform_grab(other->uniforms[i]);
+	}
+}
+
+/**
+ * Set all material uniforms that we don't set in the given state to the values
+ * given by other.
+ **/
+static void
+state_underlay_materials(state_t *state, state_t *other)
+{
+	size_t i, j;
+
+	for (i = 0; i < other->num_materials; i++) {
+		for (j = 0; j < state->num_materials; j++)
+			if (state->materials[j].mat_id ==
+			    other->materials[i].mat_id)
+				break;
+
+		if (j != state->num_materials) {
+			state_material_underlay_in(&state->materials[j],
+						   &other->materials[i]);
+			continue;
+		}
+
+		state->materials = vec_expand(state->materials,
+					      state->num_materials);
+		memcpy(&state->materials[state->num_materials++],
+		       &other->materials[i], sizeof(struct material));
+
+		state_material_clone(&state->materials[j]);
+	}
 }
 
 /**
@@ -241,8 +401,6 @@ state_underlay(state_t *state, state_t *other)
 {
 	uint64_t set;
 	uint64_t clear;
-	size_t i;
-	size_t j;
 
 	set = other->flags;
 	clear = ~other->flags;
@@ -257,8 +415,7 @@ state_underlay(state_t *state, state_t *other)
 	state->flags |= set;
 	state->flags &= ~clear;
 
-	if (state->mat_id == -1)
-		state->mat_id = other->mat_id;
+	state_underlay_materials(state, other);
 
 	if (!state->colorbuf && other->colorbuf) {
 		state->colorbuf = other->colorbuf;
@@ -272,17 +429,6 @@ state_underlay(state_t *state, state_t *other)
 
 	if (state->blend_mode == STATE_BLEND_DONTCARE)
 		state->blend_mode = other->blend_mode;
-
-	for (i = 0; i < other->num_uniforms; i++) {
-		for (j = 0; j < state->num_uniforms; j++)
-			if (! strcmp(state->uniforms[j]->name,
-				     other->uniforms[i]->name))
-				break;
-
-		if (j == state->num_uniforms)
-			state_set_uniform(state, UNIFORM_CLONE,
-					  other->uniforms[i]);
-	}
 }
 
 /**
@@ -312,11 +458,17 @@ state_stack_aggregate(void)
 }
 
 /**
- * Push a state on to the stack.
+ * Push a state on to the stack. Optionally provide a new material ID to use.
+ *
+ * state: State to push on the stack.
+ * mat_id: New material ID to use, or -1.
  **/
 void
-state_push(state_t *state)
+state_push(state_t *state, int mat_id)
 {
+	if (mat_id >= 0)
+		current_material = mat_id;
+
 	state_stack = vec_expand(state_stack, state_stack_size);
 
 	state_stack[state_stack_size++] = state;
@@ -326,15 +478,20 @@ state_push(state_t *state)
 }
 
 /**
- * Pop a state from the stack.
+ * Pop a state from the stack. Optionally provide a new material ID to use.
  *
  * state: If the state popped isn't equal to this value, and this value isn't
  *        NULL, raise an error
+ * mat_id: New material ID to use, or -1.
  **/
 void
-state_pop(state_t *state)
+state_pop(state_t *state, int mat_id)
 {
 	state_t *popped;
+
+	if (mat_id >= 0)
+		current_material = mat_id;
+
 	if (! state_stack_size) {
 		if (state)
 			errx(1, "Expected to pop a state when"
@@ -455,11 +612,15 @@ state_set_colorbuf(state_t *state, colorbuf_t *colorbuf)
  * Set a uniform that is applied when this state is entered.
  **/
 void
-state_set_uniform(state_t *state, uniform_type_t type, ...)
+state_set_uniform(state_t *state, int mat_id, uniform_type_t type, ...)
 {
 	size_t i;
 	uniform_t *uniform;
+	struct material *material;
 	va_list ap;
+
+	if (mat_id < -1)
+		errx(1, "Material IDs must be >= -1");
 
 	va_start(ap, type);
 
@@ -467,29 +628,36 @@ state_set_uniform(state_t *state, uniform_type_t type, ...)
 
 	va_end(ap);
 
-	for (i = 0; i < state->num_uniforms; i++) {
-		if (strcmp(state->uniforms[i]->name, uniform->name))
+	for (i = 0; i < state->num_materials; i++)
+		if (state->materials[i].mat_id == mat_id)
+			break;
+
+	if (i == state->num_materials) {
+		state->materials = vec_expand(state->materials,
+					      state->num_materials);
+		state->num_materials++;
+		state->materials[i].uniforms = NULL;
+		state->materials[i].num_uniforms = 0;
+		state->materials[i].mat_id = mat_id;
+	}
+
+	material = &state->materials[i];
+
+	for (i = 0; i < material->num_uniforms; i++) {
+		if (strcmp(material->uniforms[i]->name, uniform->name))
 			continue;
 
-		uniform_ungrab(state->uniforms[i]);
-		state->uniforms[i] = uniform;
+		uniform_ungrab(material->uniforms[i]);
+		material->uniforms[i] = uniform;
 		return;
 	}
 
-	state->uniforms = vec_expand(state->uniforms, state->num_uniforms);
-	state->uniforms[state->num_uniforms++] = uniform;
+	material->uniforms = vec_expand(material->uniforms,
+					material->num_uniforms);
+	material->uniforms[material->num_uniforms++] = uniform;
 
-	if (state == current_state)
+	if (state == current_state && mat_id == current_material)
 		shader_set_uniform(state->shader, uniform);
-}
-
-/**
- * Set state material ID.
- **/
-void
-state_set_material(state_t *state, int mat_id)
-{
-	state->mat_id = mat_id;
 }
 
 /**
@@ -498,13 +666,7 @@ state_set_material(state_t *state, int mat_id)
 int
 state_material_active(int mat_id)
 {
-	if (! current_state)
-		return 0;
-
-	if (current_state->mat_id < 0)
-		return 1;
-
-	return current_state->mat_id == mat_id;
+	return current_material == mat_id;
 }
 
 /**

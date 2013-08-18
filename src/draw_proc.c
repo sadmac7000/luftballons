@@ -176,9 +176,9 @@ EXPORT(draw_proc_clear);
 static void
 draw_proc_do_step(draw_proc_step_t *step)
 {
-	if (step->type == DRAW_PROC_STEP_DRAW)
+	if (step->type == DRAW_PROC_STEP_DRAW) {
 		draw_op_exec(step->draw_op);
-	else if (step->type == DRAW_PROC_STEP_PROC)
+	} else if (step->type == DRAW_PROC_STEP_PROC)
 		draw_proc_run(step->draw_proc);
 	else if (step->type == DRAW_PROC_STEP_CLEAR)
 		colorbuf_clear(step->cbuf);
@@ -195,13 +195,13 @@ draw_proc_run_once(draw_proc_t *draw_proc)
 	size_t i;
 
 	if (draw_proc->base_state)
-		state_push(draw_proc->base_state);
+		state_push(draw_proc->base_state, -1);
 
 	for (i = 0; i < draw_proc->num_steps; i++)
 		draw_proc_do_step(&draw_proc->steps[i]);
 
 	if (draw_proc->base_state)
-		state_pop(draw_proc->base_state);
+		state_pop(draw_proc->base_state, -1);
 }
 
 /**
@@ -295,10 +295,12 @@ draw_proc_set_colorbuf(draw_proc_t *draw_proc, colorbuf_t *colorbuf)
 EXPORT(draw_proc_set_colorbuf);
 
 /**
- * Set a uniform for this draw_proc.
+ * Set a uniform for this draw_proc. If mat_id is not -1, then the uniform
+ * applies only to objects with the given material.
  **/
 void
-draw_proc_set_uniform(draw_proc_t *draw_proc, uniform_type_t type, ...)
+draw_proc_set_uniform(draw_proc_t *draw_proc, int mat_id,
+		      uniform_type_t type, ...)
 {
 	va_list ap;
 	uniform_t *uniform;
@@ -308,18 +310,8 @@ draw_proc_set_uniform(draw_proc_t *draw_proc, uniform_type_t type, ...)
 	va_end(ap);
 
 	draw_proc_init_state(draw_proc);
-	state_set_uniform(draw_proc->base_state, LUFT_UNIFORM_CLONE, uniform);
+	state_set_uniform(draw_proc->base_state, mat_id, LUFT_UNIFORM_CLONE,
+			  uniform);
 	uniform_ungrab(uniform);
 }
 EXPORT(draw_proc_set_uniform);
-
-/**
- * Set the material to draw for this draw_proc.
- **/
-void
-draw_proc_set_material(draw_proc_t *draw_proc, int mat_id)
-{
-	draw_proc_init_state(draw_proc);
-	state_set_material(draw_proc->base_state, mat_id);
-}
-EXPORT(draw_proc_set_material);

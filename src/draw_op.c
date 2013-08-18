@@ -164,34 +164,82 @@ draw_op_set_colorbuf(draw_op_t *op, colorbuf_t *colorbuf)
 EXPORT(draw_op_set_colorbuf);
 
 /**
- * Set a uniform to be passed to the shader during this draw operation.
+ * Tell the draw operation that we will draw the given material.
  **/
 void
-draw_op_set_uniform(draw_op_t *op, uniform_type_t type, ...)
+draw_op_activate_material(draw_op_t *draw_op, int mat_id)
+{
+	size_t i;
+
+	if (mat_id < 0)
+		errx(1, "Material IDs must be >= 0");
+
+	for (i = 0; i < draw_op->num_materials &&
+	     draw_op->materials[i] < mat_id; i++);
+
+	if (i < draw_op->num_materials &&
+	    draw_op->materials[i] == mat_id)
+		return;
+
+	draw_op->materials = vec_expand(draw_op->materials,
+					draw_op->num_materials);
+
+	memmove(&draw_op->materials[i + 1], &draw_op->materials[i],
+		(draw_op->num_materials++ - i) * sizeof(int));
+
+	draw_op->materials[i] = mat_id;
+}
+EXPORT(draw_op_activate_material);
+
+/**
+ * Tell the draw operation not to draw the given material.
+ **/
+void
+draw_op_deactivate_material(draw_op_t *draw_op, int mat_id)
+{
+	size_t i;
+
+	if (mat_id < 0)
+		errx(1, "Material IDs must be >= 0");
+
+	for (i = 0; i < draw_op->num_materials; i++)
+		if (draw_op->materials[i] == mat_id)
+			break;
+
+	if (draw_op->num_materials == i)
+		return;
+
+	memmove(&draw_op->materials[i], &draw_op->materials[i + 1],
+		(--draw_op->num_materials - i) * sizeof(int));
+
+	state_material_eliminate(draw_op->state, mat_id);
+}
+EXPORT(draw_op_deactivate_material);
+
+/**
+ * Set a uniform to be passed to the shader during this draw operation. If
+ * mat_id is not -1, then this uniform only applies to the given material.
+ * Also, this call will act as an implicit call to draw_op_activate_material in
+ * that case.
+ **/
+void
+draw_op_set_uniform(draw_op_t *op, int mat_id, uniform_type_t type, ...)
 {
 	va_list ap;
 	uniform_t *uniform;
+
+	if (mat_id >= 0)
+		draw_op_activate_material(op, mat_id);
 
 	va_start(ap, type);
 	uniform = uniform_vcreate(type, ap);
 	va_end(ap);
 
 	draw_op_init_state(op);
-	state_set_uniform(op->state, LUFT_UNIFORM_CLONE, uniform);
+	state_set_uniform(op->state, mat_id, LUFT_UNIFORM_CLONE, uniform);
 	uniform_ungrab(uniform);
 }
 EXPORT(draw_op_set_uniform);
-
-/**
- * Set material to draw during this draw operation.
- **/
-void
-draw_op_set_material(draw_op_t *op, int mat_id)
-{
-	draw_op_init_state(op);
-	state_set_material(op->state, mat_id);
-}
-EXPORT(draw_op_set_material);
 
 /**
  * Grab a Operation.
@@ -286,6 +334,36 @@ draw_op_do_draw(object_t *object, float cspace[16],
 }
 
 /**
+ * Sort a list of objects by material.
+ **/
+static void
+draw_op_sort_objects_by_material(object_t **list, size_t size)
+{
+	object_t *tmp;
+	size_t i, j;
+	
+	if (size <= 1)
+		return;
+
+	for (i = 0, j = 1; i < size; i++) {
+		for (; j < size && list[j]->mat_id >= list[i]->mat_id; j++);
+
+		if (j == size) {
+			draw_op_sort_objects_by_material(list, i);
+			draw_op_sort_objects_by_material(list + i + 1, size - i - 1);
+			return;
+		}
+
+		tmp = list[j];
+		list[j] = list[i + 1];
+		list[i + 1] = tmp;
+		tmp = list[i];
+		list[i] = list[i + 1];
+		list[i + 1] = tmp;
+	}
+}
+
+/**
  * Perform a given draw operation
  **/
 void
@@ -298,6 +376,8 @@ draw_op_exec(draw_op_t *op)
 	size_t num_flat = 0;
 	size_t i;
 	size_t j;
+	size_t k;
+	int pushed = 0;
 	object_cursor_t cursor;
 	object_t *quad = object_get_fs_quad();
 	object_t *object = op->object;
@@ -321,25 +401,41 @@ draw_op_exec(draw_op_t *op)
 
 	object_cursor_release(&cursor);
 
-	if (op->state)
-		state_push(op->state);
+	draw_op_sort_objects_by_material(flat, num_flat);
 
 	while (num_flat) {
 		for (i = 0; i < num_pools; i++)
 			bufpool_end_generation(pools[i]);
 
-		for (i = 0, j = 0; i < num_flat; i++) {
+		for (i = 0, j = 0, k = 0; i < num_flat; i++) {
 			flat[j] = flat[i];
 
-			if (! draw_op_do_draw(flat[j], cspace, clip, quad))
+
+			while (k < op->num_materials &&
+			       op->materials[k] < flat[j]->mat_id)
+				k++;
+
+			if (k == op->num_materials ||
+			    op->materials[k] > flat[j]->mat_id)
+				continue;
+
+			if (op->state && ! pushed) {
+				state_push(op->state, op->materials[k]);
+				pushed = 1;
+			} else {
+				state_material_activate(op->materials[k]);
+			}
+
+			if (! draw_op_do_draw(flat[j], cspace,
+					      clip, quad))
 				j++;
 		}
 
 		num_flat = j;
 	}
 
-	if (op->state)
-		state_pop(op->state);
+	if (pushed)
+		state_pop(op->state, -1);
 
 	object_ungrab(quad);
 

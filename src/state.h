@@ -37,6 +37,8 @@ typedef luft_blend_mode_t state_blend_mode_t;
 #define STATE_BLEND_REVERSE_ALPHA	LUFT_BLEND_REVERSE_ALPHA
 #define STATE_BLEND_ADDITIVE		LUFT_BLEND_ADDITIVE
 
+struct material;
+
 /**
  * A bin of current misc. OpenGL state.
  *
@@ -45,17 +47,16 @@ typedef luft_blend_mode_t state_blend_mode_t;
  * colorbuf: Color buffer to render to.
  * num_uniforms, uniforms: Vector of uniforms to install.
  * shader: Shader to load in this state.
- * mat_id: The material we draw.
+ * material, num_materials: The materials we draw.
  * refcount: Reference counter.
  **/
 typedef struct state {
 	uint64_t flags;
 	uint64_t care_about;
 	colorbuf_t *colorbuf;
-	size_t num_uniforms;
-	uniform_t **uniforms;
 	shader_t *shader;
-	int mat_id;
+	struct material *materials;
+	size_t num_materials;
 	state_blend_mode_t blend_mode;
 	refcounter_t refcount;
 } state_t;
@@ -65,8 +66,11 @@ extern "C" {
 #endif
 
 int state_material_active(int mat_id);
-void state_push(state_t *state);
-void state_pop(state_t *state);
+void state_print_current(void);
+void state_material_activate(int mat_id);
+void state_material_eliminate(state_t *state, int mat_id);
+void state_push(state_t *state, int mat_id);
+void state_pop(state_t *state, int mat_id);
 state_t *state_create(void);
 void state_set_shader(state_t *state, shader_t *shader);
 state_t *state_clone(state_t *in);
@@ -77,11 +81,9 @@ void state_set_flags(state_t *state, uint64_t flags);
 void state_clear_flags(state_t *state, uint64_t flags);
 void state_ignore_flags(state_t *state, uint64_t flags);
 void state_set_colorbuf(state_t *state, colorbuf_t *colorbuf);
-void state_set_uniform(state_t *state, uniform_type_t type,
+void state_set_uniform(state_t *state, int mat_id, uniform_type_t type,
 			    ...);
-void state_set_material(state_t *state, int mat_id);
 size_t state_max_colorbufs(void);
-
 
 #ifdef __cplusplus
 }

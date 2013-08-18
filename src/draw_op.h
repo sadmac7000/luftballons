@@ -34,12 +34,16 @@ extern "C" {
  * object: Object root to draw.
  * camera: Camera to draw from.
  * state: State to enter while drawing.
+ * materials, num_materials: What materials to draw.
  * refcount: Reference count for this object.
  **/
 typedef struct draw_op {
 	object_t *object;
 	object_t *camera;
 	state_t *state;
+
+	int *materials;
+	size_t num_materials;
 
 	refcounter_t refcount;
 } draw_op_t;
@@ -49,6 +53,8 @@ API_DECLARE(draw_op_clone);
 API_DECLARE(draw_op_grab);
 API_DECLARE(draw_op_ungrab);
 API_DECLARE(draw_op_exec);
+API_DECLARE(draw_op_activate_material);
+API_DECLARE(draw_op_deactivate_material);
 
 #ifdef __cplusplus
 }
