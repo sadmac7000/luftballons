@@ -9,6 +9,8 @@
 ## Harder ##
 * Port documentation to doxygen or some equivalent, or make a doc tool that can
   parse it as-is.
+* See if it makes sense to make light color or camera dimensions into uniforms
+  instead of object properties.
 
 ## Hardest ##
 * Unit tests
