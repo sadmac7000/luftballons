@@ -1,4 +1,6 @@
 /**
+ * Copyright © 2013 Casey Dahlin
+ *
  * This file is part of Luftballons.
  *
  * Luftballons is free software: you can redistribute it and/or modify
