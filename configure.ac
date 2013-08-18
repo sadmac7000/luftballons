@@ -13,7 +13,7 @@ PKG_CHECK_MODULES([OpenGL], [gl])
 AC_ARG_WITH([glut], [AS_HELP_STRING(
 	     [--with-glut],
 	 [Allow usage of GLUT for demo apps])
-], [], [with_glut=check])
+], [], [with_glut=yes])
 
 glut_LIBS=
 glut_CFLAGS=
@@ -24,9 +24,7 @@ AS_IF([test "x$with_glut" != xno], [
 		with_glut=yes
 		glut_LIBS=-lglut
 	], [
-		if test "x$with_glut" != xcheck; then
-			AC_MSG_FAILURE([--with-glut requires GLUT-DOM])
-		fi
+		AC_MSG_FAILURE([--with-glut requires GLUT])
 	])
 ])
 
@@ -38,17 +36,15 @@ AM_CONDITIONAL([HAVE_GLUT], [ test "x$with_glut" = xyes ])
 ## Check for COLLADA ##
 AC_ARG_WITH([collada], [AS_HELP_STRING(
 	     [--with-collada],
-	 [Support the COLLADA 1.4 model file format @<:@default=check@:>@])
-], [], [with_collada=check])
+	 [Support the COLLADA 1.4 model file format @<:@default=yes@:>@])
+], [], [with_collada=yes])
 
 AS_IF([test "x$with_collada" != xno], [
 	PKG_CHECK_MODULES([collada_dom], [collada14dom], [
 		AC_DEFINE([HAVE_COLLADA], [1], [COLLADA support enabled])
 		with_collada=yes
 	], [
-		if test "x$with_collada" != xcheck; then
-			AC_MSG_FAILURE([--with-collada requires COLLADA-DOM])
-		fi
+		AC_MSG_FAILURE([--with-collada requires COLLADA-DOM])
 	])
 ])
 
@@ -57,17 +53,15 @@ AM_CONDITIONAL([HAVE_COLLADA], [ test "x$with_collada" = xyes ])
 ## Check for libpng ##
 AC_ARG_WITH([png], [AS_HELP_STRING(
 	     [--with-png],
-	 [Support for importing PNG textures])
-], [], [with_png=check])
+	 [Support for importing PNG textures @<:@default=yes@:>@])
+], [], [with_png=yes])
 
 AS_IF([test "x$with_png" != xno], [
 	PKG_CHECK_MODULES([libpng], [libpng], [
 		AC_DEFINE([HAVE_PNG], [1], [PNG support enabled])
 		with_png=yes
 	], [
-		if test "x$with_png" != xcheck; then
-			AC_MSG_FAILURE([--with-png requires libpng])
-		fi
+		AC_MSG_FAILURE([--with-png requires libpng])
 	])
 ])
 
@@ -76,17 +70,15 @@ AM_CONDITIONAL([HAVE_PNG], [ test "x$with_png" = xyes ])
 ## Check for libtiff ##
 AC_ARG_WITH([tiff], [AS_HELP_STRING(
 	     [--with-tiff],
-	 [Support for importing TIFF textures])
-], [], [with_tiff=check])
+	 [Support for importing TIFF textures @<:@default=yes@:>@])
+], [], [with_tiff=yes])
 
 AS_IF([test "x$with_tiff" != xno], [
 	PKG_CHECK_MODULES([libtiff], [libtiff-4], [
 		AC_DEFINE([HAVE_TIFF], [1], [TIFF support enabled])
 		with_tiff=yes
 	], [
-		if test "x$with_tiff" != xcheck; then
-			AC_MSG_FAILURE([--with-tiff requires libtiff])
-		fi
+		AC_MSG_FAILURE([--with-tiff requires libtiff])
 	])
 ])
 
