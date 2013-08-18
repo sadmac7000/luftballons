@@ -24,11 +24,6 @@
 #include "colorbuf.h"
 #include "util.h"
 
-/* Where the hell is this?! */
-#ifndef SIZE_T_MAX
-#define SIZE_T_MAX (~(size_t)0)
-#endif
-
 static colorbuf_t *current_colorbuf = NULL;
 
 colorbuf_t def_buf = {0};

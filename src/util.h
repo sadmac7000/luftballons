@@ -331,6 +331,11 @@ check_gl_ok(int mem_ok, const char *file, size_t line)
 #define CHECK_GL check_gl_ok(0, __FILE__, __LINE__)
 #define CLEAR_GL glGetError()
 
+/* Where the hell is this?! */
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX (~(size_t)0)
+#endif
+
 #ifdef __cplusplus
 }
 #endif
