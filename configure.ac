@@ -91,6 +91,32 @@ AM_CONDITIONAL([BUILD_DEMO], [
 		"x$with_tiff" = xyes	\
 ])
 
+### Vector configuration ###
+
+## Vector base size ##
+AC_ARG_WITH([vec-base], [AS_HELP_STRING(
+	     [--with-vec-base],
+	 [Minimum space allocation for variable-sized arrays (2^x) @<:@default=3@:>@])
+], [], [with_vec_base=3])
+
+AS_IF([test $with_vec_base -ge 1], [], [
+       AC_MSG_FAILURE([vec-base must be >= 1])
+])
+
+AC_DEFINE_UNQUOTED([VEC_BASE_SIZE], [(1 << $with_vec_base)],
+	  [Minimum space allocation for variable-sized arrays])
+
+## Vector stingy reclamation ##
+AC_ARG_WITH([stingy-vecs], [AS_HELP_STRING(
+	     [--with-stingy-vecs],
+     [Be more aggressive about reclaiming space in variable-sized arrays @<:@default=no@:>@])
+], [], [with_stingy_vecs=no])
+
+AS_IF([test "x$with_stingy_vecs" != xno], [
+		AC_DEFINE([VEC_STINGY], [1], [Stingy vectors])
+], [])
+
+## Misc. Init ##
 LT_INIT
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([include/config.h])

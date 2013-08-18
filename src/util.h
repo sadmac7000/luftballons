@@ -26,6 +26,8 @@
 
 #include <GL/gl.h>
 
+#include <config.h>
+
 #define OFFSET_OF(type, member) ((uintptr_t)&((type *)0)->member)
 #define CONTAINER_OF(ptr, type, member) ((type *)(((char *)ptr) - \
 						  OFFSET_OF(type, member)))
@@ -194,12 +196,6 @@ xdup(int fd)
 }
 
 /**
- * When allocating a potentially expanding array of elements, how many elements
- * should we have space for minimum.
- **/
-#define VEC_BASE_SIZE 8
-
-/**
  * Expand an allocated array to fit at least one more element.
  *
  * vec: Array to operate on.
@@ -231,6 +227,7 @@ do_vec_expand(void *vec, size_t items, size_t item_sz)
 static inline void *
 do_vec_contract(void *vec, size_t items, size_t item_sz)
 {
+#ifdef VEC_STINGY
 	size_t expected = items + items / 2;
 	size_t i;
 
@@ -243,6 +240,11 @@ do_vec_contract(void *vec, size_t items, size_t item_sz)
 		expected = VEC_BASE_SIZE;
 
 	return xrealloc(vec, expected * item_sz);
+#else /* !VEC_STINGY */
+	(void)items;
+	(void)item_sz;
+	return vec;
+#endif
 }
 
 #define vec_expand(x, y) do_vec_expand((x), (y), sizeof(*(x)))
