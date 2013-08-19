@@ -42,6 +42,9 @@ uniform_destructor(void *v)
 	if (uniform->type == UNIFORM_TEXMAP)
 		texmap_ungrab(uniform->value.data_ptr);
 
+	if (uniform->type == UNIFORM_MAT4 || uniform->type == UNIFORM_VEC4)
+		free(uniform->value.data_ptr);
+
 	free(uniform->name);
 	free(uniform);
 }

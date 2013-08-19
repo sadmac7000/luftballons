@@ -32,6 +32,8 @@ refcount_init(refcounter_t *counter)
 {
 	memset(counter, 0, sizeof(refcounter_t));
 	counter->count = 1;
+	counter->destructors = NULL;
+	counter->num_destructors = 0;
 }
 
 /**
@@ -89,6 +91,8 @@ void
 refcount_ungrab(refcounter_t *counter)
 {
 	size_t i;
+	refcount_destructor_t *destructors = counter->destructors;
+	size_t num_destructors = counter->num_destructors;
 
 	if (! counter->count)
 		errx(1, "Refcount went negative");
@@ -96,8 +100,8 @@ refcount_ungrab(refcounter_t *counter)
 	if (--counter->count)
 		return;
 
-	for (i = counter->num_destructors; i; i--) {
-		counter->destructors[i-1].callback(
-			counter->destructors[i-1].data);
-	}
+	for (i = num_destructors; i; i--)
+		destructors[i-1].callback(destructors[i-1].data);
+
+	free(destructors);
 }

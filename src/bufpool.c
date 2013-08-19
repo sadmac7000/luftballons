@@ -98,8 +98,8 @@ bufpool_create_buffers(bufpool_t *pool)
 	mesh_t *mesh;
 	size_t vbuf_size = 0;
 	size_t ebuf_size = 0;
-	vbuf_t *vbuf;
-	ebuf_t *ebuf;
+	vbuf_t *vbuf = NULL;
+	ebuf_t *ebuf = NULL;
 
 	if (list_empty(&pool->generations))
 		return;

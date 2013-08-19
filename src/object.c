@@ -225,6 +225,8 @@ object_invalidate_transform_cache(object_t *object)
 		free(object->transform_cache);
 		object->transform_cache = NULL;
 	}
+
+	object_cursor_release(&cursor);
 }
 
 /**

@@ -44,6 +44,7 @@ mesh_destructor(void *mesh_)
 	mesh->generation = NULL;
 
 	free(mesh->vert_data);
+	free(mesh->elem_data);
 	free(mesh);
 }
 

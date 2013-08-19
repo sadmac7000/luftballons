@@ -65,7 +65,7 @@ ebuf_destructor(void *buffer_)
 ebuf_t *
 ebuf_create(size_t size)
 {
-	ebuf_t *ret = xmalloc(sizeof(ebuf_t));
+	ebuf_t *ret;
 	GLuint handle;
 	int memfail;
 
@@ -84,6 +84,7 @@ ebuf_create(size_t size)
 	if (memfail)
 		return NULL;
 
+	ret = xmalloc(sizeof(ebuf_t));
 	ret->gl_handle = handle;
 	ret->size = size;
 
