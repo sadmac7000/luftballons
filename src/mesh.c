@@ -24,9 +24,6 @@
 #include "util.h"
 #include "texmap.h"
 
-/* Special delivery from bufpool.c */
-void bufpool_notify_generation(struct generation *gen);
-
 /**
  * Destroy and free a mesh object.
  **/
@@ -37,9 +34,6 @@ mesh_destructor(void *mesh_)
 	mesh_remove_from_vbuf(mesh);
 	mesh_remove_from_ebuf(mesh);
 	list_remove(&mesh->generation_link);
-
-	if (mesh->generation)
-		bufpool_notify_generation(mesh->generation);
 
 	mesh->generation = NULL;
 

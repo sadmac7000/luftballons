@@ -27,7 +27,6 @@
  * Meshes in the same generation were all backed around the same time.
  **/
 struct generation {
-	list_node_t link;
 	list_head_t meshes;
 };
 
@@ -37,11 +36,21 @@ struct generation {
 static void
 bufpool_add_generation(bufpool_t *pool)
 {
-	struct generation *gen = xmalloc(sizeof(struct generation));
+	size_t i;
 
-	list_init(&gen->link);
-	list_init(&gen->meshes);
-	list_insert(&pool->generations, &gen->link);
+	for (i = 0; i < pool->num_generations;) {
+		if (list_empty(&pool->generations[i].meshes)) {
+			pool->generations = vec_del(pool->generations,
+						    pool->num_generations, i);
+			pool->num_generations--;
+		} else {
+			i++;
+		}
+	}
+
+	pool->generations = vec_expand(pool->generations, pool->num_generations);
+
+	list_init(&pool->generations[pool->num_generations++].meshes);
 }
 
 /**
@@ -54,8 +63,8 @@ bufpool_create(vbuf_fmt_t format)
 
 	ret->format = format;
 	ret->generation_over = 1;
-
-	list_init(&ret->generations);
+	ret->generations = NULL;
+	ret->num_generations = 0;
 
 	return ret;
 }
@@ -66,14 +75,13 @@ bufpool_create(vbuf_fmt_t format)
 static int
 bufpool_prune(bufpool_t *pool)
 {
-	struct generation *gen = (struct generation *)pool->generations.prev;
+	struct generation *gen;
 	mesh_t *mesh;
 
-	/* 0 or 1 generations left */
-	if (pool->generations.prev == pool->generations.next)
+	if (pool->num_generations <= 1)
 		return 0;
 
-	list_remove(&gen->link);
+	gen = &pool->generations[--pool->num_generations];
 
 	while (! list_empty(&gen->meshes)) {
 		mesh = CONTAINER_OF(gen->meshes.next, mesh_t, generation_link);
@@ -84,7 +92,8 @@ bufpool_prune(bufpool_t *pool)
 		mesh_remove_from_ebuf(mesh);
 	}
 
-	free(gen);
+	pool->generations = vec_contract(pool->generations, pool->num_generations);
+
 	return 1;
 }
 
@@ -94,15 +103,17 @@ bufpool_prune(bufpool_t *pool)
 static void
 bufpool_create_buffers(bufpool_t *pool)
 {
-	struct generation *gen = (struct generation *)pool->generations.next;
+	struct generation *gen;
 	mesh_t *mesh;
 	size_t vbuf_size = 0;
 	size_t ebuf_size = 0;
 	vbuf_t *vbuf = NULL;
 	ebuf_t *ebuf = NULL;
 
-	if (list_empty(&pool->generations))
+	if (! pool->num_generations)
 		return;
+
+	gen = &pool->generations[pool->num_generations - 1];
 
 	foreach(&gen->meshes, pos) {
 		mesh = CONTAINER_OF(pos, mesh_t, generation_link);
@@ -151,23 +162,6 @@ bufpool_end_generation(bufpool_t *pool)
 }
 
 /**
- * Notify that a generation has been lost.
- *
- * Note that this is not exposed in the header file. It is prototyped for
- * mesh.c alone, which cannot include the header file due to circular
- * dependency.
- **/
-void
-bufpool_notify_generation(struct generation *gen)
-{
-	if (! list_empty(&gen->meshes))
-		return;
-
-	list_remove(&gen->link);
-	free(gen);
-}
-
-/**
  * Add a mesh to this buffer pool in this generation.
  **/
 void
@@ -179,7 +173,7 @@ bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh)
 		bufpool_add_generation(pool);
 
 	pool->generation_over = 0;
-	gen = (struct generation *)pool->generations.next;
+	gen = &pool->generations[pool->num_generations - 1];
 
 	if (gen == mesh->generation)
 		return;
@@ -188,9 +182,6 @@ bufpool_add_mesh(bufpool_t *pool, mesh_t *mesh)
 		errx(1, "Added mesh to wrong buffer pool");
 
 	list_insert(&gen->meshes, &mesh->generation_link);
-
-	if (mesh->generation)
-		bufpool_notify_generation(mesh->generation);
 
 	mesh->generation = gen;
 }

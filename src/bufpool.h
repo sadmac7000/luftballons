@@ -28,12 +28,13 @@
  * A pool of buffer space to draw from to back an object.
  *
  * format: What vertex format these buffers are.
- * generations: LRU list of backed meshes.
+ * generations, num_generations: LRU list of backed meshes.
  * generation_over: Whether the next new mesh should start a generation.
  **/
 typedef struct bufpool {
 	vbuf_fmt_t format;
-	list_head_t generations;
+	struct generation *generations;
+	size_t num_generations;
 	int generation_over;
 } bufpool_t;
 
