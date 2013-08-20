@@ -79,6 +79,7 @@ colorbuf_destroy(void *buf_v)
 		glDeleteRenderbuffers(1, &buf->autodepth);
 
 	free(buf->colorbufs);
+	free(buf->colorbuf_attach_pos);
 	free(buf);
 }
 
