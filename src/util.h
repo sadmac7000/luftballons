@@ -97,59 +97,6 @@ xmemdup(const void *data, size_t size)
 	return ret;
 }
 
-typedef struct list {
-	struct list *next, *prev;
-} list_node_t;
-
-typedef list_node_t list_head_t;
-
-#define foreach(head_, pos_) \
-	for (list_node_t *head = (head_), *pos_ = head->next; \
-	     pos_ != head; pos_ = pos_->next)
-
-/**
- * Check to see if a list is empty, or if a node is not in a list.
- */
-static inline int
-list_empty(list_node_t *node)
-{
-	return node->next == node;
-}
-
-/**
- * Initialize a list node or head.
- **/
-static inline void
-list_init(list_node_t *node)
-{
-	node->next = node;
-	node->prev = node;
-}
-
-/**
- * Remove an element from a list.
- **/
-static inline void
-list_remove(list_node_t *node)
-{
-	node->next->prev = node->prev;
-	node->prev->next = node->next;
-	list_init(node);
-}
-
-/**
- * Insert an element into a list after the given element.
- **/
-static inline void
-list_insert(list_node_t *prev, list_node_t *node)
-{
-	list_remove(node);
-	node->next = prev->next;
-	node->prev = prev;
-	node->prev->next = node;
-	node->next->prev = node;
-}
-
 /**
  * Just like read(2) but with no risk of EINTR and aborting on other errors.
  **/
