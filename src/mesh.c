@@ -33,9 +33,7 @@ mesh_destructor(void *mesh_)
 	mesh_t *mesh = mesh_;
 	mesh_remove_from_vbuf(mesh);
 	mesh_remove_from_ebuf(mesh);
-	list_remove(&mesh->generation_link);
-
-	mesh->generation = NULL;
+	mesh_remove_from_generation(mesh);
 
 	free(mesh->vert_data);
 	free(mesh->elem_data);
@@ -63,6 +61,8 @@ mesh_create(size_t verts, const void *vert_data,
 	memcpy(ret->elem_data, elem_data, 2 * elems);
 	ret->elems = elems;
 
+	ret->generation = NULL;
+
 	ret->format = format;
 
 	ret->type = type;
@@ -75,9 +75,6 @@ mesh_create(size_t verts, const void *vert_data,
 
 	refcount_init(&ret->refcount);
 	refcount_add_destructor(&ret->refcount, mesh_destructor, ret);
-
-	ret->generation = NULL;
-	list_init(&ret->generation_link);
 
 	return ret;
 }
@@ -231,4 +228,28 @@ mesh_draw(mesh_t *mesh)
 				 mesh->vbuf_pos);
 
 	return 1;
+}
+
+/**
+ * Remove a mesh from its containing generation.
+ **/
+void
+mesh_remove_from_generation(mesh_t *mesh)
+{
+	size_t i;
+
+	if (! mesh->generation)
+		return;
+
+	for (i = 0; i < mesh->generation->num_meshes; i++)
+		if (mesh->generation->meshes[i] == mesh)
+			break;
+
+	if (i >= mesh->generation->num_meshes)
+		return;
+
+	mesh->generation->meshes = vec_del(mesh->generation->meshes,
+					   mesh->generation->num_meshes, i);
+	mesh->generation->num_meshes--;
+	mesh->generation = NULL;
 }

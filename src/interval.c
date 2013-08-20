@@ -275,6 +275,7 @@ interval_set(intervals_t *set, size_t start, size_t size)
 		if (cmp->start + cmp->size == start) {
 			cmp->size += size;
 			interval_do_merge(set, off_pos - 1);
+			free(new);
 			return;
 		}
 	}
@@ -286,6 +287,7 @@ interval_set(intervals_t *set, size_t start, size_t size)
 			cmp->start = start;
 			cmp->size += size;
 			interval_do_merge(set, off_pos);
+			free(new);
 			return;
 		}
 	}

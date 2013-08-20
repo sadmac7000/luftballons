@@ -33,7 +33,7 @@
  **/
 typedef struct bufpool {
 	vbuf_fmt_t format;
-	struct generation *generations;
+	mesh_generation_t *generations;
 	size_t num_generations;
 	int generation_over;
 } bufpool_t;

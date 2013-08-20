@@ -28,6 +28,14 @@
 #include "refcount.h"
 
 /**
+ * Meshes in the same generation were all backed around the same time.
+ **/
+typedef struct generation {
+	struct mesh **meshes;
+	size_t num_meshes;
+} mesh_generation_t;
+
+/**
  * A collection of vertex data ready to be passed to a draw call.
  *
  * vert_data: Copy of the vertex data we will pass in to the shader.
@@ -36,15 +44,13 @@
  * elem_data: Element buffer for this vertex data.
  * elems: Number of elements in this vertex data.
  * format: Format of the vertex data.
- * generation: bufpool generation that this mesh is associated with.
- * generation_link: Link into a bufpool generation.
+ * generation: Generation this mesh is part of.
  * vbuf: Vertex buffer we are currently copied in to.
  * vbuf_pos: Where in the vertex buffer we've been loaded.
  * ebuf: ELement buffer we are currently copied in to.
  * ebuf_pos: Where in the element buffer we've been loaded.
  * refcount: Refcount for tracking and freeing this object.
  **/
-typedef struct bufpool bufpool_t;
 typedef struct mesh {
 	void *vert_data;
 	size_t verts;
@@ -53,10 +59,9 @@ typedef struct mesh {
 	char *elem_data;
 	size_t elems;
 
-	vbuf_fmt_t format;
+	mesh_generation_t *generation;
 
-	struct generation *generation;
-	list_node_t generation_link;
+	vbuf_fmt_t format;
 
 	vbuf_t *vbuf;
 	size_t vbuf_pos;
@@ -81,6 +86,7 @@ void mesh_remove_from_ebuf(mesh_t *mesh);
 int mesh_draw(mesh_t *mesh);
 void mesh_grab(mesh_t *mesh);
 void mesh_ungrab(mesh_t *mesh);
+void mesh_remove_from_generation(mesh_t *mesh);
 
 #ifdef __cplusplus
 }
