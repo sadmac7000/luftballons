@@ -79,7 +79,6 @@ API_DECLARE(colorbuf_grab);
 API_DECLARE(colorbuf_ungrab);
 API_DECLARE(colorbuf_set_buf);
 API_DECLARE(colorbuf_clear);
-API_DECLARE(colorbuf_copy);
 API_DECLARE(colorbuf_clear_color);
 API_DECLARE(colorbuf_clear_depth);
 API_DECLARE(colorbuf_clear_stencil);

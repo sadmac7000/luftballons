@@ -44,8 +44,6 @@ void luft_colorbuf_ungrab(luft_colorbuf_t *luft_colorbuf);
 void luft_colorbuf_set_buf(luft_colorbuf_t *buf, size_t idx,
 			   luft_texmap_t *texmap);
 void luft_colorbuf_clear(luft_colorbuf_t *luft_colorbuf);
-void luft_colorbuf_copy(luft_colorbuf_t *in, size_t in_idx,
-			luft_colorbuf_t *out, size_t out_idx);
 void luft_colorbuf_clear_color(luft_colorbuf_t *in, float color[4]);
 void luft_colorbuf_clear_depth(luft_colorbuf_t *in, float depth);
 void luft_colorbuf_clear_stencil(luft_colorbuf_t *in, int index);
