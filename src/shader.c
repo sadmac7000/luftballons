@@ -111,9 +111,8 @@ shader_link(shader_t *shader)
 	if (status != GL_FALSE)
 		return;
 
-	log = xmalloc(log_len + 1);
-
 	glGetProgramiv(shader->gl_handle, GL_INFO_LOG_LENGTH, &log_len);
+	log = xmalloc(log_len + 1);
 	glGetProgramInfoLog(shader->gl_handle, log_len, NULL, log);
 
 	errx(1, "Could not link shaders: %s", log);
