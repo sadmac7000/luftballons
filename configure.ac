@@ -123,7 +123,7 @@ AC_CONFIG_HEADERS([include/config.h])
 AC_CONFIG_FILES([
 	Makefile
 	src/Makefile
-	src/luftdraw.pc
+	src/luftcore.pc
 	include/Makefile
 ])
 AC_OUTPUT
