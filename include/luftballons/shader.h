@@ -31,9 +31,6 @@ extern "C" {
 luft_shader_t *luft_shader_create(const char *vertex, const char *frag);
 void luft_shader_grab(luft_shader_t *shader);
 void luft_shader_ungrab(luft_shader_t *shader);
-void luft_shader_activate(luft_shader_t *shader);
-void luft_shader_set_uniform(luft_shader_t *shader, luft_uniform_t *uniform);
-void luft_shader_set_temp_uniform(luft_uniform_t *uniform);
 
 #ifdef __cplusplus
 }

@@ -51,9 +51,10 @@ extern "C" {
 API_DECLARE(shader_create);
 API_DECLARE(shader_grab);
 API_DECLARE(shader_ungrab);
-API_DECLARE(shader_activate);
-API_DECLARE(shader_set_uniform);
-API_DECLARE(shader_set_temp_uniform);
+
+void shader_activate(shader_t *shader);
+void shader_set_uniform(shader_t *shader, uniform_t *uniform);
+void shader_set_temp_uniform(uniform_t *uniform);
 
 #ifdef __cplusplus
 }
