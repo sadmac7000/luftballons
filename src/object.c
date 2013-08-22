@@ -277,6 +277,9 @@ object_destructor(void *object_)
 	if (object->parent)
 		errx(1, "Object unreferenced but still has parent.");
 
+	if (object->meta && object->meta_destructor)
+		object->meta_destructor(object->meta);
+
 	free(object->name);
 	free(object->transform_cache);
 	free(object->private_transform);
@@ -301,6 +304,8 @@ object_create(object_t *parent)
 	ret->mat = NO_MATERIAL;
 	ret->transform_cache = NULL;
 	ret->private_transform = NULL;
+	ret->meta = NULL;
+	ret->meta_destructor = 0;
 
 	ret->draw_distance = 0;
 	ret->child_draw_distance = 0;
@@ -740,3 +745,17 @@ object_get_type(luft_object_t *object)
 	return object->type;
 }
 EXPORT(object_get_type);
+
+/**
+ * Set an object's metadata.
+ **/
+void
+object_set_meta(object_t *object, void *meta, void (*meta_destructor)(void *))
+{
+	if (object->meta && object->meta_destructor)
+		object->meta_destructor(object->meta);
+
+	object->meta = meta;
+	object->meta_destructor = meta_destructor;
+}
+EXPORT(object_set_meta);

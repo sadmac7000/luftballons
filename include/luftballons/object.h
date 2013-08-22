@@ -75,6 +75,8 @@ void luft_object_set_material(luft_object_t *object, luft_material_t mat);
 void luft_object_set_draw_distance_local(luft_object_t *object, float dist);
 void luft_object_set_draw_distance_children(luft_object_t *object, float dist);
 void luft_object_set_draw_distance(luft_object_t *object, float dist);
+void luft_object_set_meta(luft_object_t *object, void *meta,
+			  void (*meta_destructor)(void *));
 
 void luft_camera_set_aspect(luft_object_t *camera, float aspect);
 

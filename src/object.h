@@ -55,6 +55,8 @@
  * type: What type of object this is.
  * mesh: The mesh to draw at this object's location.
  * camera: A camera to position at this location.
+ * meta: A piece of attached object metadata.
+ * meta_destructor: Destructor for meta.
  * refcount: Reference count.
  **/
 typedef struct object {
@@ -80,6 +82,9 @@ typedef struct object {
 		struct camera *camera;
 		float light_color[3];
 	};
+
+	void *meta;
+	void (*meta_destructor)(void *);
 
 	refcounter_t refcount;
 } object_t;
@@ -109,6 +114,7 @@ API_DECLARE(object_apply_pretransform);
 API_DECLARE(object_get_total_transform);
 API_DECLARE(object_lookup);
 API_DECLARE(object_set_material);
+API_DECLARE(object_set_meta);
 
 API_DECLARE(camera_set_aspect);
 
