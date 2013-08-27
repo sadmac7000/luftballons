@@ -730,7 +730,7 @@ EXPORT(object_set_draw_distance);
  * Get an object's name.
  **/
 const char *
-object_get_name(luft_object_t *object)
+object_get_name(object_t *object)
 {
 	return object->name;
 }
@@ -740,7 +740,7 @@ EXPORT(object_get_name);
  * Get the type of an object.
  **/
 object_type_t
-object_get_type(luft_object_t *object)
+object_get_type(object_t *object)
 {
 	return object->type;
 }
