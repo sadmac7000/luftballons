@@ -221,6 +221,31 @@ matrix_multiply(float a[16], float b[16], float result[16])
 EXPORT(matrix_multiply);
 
 /**
+ * Multiply a matrix by a vector. The vector is expanded from a 3-vector to a
+ * 4-vector with the given W component.
+ **/
+void
+matrix_vec3_mul(float mat[16], float vec[3], float w, float out[4])
+{
+	float vec4[] = { vec[0], vec[1], vec[2], w };
+	float tmp_out[4];
+	int i, k;
+
+	if (vec == out) {
+		matrix_vec3_mul(mat, vec, w, tmp_out);
+		memcpy(out, tmp_out, 4 * sizeof(float));
+		return;
+	}
+
+	memset(out, 0, 4 * sizeof(float));
+
+	for (i = 0; i < 4; i++)
+		for (k = 0; k < 4; k++)
+			out[i] += mat[i + k * 4] * vec4[k];
+}
+EXPORT(matrix_vec3_mul);
+
+/**
  * Dot product of two vectors.
  **/
 float

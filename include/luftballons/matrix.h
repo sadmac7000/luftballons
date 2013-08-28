@@ -75,6 +75,7 @@ luft_matrix_dup(float in[16], float out[16])
 void luft_matrix_transpose(float in[16], float out[16]);
 int luft_matrix_inverse_trans(float in[16], float out[16]);
 void luft_matrix_multiply(float a[16], float b[16], float result[16]);
+void luft_matrix_vec3_mul(float mat[16], float vec[3], float w, float out[4]);
 float luft_vec3_dot(float a[3], float b[3]);
 void luft_vec3_cross(float a[3], float b[3], float result[3]);
 void luft_vec3_normalize(float in[3], float out[3]);
