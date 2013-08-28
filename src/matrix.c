@@ -138,6 +138,22 @@ matrix_cofactor(float in[16], size_t i, size_t j)
 }
 
 /**
+ * Find the determinant of a matrix.
+ **/
+float
+matrix_determinant(float in[16])
+{
+	float det = 0;
+	size_t i;
+
+	for (i = 0; i < 4; i++)
+		det += matrix_cofactor(in, i, 0) * in[i];
+
+	return det;
+}
+EXPORT(matrix_determinant);
+
+/**
  * Invert and transpose matrix.
  *
  * Returns: True if the matrix has an inverse.

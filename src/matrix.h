@@ -49,6 +49,7 @@ extern "C" {
 
 API_DECLARE(matrix_stack_release);
 API_DECLARE(matrix_transpose);
+API_DECLARE(matrix_determinant);
 API_DECLARE(matrix_inverse_trans);
 API_DECLARE(matrix_multiply);
 API_DECLARE(matrix_vec3_mul);
