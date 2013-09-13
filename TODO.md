@@ -16,8 +16,7 @@
 * Unit tests
     * And kill demo.c
 * Skeletal animation
-* Collision detection / Object culling
-    * Most of the ways I can think of to do these makes them semi-related
+* Object culling (via collision detection?)
 * DSL for describing rendering pipelines with inline shaders.
 * Asset management.
 * Sound.

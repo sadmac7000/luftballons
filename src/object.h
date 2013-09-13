@@ -34,6 +34,9 @@
 #define OBJ_MESH LUFT_OBJ_MESH
 #define OBJ_CAMERA LUFT_OBJ_CAMERA
 #define OBJ_LIGHT LUFT_OBJ_LIGHT
+#define OBJ_COLLIDER_BOX LUFT_OBJ_COLLIDER_BOX
+#define OBJ_COLLIDER_CYLINDER LUFT_OBJ_COLLIDER_CYLINDER
+#define OBJ_COLLIDER_SPHERE LUFT_OBJ_COLLIDER_SPHERE
 
 /**
  * An object. That is a mesh with a position and render context and all of
@@ -55,6 +58,8 @@
  * type: What type of object this is.
  * mesh: The mesh to draw at this object's location.
  * camera: A camera to position at this location.
+ * light_color: Color of the light this (light source) object emits.
+ * r,w,l,h: Demensions of this (collision primitive) object.
  * meta: A piece of attached object metadata.
  * meta_destructor: Destructor for meta.
  * refcount: Reference count.
@@ -81,6 +86,14 @@ typedef struct object {
 		mesh_t *mesh;
 		struct camera *camera;
 		float light_color[3];
+		struct {
+			union {
+				float w;
+				float r;
+			};
+			float h;
+			float l;
+		};
 	};
 
 	void *meta;
@@ -98,6 +111,9 @@ extern "C" {
 API_DECLARE(object_create);
 API_DECLARE(object_make_light);
 API_DECLARE(object_make_camera);
+API_DECLARE(object_make_box_collider);
+API_DECLARE(object_make_sphere_collider);
+API_DECLARE(object_make_cylinder_collider);
 API_DECLARE(object_set_name);
 API_DECLARE(object_grab);
 API_DECLARE(object_ungrab);
@@ -113,6 +129,7 @@ API_DECLARE(object_reparent);
 API_DECLARE(object_apply_pretransform);
 API_DECLARE(object_get_total_transform);
 API_DECLARE(object_lookup);
+API_DECLARE(object_check_collision);
 API_DECLARE(object_set_material);
 API_DECLARE(object_set_meta);
 

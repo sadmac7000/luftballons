@@ -33,6 +33,9 @@ typedef enum {
 	LUFT_OBJ_MESH,
 	LUFT_OBJ_CAMERA,
 	LUFT_OBJ_LIGHT,
+	LUFT_OBJ_COLLIDER_BOX,
+	LUFT_OBJ_COLLIDER_CYLINDER,
+	LUFT_OBJ_COLLIDER_SPHERE,
 } luft_object_type_t;
 
 /**
@@ -54,6 +57,10 @@ luft_object_t *luft_object_create(luft_object_t *parent);
 void luft_object_make_light(luft_object_t *object, float color[3]);
 void luft_object_make_camera(luft_object_t *object, float fov,
 			     float near, float far);
+void luft_object_make_box_collider(luft_object_t *object, float l,
+				   float w, float h);
+void luft_object_make_sphere_collider(luft_object_t *object, float r);
+void luft_object_make_cylinder_collider(luft_object_t *object, float r, float h);
 luft_object_type_t luft_object_get_type(luft_object_t *object);
 void luft_object_set_name(luft_object_t *object, const char *name);
 const char *luft_object_get_name(luft_object_t *object);
@@ -71,6 +78,7 @@ void luft_object_reparent(luft_object_t *object, luft_object_t *parent);
 void luft_object_apply_pretransform(luft_object_t *object, float matrix[16]);
 void luft_object_get_total_transform(luft_object_t *object, float mat[16]);
 luft_object_t *luft_object_lookup(luft_object_t *object, const char *name);
+int luft_object_check_collision(luft_object_t *a, luft_object_t *b);
 void luft_object_set_material(luft_object_t *object, luft_material_t mat);
 void luft_object_set_draw_distance_local(luft_object_t *object, float dist);
 void luft_object_set_draw_distance_children(luft_object_t *object, float dist);

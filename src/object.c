@@ -342,6 +342,340 @@ object_make_light(object_t *object, float color[3])
 EXPORT(object_make_light);
 
 /**
+ * Make this object a collision box.
+ **/
+void
+object_make_box_collider(object_t *object, float l, float w, float h)
+{
+	object_make_nodetype(object);
+	object->type = OBJ_COLLIDER_BOX;
+	object->l = l;
+	object->w = w;
+	object->h = h;
+}
+EXPORT(object_make_box_collider);
+
+/**
+ * Make an object a collision sphere.
+ **/
+void
+object_make_sphere_collider(object_t *object, float r)
+{
+	object_make_nodetype(object);
+	object->type = OBJ_COLLIDER_SPHERE;
+	object->r = r;
+}
+EXPORT(object_make_sphere_collider);
+
+/**
+ * Make an object a collision cylinder.
+ **/
+void
+object_make_cylinder_collider(object_t *object, float r, float h)
+{
+	object_make_nodetype(object);
+	object->type = OBJ_COLLIDER_CYLINDER;
+	object->r = r;
+	object->h = h;
+}
+EXPORT(object_make_cylinder_collider);
+
+/**
+ * Component of the support function for a sphere collider.
+ **/
+static void
+object_support_component_sphere(object_t *object,
+				float direction[3], float out[3])
+{
+	float trans[16];
+
+	vec3_normalize(direction, direction);
+	vec3_scale(direction, direction, object->r);
+
+	object_get_transform_mat(object, trans);
+
+	out[0] = trans[3];
+	out[1] = trans[7];
+	out[2] = trans[11];
+
+	vec3_add(direction, out, out);
+}
+
+/**
+ * Component of the support function for a cylinder collider.
+ **/
+static void
+object_support_component_cylinder(object_t *object,
+				  float direction[3], float out[3])
+{
+	float top[3] = { 0, object->h / 2, 0 };
+	float bottom[3] = { 0, -object->h / 2, 0 };
+	float axis[3];
+	float dir_perp[3];
+	float trans[16];
+	float dot_top;
+
+	object_get_transform_mat(object, trans);
+
+	/* Top and bottom are set to points in the middle of the top and the
+	 * bottom faces of the cylinder respectively. We transform them to
+	 * their worldspace positions.
+	 */
+	matrix_vec3_mul(trans, top, 1.0, top);
+	matrix_vec3_mul(trans, bottom, 1.0, bottom);
+
+	/* We get an axis vector that runs down the middle of the cylinder. */
+	vec3_subtract(top, bottom, axis);
+
+	/* Part of another process, but useful now for a reason... */
+	vec3_cross(axis, direction, dir_perp);
+
+	/* If the cross product is zero, our direction is aligned with the
+	 * cylinder and top and bottom are our two final candidates.
+	 */
+	if (vec3_magnitude(dir_perp) > 0) {
+		/* This completes what we started with the last cross product.
+		 * dir_perp is now a vector perpendicular to the cylinder's
+		 * axis, but as close to our selected direction as possible.
+		 */
+		vec3_cross(dir_perp, axis, dir_perp);
+
+		/* Scale dir_perp to be the radius of our cylinder.
+		 */
+		vec3_normalize(dir_perp, dir_perp);
+		vec3_scale(dir_perp, dir_perp, object->r);
+
+		/* Finally, move top and bottom to the edges of our cylinder in
+		 * the appropriate direction. We now have our two final
+		 * candidates.
+		 */
+		vec3_add(dir_perp, top, top);
+		vec3_add(dir_perp, bottom, bottom);
+	}
+
+	/* We now have two candidates, top and bottom. We can just use largest
+	 * dot product to determine which is furthest.
+	 */
+	dot_top = vec3_dot(top, direction);
+
+	if (dot_top > vec3_dot(bottom, direction))
+		memcpy(out, top, 3 * sizeof(float));
+	else
+		memcpy(out, bottom, 3 * sizeof(float));
+}
+
+/**
+ * Component of the support function for a cylinder collider.
+ **/
+static void
+object_support_component_box(object_t *object,
+			     float direction[3], float out[3])
+{
+	float x = object->w / 2;
+	float y = object->h / 2;
+	float z = object->l / 2;
+	float trans[16];
+	float dot;
+	float max_val = -INFINITY;
+	size_t max;
+	size_t i;
+
+	float coords[8][3] = {
+		{ +x, +y, +z, },
+		{ +x, +y, -z, },
+		{ +x, -y, +z, },
+		{ +x, -y, -z, },
+		{ -x, +y, +z, },
+		{ -x, +y, -z, },
+		{ -x, -y, +z, },
+		{ -x, -y, -z, },
+	};
+
+	object_get_transform_mat(object, trans);
+
+	for (i = 0, max = 0; i < 8; i++) {
+		matrix_vec3_mul(trans, coords[i], 1, coords[i]);
+		dot = vec3_dot(direction, coords[i]);
+
+		if (dot <= max_val)
+			continue;
+
+		max_val = dot;
+		max = i;
+	}
+
+	memcpy(out, coords[max], 3 * sizeof(float));
+}
+
+/**
+ * Component of the support function for a single object.
+ **/
+static void
+object_support_component(object_t *object, float direction[3], float out[3])
+{
+	if (object->type == OBJ_COLLIDER_SPHERE)
+		object_support_component_sphere(object, direction, out);
+	else if (object->type == OBJ_COLLIDER_CYLINDER)
+		object_support_component_cylinder(object, direction, out);
+	else if (object->type == OBJ_COLLIDER_BOX)
+		object_support_component_box(object, direction, out);
+	else
+		errx(1, "Only colliders have a support component");
+}
+
+/**
+ * GJK collision support function.
+ **/
+static void
+object_support(object_t *a, object_t *b, float direction[3], float out[3])
+{
+	float pa[3];
+	float pb[3];
+
+	object_support_component(a, direction, pa);
+	vec3_scale(direction, direction, -1);
+	object_support_component(b, direction, pb);
+	vec3_subtract(pa, pb, out);
+}
+
+/**
+ * Check whether an object is a collider.
+ **/
+static int
+object_is_collider(object_t *object)
+{
+	if (object->type == OBJ_COLLIDER_SPHERE)
+		return 1;
+	if (object->type == OBJ_COLLIDER_CYLINDER)
+		return 1;
+	if (object->type == OBJ_COLLIDER_BOX)
+		return 1;
+
+	return 0;
+}
+
+/**
+ * Figure out what region the origin is in relative to a collision simplex.
+ * Returns a vertex index for the region opposite that vertex, 4 if we're
+ * inside the simplex
+ **/
+static size_t
+object_simplex_detect_region(float simplex[4][3], size_t simplex_pos)
+{
+	MATRIX_DECL(base_det_matrix,
+		simplex[0][0], simplex[0][1], simplex[0][2], 1,
+		simplex[1][0], simplex[1][1], simplex[1][2], 1,
+		simplex[2][0], simplex[2][1], simplex[2][2], 1,
+		simplex[3][0], simplex[3][1], simplex[3][2], 1);
+	float boundary_det_matrices[4][16] = {
+		{	0, simplex[1][0], simplex[2][0], simplex[3][0],
+			0, simplex[1][1], simplex[2][1], simplex[3][1],
+			0, simplex[1][2], simplex[2][2], simplex[3][2],
+			1, 1, 1, 1,
+		}, {	simplex[0][0], 0, simplex[2][0], simplex[3][0],
+			simplex[0][1], 0, simplex[2][1], simplex[3][1],
+			simplex[0][2], 0, simplex[2][2], simplex[3][2],
+			1, 1, 1, 1,
+		}, {	simplex[0][0], simplex[1][0], 0, simplex[3][0],
+			simplex[0][1], simplex[1][1], 0, simplex[3][1],
+			simplex[0][2], simplex[1][2], 0, simplex[3][2],
+			1, 1, 1, 1,
+		}, {	simplex[0][0], simplex[1][0], simplex[2][0], 0,
+			simplex[0][1], simplex[1][1], simplex[2][1], 0,
+			simplex[0][2], simplex[1][2], simplex[2][2], 0,
+			1, 1, 1, 1,
+		},
+	};
+	float base_det;
+	size_t i;
+
+	base_det = matrix_determinant(base_det_matrix);
+
+	for (i = 0; i < 4; i++) {
+		if (i == simplex_pos)
+			continue;
+
+		if (base_det *
+		    matrix_determinant(boundary_det_matrices[i]) > 0)
+			break;
+	}
+
+	return i;
+}
+
+/**
+ * Check for collision between objects.
+ **/
+int
+object_check_collision(object_t *a, object_t *b)
+{
+	float direction[3] = { 0, 1, 0 };
+	float simplex[4][3];
+	size_t simplex_pos = 5;
+	size_t last;
+	float middle[3];
+	float to_last[3];
+
+	if (! (object_is_collider(a) &&
+	       object_is_collider(b)))
+		return 0;
+
+	object_support(a, b, direction, simplex[0]);
+
+	direction[2] = -1;
+	object_support(a, b, direction, simplex[1]);
+
+	if (vec3_dot(simplex[1], direction) <= 0)
+		return 0;
+
+	vec3_subtract(simplex[1], simplex[0], to_last);
+	vec3_cross(simplex[1], to_last, direction);
+	vec3_cross(direction, to_last, direction);
+	object_support(a, b, direction, simplex[2]);
+
+	if (vec3_dot(simplex[2], direction) <= 0)
+		return 0;
+
+	while (vec3_dot(simplex[simplex_pos], direction)) {
+		if (simplex_pos == 5) {
+			simplex_pos = 3;
+			last = 2;
+		} else {
+			last = simplex_pos;
+			simplex_pos =
+				object_simplex_detect_region(simplex,
+							     simplex_pos);
+		}
+
+		if (simplex_pos == 4)
+			return 1;
+
+		middle[0] = middle[1] = middle[2] = 0;
+
+		if (simplex_pos != 3)
+			vec3_add(simplex[3], middle, middle);
+
+		if (simplex_pos != 2)
+			vec3_add(simplex[2], middle, middle);
+
+		if (simplex_pos != 1)
+			vec3_add(simplex[1], middle, middle);
+
+		if (simplex_pos != 0)
+			vec3_add(simplex[0], middle, middle);
+
+		vec3_scale(middle, middle, 1.0/3.0);
+		vec3_subtract(middle, simplex[last], to_last);
+		vec3_cross(middle, to_last, direction);
+		vec3_cross(direction, to_last, direction);
+		object_support(a, b, direction, simplex[simplex_pos]);
+	}
+
+	return 0;
+}
+EXPORT(object_check_collision);
+
+/**
  * Make this object a camera.
  **/
 void
