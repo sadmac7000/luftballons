@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include <GL/glut.h>
+#include <GLFW/glfw3.h>
 
 #include <luftballons/shader.h>
 #include <luftballons/uniform.h>
@@ -69,6 +69,7 @@ luft_material_t plane_mat;
 luft_material_t canopy_mat;
 luft_material_t cube_mat;
 luft_material_t light_mat;
+GLFWwindow *window;
 
 GLsizei win_sz[2] = {800, 600};
 int need_reshape = 1;
@@ -247,7 +248,7 @@ void
 render(void)
 {
 	float offset[3] = { -.5, 0, -1.25 };
-	float time = glutGet(GLUT_ELAPSED_TIME);
+	double time = glfwGetTime() * 1000;
 	float angle;
 	luft_quat_t cube_rot;
 	luft_quat_t center_rot;
@@ -265,15 +266,15 @@ render(void)
 
 	luft_draw_proc_run(output_draw_proc);
 
-	glutSwapBuffers();
-	glutPostRedisplay();
+	glfwSwapBuffers(window);
 
 	frame_time = time;
 }
 
 void
-reshape(int x, int y)
+reshape(GLFWwindow *window, int x, int y)
 {
+	(void)window;
 	win_sz[0] = x;
 	win_sz[1] = y;
 
@@ -281,55 +282,58 @@ reshape(int x, int y)
 }
 
 void
-tkey(unsigned char key, int x, int y, int state)
+tkey(int key, int state)
 {
-	(void)x;
-	(void)y;
-
-	if (key == 27)
+	if (key == GLFW_KEY_ESCAPE)
 		exit(0);
 
-	if (key == 'w')
+	if (key == 'W')
 		movement.forward = state;
 
-	if (key == 's')
+	if (key == 'S')
 		movement.backward = state;
 
-	if (key == 'a')
+	if (key == 'A')
 		movement.s_left = state;
 
-	if (key == 'd')
+	if (key == 'D')
 		movement.s_right = state;
 
-	if (key == 'q')
+	if (key == 'Q')
 		movement.t_left = state;
 
-	if (key == 'e')
+	if (key == 'E')
 		movement.t_right = state;
 
-	if (key == 'r')
+	if (key == 'R')
 		movement.rise = state;
 
-	if (key == 'f')
+	if (key == 'F')
 		movement.fall = state;
 
-	if (key == 't')
+	if (key == 'T')
 		movement.t_up = state;
 
-	if (key == 'g')
+	if (key == 'G')
 		movement.t_down = state;
 }
 
 void
-onkey(unsigned char key, int x, int y)
+onkey(GLFWwindow *window, int key, int sc, int action, int mods)
 {
-	tkey(key, x, y, 1);
-}
+	(void)window;
+	(void)sc;
+	(void)mods;
 
-void
-offkey(unsigned char key, int x, int y)
-{
-	tkey(key, x, y, 0);
+	if (action == GLFW_PRESS) {
+		printf("Down\n");
+		tkey(key, 1);
+	} else if (action == GLFW_RELEASE) {
+		printf("Up\n");
+		tkey(key, 0);
+	} else {
+		printf("Rep\n");
+	}
 }
 
 void
@@ -359,20 +363,14 @@ assign_material(luft_object_t *object)
 
 
 void
-init_glut(int argc, char **argv, float clear_color[4])
+init_glfw(float clear_color[4])
 {
-	glutInit(&argc, argv);
-	glutInitWindowPosition(-1,-1);
-	glutInitWindowSize(win_sz[0], win_sz[1]);
-	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_ACCUM |
-			    GLUT_DEPTH | GLUT_STENCIL);
+	glfwInit();
+	window = glfwCreateWindow(win_sz[0], win_sz[1], "Demo", NULL, NULL);
+	glfwMakeContextCurrent(window);
 
-	glutCreateWindow(argv[0]);
-
-	glutDisplayFunc(render);
-	glutReshapeFunc(reshape);
-	glutKeyboardFunc(onkey);
-	glutKeyboardUpFunc(offkey);
+	glfwSetWindowSizeCallback(window, reshape);
+	glfwSetKeyCallback(window, onkey);
 
 	luft_colorbuf_init_output(LUFT_COLORBUF_CLEAR_DEPTH |
 				  LUFT_COLORBUF_CLEAR |
@@ -383,7 +381,7 @@ init_glut(int argc, char **argv, float clear_color[4])
 }
 
 int
-main(int argc, char **argv)
+main(void)
 {
 	size_t aspect = (win_sz[0] / (float)win_sz[1]);
 
@@ -408,7 +406,7 @@ main(int argc, char **argv)
 	float light_color_2[3] = { 1.0, 1.0, 0.0 };
 	float light_offset_2[4] = { 0.0, 2.0, 0.0, 1.0 };
 
-	init_glut(argc, argv, clear_color);
+	init_glfw(clear_color);
 	root = luft_object_create(NULL);
 
 	plane_mat = luft_material_alloc();
@@ -583,6 +581,8 @@ main(int argc, char **argv)
 	luft_draw_proc_run_other(output_draw_proc, gather_draw_proc_3);
 	luft_draw_proc_run_other(output_draw_proc, gather_draw_proc_2);
 
-	glutMainLoop();
-	return 0;
+	while (! glfwWindowShouldClose(window)) {
+		render();
+		glfwPollEvents();
+	}
 }

@@ -50,13 +50,13 @@ LIB_CFLAGS = \
 	$(collada_dom_CFLAGS)	\
 	$(libpng_CFLAGS)	\
 	$(OpenGL_CFLAGS)	\
-	$(glut_CFLAGS)		\
+	$(glfw_CFLAGS)		\
 	$(libtiff_CFLAGS)
 
 libluftcore_la_CFLAGS = $(AM_CFLAGS) $(LIB_CFLAGS)
 libluftcore_la_CXXFLAGS = $(AM_CXXFLAGS) $(LIB_CFLAGS)
 libluftcore_la_LIBADD = 	\
-	$(glut_LIBS)		\
+	$(glfw_LIBS)		\
 	$(libtiff_LIBS)		\
 	$(collada_dom_LIBS)	\
 	$(OpenGL_LIBS)		\

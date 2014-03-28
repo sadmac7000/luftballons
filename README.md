@@ -21,9 +21,8 @@ Luftballons depends on the following libraries:
 
 * OpenGL. The best implementation will depend on your system, but most testing
   has happened with [Mesa](http://www.mesa3d.org/).
-* GLUT. Luftballons prefers [FreeGLUT](http://freeglut.sourceforge.net/). Note
-  that you only need this to build the demo apps. The library does not require
-  it.
+* [GLFW](http://glfw.org/) Note that you only need this to build the demos and
+  tests.
 * [COLLADA-DOM](http://sourceforge.net/projects/collada-dom/)
 * [libpng](http://www.libpng.org/pub/png/libpng.html)
 * [libtiff](http://www.libtiff.org/)
