@@ -28,11 +28,7 @@
 #include <ctype.h>
 #include <time.h>
 
-#include <dae.h>
-#include <dom/domCOLLADA.h>
-#include <dom/domMesh.h>
-#include <dom/domGeometry.h>
-#include <dom/domInputLocal.h>
+#include "collada_includes.h"
 
 #include "object.h"
 #include "util.h"
