@@ -20,7 +20,7 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include <GL/glut.h>
+#include <GL/gl.h>
 
 #include "vbuf.h"
 #include "vbuf_fmt.h"
