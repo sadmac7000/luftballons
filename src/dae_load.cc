@@ -64,11 +64,29 @@ size_t used_param_count;
 size_t stride;
 daeElementRef source;
 
+domInputLocalRef vert_to_pos(domInputLocalOffsetRef input);
+void set_gl_type_int();
+void set_gl_type_float();
+void set_gl_type();
+template <typename T, typename U> void grab_buffer(T array);
+void load_from_accessor(domAccessorRef ref);
+void load_from_source(domSourceRef ref);
+
+public:
+
+void *copy_out(void *target, size_t idx);
+void add_to_vbuf(vbuf_fmt_t *fmt);
+
+DAEDataSource(domInputLocalOffsetRef input);
+~DAEDataSource();
+
+};
+
 /**
  * Given a vertex input, find the position input.
  **/
 domInputLocalRef
-vert_to_pos(domInputLocalOffsetRef input)
+DAEDataSource::vert_to_pos(domInputLocalOffsetRef input)
 {
 	domVerticesRef ref = input->getSource().getElement();
 	domInputLocal_Array array = ref->getInput_array();
@@ -89,7 +107,7 @@ vert_to_pos(domInputLocalOffsetRef input)
  * Set the value of gl_type and load data. Assume we have an integer type source.
  **/
 void
-set_gl_type_int()
+DAEDataSource::set_gl_type_int()
 {
 	domInt_arrayRef array = (domInt_arrayRef)this->source;
 	int min = array->getMinInclusive();
@@ -126,7 +144,7 @@ set_gl_type_int()
  * Set the value of gl_type and load data. Assume we have a float type source.
  **/
 void
-set_gl_type_float()
+DAEDataSource::set_gl_type_float()
 {
 	domFloat_arrayRef array = (domFloat_arrayRef)this->source;
 
@@ -149,7 +167,7 @@ set_gl_type_float()
  * Set the value of gl_type and load data.
  **/
 void
-set_gl_type()
+DAEDataSource::set_gl_type()
 {
 	if (this->source->typeID() == domBool_array::ID()) {
 		this->gl_type = GL_UNSIGNED_BYTE;
@@ -169,7 +187,7 @@ set_gl_type()
  **/
 template <typename T, typename U>
 void
-grab_buffer(T array)
+DAEDataSource::grab_buffer(T array)
 {
 	size_t array_size = array.getCount();
 	U *buffer = (U *)xcalloc(array_size, sizeof(U));
@@ -196,7 +214,7 @@ grab_buffer(T array)
  * Fill out this class with data from the given Accessor element.
  **/
 void
-load_from_accessor(domAccessorRef ref)
+DAEDataSource::load_from_accessor(domAccessorRef ref)
 {
 	size_t i;
 	const char *pname;
@@ -227,7 +245,7 @@ load_from_accessor(domAccessorRef ref)
  * Fill out this class with data from the given Source element.
  **/
 void
-load_from_source(domSourceRef ref)
+DAEDataSource::load_from_source(domSourceRef ref)
 {
 	domSource::domTechnique_commonRef tech =
 		ref->getTechnique_common();
@@ -239,10 +257,11 @@ load_from_source(domSourceRef ref)
 	this->load_from_accessor(tech->getAccessor());
 }
 
-public:
-
+/**
+ * Copy our data to a plain memory buffer.
+ **/
 void *
-copy_out(void *target, size_t idx)
+DAEDataSource::copy_out(void *target, size_t idx)
 {
 	size_t span = this->used_param_count * this->datum_sz;
 	char *src = (char *)this->data;
@@ -257,7 +276,7 @@ copy_out(void *target, size_t idx)
  * Add this class to a vertex buffer format.
  **/
 void
-add_to_vbuf(vbuf_fmt_t *fmt)
+DAEDataSource::add_to_vbuf(vbuf_fmt_t *fmt)
 {
 	vbuf_fmt_add(fmt, this->name, this->used_param_count, this->gl_type);
 }
@@ -265,7 +284,7 @@ add_to_vbuf(vbuf_fmt_t *fmt)
 /**
  * Construct this class from a COLLADA input.
  **/
-DAEDataSource(domInputLocalOffsetRef input)
+DAEDataSource::DAEDataSource(domInputLocalOffsetRef input)
 {
 	domSourceRef source = input->getSource().getElement();
 	char *name = xstrdup(input->getSemantic());
@@ -292,13 +311,11 @@ DAEDataSource(domInputLocalOffsetRef input)
 /**
  * Destroy this class.
  **/
-~DAEDataSource()
+DAEDataSource::~DAEDataSource()
 {
 	free(this->name);
 	free(this->data);
 }
-
-}; /* class DAEDataSource */
 
 /**
  * Get a transform matrix to correct the up axis.
