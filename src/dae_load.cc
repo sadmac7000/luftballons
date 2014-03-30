@@ -709,7 +709,7 @@ extern "C" {
 object_t **
 dae_load(const char *filename, size_t *count)
 {
-	DAE dae;
+	DAE dae(NULL, NULL, "1.4.1");
 	daeElement *root;
 	domCOLLADA *doc;
 
