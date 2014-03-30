@@ -28,3 +28,4 @@
 #include <dom/domMesh.h>
 #include <dom/domGeometry.h>
 #include <dom/domInputLocal.h>
+#include <modules/daeLIBXMLPlugin.h>
