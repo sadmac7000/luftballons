@@ -40,7 +40,7 @@ AC_ARG_WITH([collada], [AS_HELP_STRING(
 ], [], [with_collada=yes])
 
 AS_IF([test "x$with_collada" != xno], [
-	PKG_CHECK_MODULES([collada_dom], [collada14dom], [
+	PKG_CHECK_MODULES([collada_dom], [collada-dom-141], [
 		AC_DEFINE([HAVE_COLLADA], [1], [COLLADA support enabled])
 		with_collada=yes
 	], [
